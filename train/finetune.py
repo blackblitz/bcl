@@ -16,10 +16,17 @@ def finetune(
     step = make_step(loss)
     for i, dataset in enumerate(dataseq.train()):
         if dataloader_kwargs is None:
-            kwargs = {'batch_size': len(dataset), 'collate_fn': numpy_collate}
-        else:
-            kwargs = dataloader_kwargs
-        for _ in range(nepochs):
-            for x, y in DataLoader(dataset, **kwargs):
+            x, y = next(iter(
+                DataLoader(
+                    dataset,
+                    batch_size=len(dataset),
+                    collate_fn=numpy_collate
+                )
+            ))
+            for _ in range(nepochs):
                 state = step(state, x, y)
+        else:
+            for _ in range(nepochs):
+                for x, y in DataLoader(dataset, **dataloader_kwargs):
+                    state = step(state, x, y)
         yield state, loss
