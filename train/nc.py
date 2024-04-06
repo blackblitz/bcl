@@ -86,7 +86,7 @@ def nc(
             for _ in range(nepochs):
                 for x, y in DataLoader(dataset, **dataloader_kwargs):
                     state = step(state, x, y)
-        yield state, loss
+        yield state, loss, dataset
         state_consolidator = state_consolidator.replace(
             hyperparams=state_consolidator.hyperparams | {'minimum': state.params}
         )

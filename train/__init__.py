@@ -2,8 +2,13 @@
 
 from operator import add
 
+from flax.training import train_state
 from jax import grad, jit, tree_util
 import optax
+
+
+class TrainState(train_state.TrainState):
+    hyperparams: dict
 
 
 def make_step(loss):

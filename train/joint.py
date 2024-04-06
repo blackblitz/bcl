@@ -31,4 +31,4 @@ def joint(
             for _ in range(nepochs):
                 for x, y in DataLoader(concat, **dataloader_kwargs):
                     state = step(state, x, y)
-        yield state, loss
+        yield state, loss, concat
