@@ -1,1 +1,0 @@
-"""Models for SplitIris2."""
