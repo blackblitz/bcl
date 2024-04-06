@@ -15,7 +15,7 @@ params = model.init(key, jnp.zeros(2))['params']
 state_init = TrainState.create(
     apply_fn=model.apply,
     params=params,
-    tx=optax.adam(0.1),
+    tx=optax.adam(0.01),
     hyperparams={}
 )
 
@@ -23,7 +23,7 @@ class Consolidator(nn.Module):
 
     @nn.compact
     def __call__(self, x):
-        x = nn.Dense(20)(x)
+        x = nn.Dense(50)(x)
         x = nn.swish(x)
         x = nn.Dense(1)(x)
         return x
@@ -37,7 +37,7 @@ state_consolidator_init = TrainState.create(
     params=consolidator.init(
         key1, jnp.expand_dims(pflat, 0)
     )['params'],
-    tx=optax.adam(0.1),
+    tx=optax.adam(0.01),
     hyperparams={
         'minimum': tree_util.tree_map(jnp.zeros_like, state_init.params),
         'radius': 20.0,

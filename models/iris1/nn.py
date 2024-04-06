@@ -25,7 +25,7 @@ params = model.init(key, jnp.zeros(1))['params']
 state_init = TrainState.create(
     apply_fn=model.apply,
     params=params,
-    tx=optax.adam(0.1),
+    tx=optax.adam(0.01),
     hyperparams={}
 )
 

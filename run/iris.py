@@ -11,6 +11,7 @@ from tqdm import tqdm
 from dataseqs.iris import PermutedIris, SplitIris
 from evaluate import aa_softmax
 from train import make_loss_sce
+from train.ah import ah
 from train.ewc import ewc
 from train.finetune import finetune
 from train.joint import joint
@@ -38,16 +39,17 @@ for dataseq_name, Dataseq in zip(
                 'Joint Training',
                 'Fine-tuning',
                 'Elastic Weight\nConsolidation\n($\lambda=1$)',
+                'Autodiff Hessian',
                 'Neural Consolidation\n($n=10000,r=20$)'
             ]),
-            [joint, finetune, ewc, nc],
-            [{}, {}, {}, {'state_consolidator': state_consolidator_init}]
+            [joint, finetune, ewc, ah, nc],
+            [{}, {}, {}, {}, {'state_consolidator': state_consolidator_init}]
         )):
             ax.plot(
                 time,
                 jnp.array([
                     aa_softmax(i, state, dataseq)
-                    for i, (state, loss) in enumerate(
+                    for i, (state, loss, dataset) in enumerate(
                         algo(1000, state_init, loss_sce, dataseq, **kwargs)
                     )
                 ]),

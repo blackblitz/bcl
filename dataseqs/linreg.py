@@ -9,7 +9,8 @@ from torch.utils.data import Dataset
 class LinReg(Dataset):
     def __init__(self, key, transform=None, target_transform=None):
         self.x = np.linspace(0.0, 1.0, num=100)[:, None]
-        self.y = self.x + random.normal(key, shape=self.x.shape)
+        self.y = self.x[:, 0]
+        self.y += np.array(random.normal(key, shape=self.y.shape))
         self.transform = transform
         self.target_transform = target_transform
 
