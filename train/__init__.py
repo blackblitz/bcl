@@ -44,14 +44,14 @@ def make_loss_sce(state):
     )
 
 
-def make_loss_reg(state, loss):
+def make_loss_reg(state, hyperparams, loss_basic):
     return jit(
         lambda params, x, y: 
         tree_util.tree_reduce(
             add,
             tree_util.tree_map(
-                lambda x: 0.5 * (state.hyperparams['precision'] * x ** 2).sum(),
+                lambda x: 0.5 * (hyperparams['precision'] * x ** 2).sum(),
                 params
             )
-        ) + loss(params, x, y)
+        ) + loss_basic(params, x, y)
     )
