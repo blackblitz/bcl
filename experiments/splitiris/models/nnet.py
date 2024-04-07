@@ -1,4 +1,4 @@
-"""Neural network for Permuted Iris."""
+"""Neural network for Split Iris."""
 
 from flax import linen as nn
 

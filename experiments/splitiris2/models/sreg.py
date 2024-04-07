@@ -1,4 +1,4 @@
-"""Softmax regression for Split Iris."""
+"""Logistic regression for Split Iris 2."""
 
 from flax import linen as nn
 

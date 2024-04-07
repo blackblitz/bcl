@@ -39,15 +39,30 @@ hyperparams_inits = [
     {'init': True, 'precision': 0.1},
     {'init': True, 'precision': 0.1, 'radius': 20.0, 'size': 10000}
 ]
+markers = 'ovsPX'
 for name, model in zip(['sreg', 'nnet'], [sreg, nnet]):
+    fig, ax = plt.subplots(figsize=(12, 6.75))
     state_main_init, state_consolidator_init = make_state(model.Main(), model.Consolidator())
     hyperparams_inits[4]['state_consolidator'] = state_consolidator_init
-    for label, algo, hyperparams_init in zip(labels, algos, hyperparams_inits):
-        print(label)
-        hyperparams = deepcopy(hyperparams_init)
+    for i, label in enumerate(labels):
+        hyperparams = deepcopy(hyperparams_inits[i])
         state_main = state_main_init
-        for i, dataset in enumerate(splitiris.train()):
-            state_main, hyperparams, loss = algo(
-                make_loss_sce, 1000, None, state_main, hyperparams, dataset
+        aa = []
+        xs = range(1, 4)
+        for j, dataset_train in enumerate(splitiris.train()):
+            state_main, hyperparams, loss = algos[i](
+                make_loss_sce, 1000, None, state_main, hyperparams, dataset_train
             )
-            print(np.mean([accuracy(None, state_main, d) for d in islice(splitiris.test(), 0, i + 1)]))
+            aa.append(
+                np.mean([
+                    accuracy(None, state_main, dataset_test)
+                    for dataset_test in islice(splitiris.test(), 0, j + 1)
+                ])
+            )
+        ax.plot(xs, aa, marker=markers[i], markersize=10, alpha=0.5, label=label)
+    ax.set_xticks(xs)
+    ax.set_ylim([-0.1, 1.1])
+    ax.set_xlabel('Time')
+    ax.set_ylabel('Average Accuracy')
+    ax.legend()
+    fig.savefig(f'plots/splitiris_aa_{name}.png')
