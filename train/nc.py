@@ -17,7 +17,7 @@ def make_loss_nc(state, hyperparams, loss_basic):
     )
 
 
-def make_loss_consolidator(batch_size, state, hyperparams, loss_target, dataset):
+def make_loss_consolidator_(batch_size, state, hyperparams, loss_target):
     pflat, punflatten = flatten_util.ravel_pytree(hyperparams['minimum'])
     ball = random.ball(random.PRNGKey(1337), len(pflat), shape=(hyperparams['size'],))
     pflats = pflat + hyperparams['radius'] * ball
@@ -32,7 +32,7 @@ def make_loss_consolidator(batch_size, state, hyperparams, loss_target, dataset)
     )
 
 
-def make_loss_consolidator_2(batch_size, state, hyperparams, loss_target, dataset):
+def make_loss_consolidator(batch_size, state, hyperparams, loss_target, dataset):
     pflat, punflatten = flatten_util.ravel_pytree(hyperparams['minimum'])
     ball = random.ball(random.PRNGKey(1337), len(pflat), shape=(hyperparams['size'],))
     pflats = pflat + hyperparams['radius'] * ball
@@ -69,8 +69,8 @@ def nc(
         batch_size, hyperparams['state_consolidator'], hyperparams, loss, dataset
     )
     step_consolidator = make_step(loss_consolidator)
-    for x, y in fetch(dataset, num_epochs, batch_size):
-        state_consolidator = step_consolidator(state_consolidator, x, y)
+    for _ in range(num_epochs):
+        state_consolidator = step_consolidator(state_consolidator, None, None)
     hyperparams['state_consolidator'] = state_consolidator
     hyperparams['init'] = False
     return state, hyperparams, loss
