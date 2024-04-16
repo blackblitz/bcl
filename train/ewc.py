@@ -65,7 +65,7 @@ def ewc(
     hyperparams['minimum'] = state.params
     hyperparams['fisher'] = tree_util.tree_map(
         add, hyperparams['fisher'],
-        get_fisher(batch_size, loss_basic, state.params, dataset)
+        get_fisher(1024, loss_basic, state.params, dataset)
     )
     hyperparams['init'] = False
     return state, hyperparams, loss
