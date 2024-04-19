@@ -6,8 +6,7 @@ import jax.numpy as jnp
 from jax import grad, jit, random, tree_util
 from jax.lax import scan
 
-
-from datasets import fetch
+from torchds import fetch
 from . import make_loss_reg, make_step
 
 
@@ -48,7 +47,8 @@ def get_fisher(batch_size, loss_basic, params, dataset):
 
 
 def ewc(
-    make_loss_basic, num_epochs, batch_size, state, hyperparams, dataset
+    make_loss_basic, num_epochs, batch_size,
+    state, hyperparams, dataset, apply=lambda x: x
 ):
     if hyperparams['init']:
         make_loss = make_loss_reg
@@ -61,7 +61,7 @@ def ewc(
     loss = make_loss(state, hyperparams, loss_basic)
     step = make_step(loss)
     for x, y in fetch(dataset, num_epochs, batch_size):
-        state = step(state, x, y)
+        state = step(state, apply(x), y)
     hyperparams['minimum'] = state.params
     hyperparams['fisher'] = tree_util.tree_map(
         add, hyperparams['fisher'],

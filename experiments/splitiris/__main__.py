@@ -18,12 +18,13 @@ from train.nc import nc
 
 from evaluate.softmax import accuracy
 
-from .data import SplitIris
+from torchds.dataset_sequences.splitiris import SplitIris
 from .models import make_state, nnet, sreg
 
 plt.style.use('bmh')
 
-splitiris = SplitIris()
+splitiris_train = SplitIris()
+splitiris_test = SplitIris(train=False)
 labels = [
     'Joint training',
     'Fine-tuning',
@@ -40,23 +41,25 @@ hyperparams_inits = [
     {'init': True, 'precision': 0.1, 'radius': 20.0, 'size': 10000}
 ]
 markers = 'ovsPX'
-for name, model in zip(['sreg', 'nnet'], [sreg, nnet]):
+for name, model in zip(tqdm(['sreg', 'nnet'], unit='model'), [sreg, nnet]):
     fig, ax = plt.subplots(figsize=(12, 6.75))
     state_main_init, state_consolidator_init = make_state(model.Main(), model.Consolidator())
     hyperparams_inits[4]['state_consolidator'] = state_consolidator_init
-    for i, label in enumerate(labels):
+    for i, label in enumerate(tqdm(labels, unit='algorithm', leave=False)):
         hyperparams = deepcopy(hyperparams_inits[i])
         state_main = state_main_init
         aa = []
         xs = range(1, 4)
-        for j, dataset_train in enumerate(splitiris.train()):
+        for j, dataset in enumerate(tqdm(
+            splitiris_train, unit='task', leave=False
+        )):
             state_main, hyperparams, loss = algos[i](
-                make_loss_sce, 1000, None, state_main, hyperparams, dataset_train
+                make_loss_sce, 1000, None, state_main, hyperparams, dataset
             )
             aa.append(
                 np.mean([
-                    accuracy(None, state_main, dataset_test)
-                    for dataset_test in islice(splitiris.test(), 0, j + 1)
+                    accuracy(None, state_main, dataset)
+                    for dataset in list(splitiris_test)[: j + 1]
                 ])
             )
         ax.plot(xs, aa, marker=markers[i], markersize=10, alpha=0.5, label=label)

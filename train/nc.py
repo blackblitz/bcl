@@ -3,7 +3,7 @@
 from jax import flatten_util, jit, random, vmap
 import optax
 
-from datasets import fetch
+from torchds import fetch
 from . import make_loss_reg, make_step
 
 
@@ -52,7 +52,8 @@ def make_loss_consolidator(state, hyperparams, loss_target, dataset, batch_size)
 
 
 def nc(
-    make_loss_basic, num_epochs, batch_size, state, hyperparams, dataset
+    make_loss_basic, num_epochs, batch_size,
+    state, hyperparams, dataset, apply=lambda x: x
 ):
     if hyperparams['init']:
         make_loss = make_loss_reg
@@ -62,7 +63,7 @@ def nc(
     loss = make_loss(state, hyperparams, loss_basic)
     step = make_step(loss)
     for x, y in fetch(dataset, num_epochs, batch_size):
-        state = step(state, x, y)
+        state = step(state, apply(x), y)
     hyperparams['minimum'] = state.params
     state_consolidator = hyperparams['state_consolidator']
     loss_consolidator = make_loss_consolidator(

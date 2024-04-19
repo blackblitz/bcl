@@ -6,7 +6,7 @@ from flax import linen as nn
 class Main(nn.Module):
     @nn.compact
     def __call__(self, x):
-        x = nn.Conv(8, (3, 3), padding='CIRCULAR')(x)
+        x = nn.Conv(8, (3, 3))(x)
         x = nn.swish(x)
         x = nn.max_pool(x, (8, 8), strides=(8, 8))
         x = x.reshape((x.shape[0], -1))

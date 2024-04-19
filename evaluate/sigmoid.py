@@ -2,7 +2,7 @@
 
 from jax.nn import sigmoid
 
-from datasets import fetch
+from torchds import fetch
 
 
 def predict(state, x):

@@ -18,8 +18,8 @@ from train.nc import nc
 
 from evaluate.sigmoid import accuracy
 
-from datasets import fetch
-from .data import SplitIris1
+from torchds import fetch
+from torchds.dataset_sequences.splitiris import SplitIris1
 from .models import lreg, make_state, nnet
 
 plt.style.use('bmh')
@@ -37,7 +37,8 @@ def plot_loss(ax, state, loss, x, y, lim=20.0, vmax=2000.0):
     return mesh
 
 
-splitiris1 = SplitIris1()
+splitiris1_train = SplitIris1()
+splitiris1_test = SplitIris1(train=False)
 labels = [
     'Joint training',
     'Fine-tuning',
@@ -60,16 +61,18 @@ for name, model in zip(['lreg', 'nnet'], [lreg, nnet]):
     for i, label in enumerate(labels):
         hyperparams = deepcopy(hyperparams_inits[i])
         state_main = state_main_init
-        for j, dataset_train in enumerate(splitiris1.train()):
+        for j, dataset in enumerate(tqdm(
+            splitiris1_train, unit='task', leave=False
+        )):
             state_main, hyperparams, loss = algos[i](
-                make_loss_bce, 1000, None, state_main, hyperparams, dataset_train
+                make_loss_bce, 1000, None, state_main, hyperparams, dataset
             )
-            x, y = next(fetch(hyperparams.get('coreset', dataset_train), 1, None))
+            x, y = next(fetch(hyperparams.get('coreset', dataset), 1, None))
             plot_loss(axes[j, i], state_main, loss, x, y)
             axes[j, i].set_title(
                 'AA: {:.4f}'.format(np.mean([
-                    accuracy(None, state_main, dataset_test)
-                    for dataset_test in islice(splitiris1.test(), 0, j + 1)
+                    accuracy(None, state_main, dataset)
+                    for dataset in list(splitiris1_test)[: j + 1]
                 ]))
             )
             axes[j, 0].set_ylabel(f'Time {j + 1}')

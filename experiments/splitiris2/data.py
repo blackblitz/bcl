@@ -2,7 +2,7 @@
 
 from torch.utils.data import Subset
 
-from datasets.iris import Iris
+from torchds.datasets.iris import Iris
 
 
 class SplitIris2:
