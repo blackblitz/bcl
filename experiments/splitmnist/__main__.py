@@ -17,7 +17,7 @@ from train.nc import nc
 
 from evaluate.softmax import accuracy
 
-from .data import SplitMNIST
+from torchds.dataset_sequences.splitmnist import SplitMNIST
 from .models import make_state, cnn, fcnn
 
 plt.style.use('bmh')
