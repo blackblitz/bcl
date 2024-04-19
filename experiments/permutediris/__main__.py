@@ -17,12 +17,13 @@ from train.nc import nc
 
 from evaluate.softmax import accuracy
 
-from .data import PermutedIris
+from torchds.dataset_sequences.permutediris import PermutedIris
 from .models import make_state, nnet, sreg
 
 plt.style.use('bmh')
 
-permutediris = PermutedIris()
+permutediris_train = PermutedIris()
+permutediris_test = PermutedIris(train=False)
 labels = [
     'Joint training',
     'Fine-tuning',
@@ -38,15 +39,30 @@ hyperparams_inits = [
     {'init': True, 'precision': 0.1},
     {'init': True, 'precision': 0.1, 'radius': 20.0, 'size': 10000}
 ]
-for name, model in zip(['sreg', 'nnet'], [sreg, nnet]):
+markers = 'ovsPX'
+for name, model in zip(tqdm(['sreg', 'nnet'], unit='model'), [sreg, nnet]):
+    fig, ax = plt.subplots(figsize=(12, 6.75))
     state_main_init, state_consolidator_init = make_state(model.Main(), model.Consolidator())
     hyperparams_inits[4]['state_consolidator'] = state_consolidator_init
-    for label, algo, hyperparams_init in zip(labels, algos, hyperparams_inits):
-        print(label)
-        hyperparams = deepcopy(hyperparams_init)
+    for i, label in enumerate(tqdm(labels, unit='algorithm', leave=False)):
+        hyperparams = deepcopy(hyperparams_inits[i])
         state_main = state_main_init
-        for i, dataset in enumerate(permutediris.train()):
-            state_main, hyperparams, loss = algo(
+        aa = []
+        xs = range(1, 4)
+        for j, dataset in enumerate(tqdm(permutediris_train, unit='task', leave=False)):
+            state_main, hyperparams, loss = algos[i](
                 make_loss_sce, 1000, None, state_main, hyperparams, dataset
             )
-            print(np.mean([accuracy(None, state_main, d) for d in islice(permutediris.test(), 0, i + 1)]))
+            aa.append(
+                np.mean([
+                    accuracy(None, state_main, dataset)
+                    for dataset in list(permutediris_test)[: j + 1]
+                ])
+            )
+        ax.plot(xs, aa, marker=markers[i], markersize=10, alpha=0.5, label=label)
+    ax.set_xticks(xs)
+    ax.set_ylim([-0.1, 1.1])
+    ax.set_xlabel('Time')
+    ax.set_ylabel('Average Accuracy')
+    ax.legend()
+    fig.savefig(f'plots/permutediris_aa_{name}.png')

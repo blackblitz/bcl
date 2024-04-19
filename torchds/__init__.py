@@ -1,4 +1,4 @@
-"""Datasets."""
+"""Torch datasets."""
 
 import random
 

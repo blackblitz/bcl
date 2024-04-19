@@ -2,7 +2,7 @@
 
 from jax.nn import softmax
 
-from datasets import fetch
+from torchds import fetch
 
 
 def predict(state, x):

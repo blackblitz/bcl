@@ -1,11 +1,13 @@
 """Split MNIST."""
 
+from collections.abc import Sequence
+
 import numpy as np
 from torch.utils.data import Subset
 from torchvision.datasets import MNIST
 
 
-class SplitMNIST:
+class SplitMNIST(Sequence):
     def __init__(self, train=True):
         self.dataset = MNIST(
             'data', download=True, train=train,

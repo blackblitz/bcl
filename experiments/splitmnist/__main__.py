@@ -47,14 +47,16 @@ for name, model in zip(tqdm(['fcnn', 'cnn'], unit='model'), [fcnn, cnn]):
         hyperparams = deepcopy(hyperparams_inits[i])
         state_main = state_main_init
         aa = []
-        for j, dataset_train in enumerate(tqdm(splitmnist_train, leave=False)):
+        for j, dataset in enumerate(tqdm(
+            splitmnist_train, leave=False, unit='task'
+        )):
             state_main, hyperparams, loss = algos[i](
-                make_loss_sce, 10, 64, state_main, hyperparams, dataset_train
+                make_loss_sce, 10, 64, state_main, hyperparams, dataset
             )
             aa.append(
                 np.mean([
-                    accuracy(1024, state_main, dataset_test)
-                    for dataset_test in list(splitmnist_test)[:j + 1]
+                    accuracy(1024, state_main, dataset)
+                    for dataset in list(splitmnist_test)[:j + 1]
                 ])
             )
         ax.plot(xs, aa, marker=markers[i], markersize=10, alpha=0.5, label=label)

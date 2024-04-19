@@ -20,8 +20,8 @@ from train.nc import nc
 
 from evaluate.softmax import accuracy
 
-from datasets import fetch
-from .data import SplitIris2
+from torchds import fetch
+from torchds.dataset_sequences.splitiris import SplitIris2
 from .models import sreg, make_state, nnet
 
 plt.style.use('bmh')
@@ -46,7 +46,8 @@ def plot_xy(ax, x, y):
     )
 
 
-splitiris2 = SplitIris2()
+splitiris2_train = SplitIris2()
+splitiris2_test = SplitIris2(train=False)
 labels = [
     'Joint training',
     'Fine-tuning',
@@ -69,17 +70,19 @@ for name, model in zip(['sreg', 'nnet'], [sreg, nnet]):
     for i, label in enumerate(labels):
         hyperparams = deepcopy(hyperparams_inits[i])
         state_main = state_main_init
-        for j, dataset_train in enumerate(splitiris2.train()):
+        for j, dataset in enumerate(tqdm(
+            splitiris2_train, unit='task', leave=False
+        )):
             state_main, hyperparams, loss = algos[i](
-                make_loss_sce, 1000, None, state_main, hyperparams, dataset_train
+                make_loss_sce, 1000, None, state_main, hyperparams, dataset
             )
-            x, y = next(fetch(hyperparams.get('coreset', dataset_train), 1, None))
+            x, y = next(fetch(hyperparams.get('coreset', dataset), 1, None))
             plot_pred(axes[j, i], state_main)
             plot_xy(axes[j, i], x, y)
             axes[j, i].set_title(
                 'AA: {:.4f}'.format(np.mean([
-                    accuracy(None, state_main, dataset_test)
-                    for dataset_test in islice(splitiris2.test(), 0, j + 1)
+                    accuracy(None, state_main, dataset)
+                    for dataset_test in list(splitiris2_test)[: j + 1]
                 ]))
             )
             axes[j, 0].set_ylabel(f'Time {j + 1}')
