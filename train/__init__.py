@@ -1,22 +1,7 @@
 """Training package."""
 
-from operator import add
-
-from flax.training import train_state
-from jax import grad, jit, tree_util
+from jax import grad, jit
 import optax
-
-
-class TrainState(train_state.TrainState):
-    hyperparams: dict
-
-
-def make_step(loss):
-    return jit(
-        lambda state, x, y: state.apply_gradients(
-            grads=grad(loss)(state.params, x, y)
-        )
-    )
 
 
 def make_loss_sse(state):
@@ -44,14 +29,9 @@ def make_loss_sce(state):
     )
 
 
-def make_loss_reg(state, hyperparams, loss_basic):
+def make_step(loss):
     return jit(
-        lambda params, x, y: 
-        tree_util.tree_reduce(
-            add,
-            tree_util.tree_map(
-                lambda x: 0.5 * (hyperparams['precision'] * x ** 2).sum(),
-                params
-            )
-        ) + loss_basic(params, x, y)
+        lambda state, x, y: state.apply_gradients(
+            grads=grad(loss)(state.params, x, y)
+        )
     )

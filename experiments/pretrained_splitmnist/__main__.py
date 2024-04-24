@@ -1,22 +1,40 @@
-"""Script for Split MNIST."""
+"""Script for Pretrained Split MNIST."""
 
 from copy import deepcopy
 from itertools import accumulate
+from importlib.resources import files
 
 import jax.numpy as jnp
-from jax import random
+from jax import jit, random
 import matplotlib.pyplot as plt
 import numpy as np
+from orbax.checkpoint import PyTreeCheckpointer
 from torch.utils.data import ConcatDataset
 from tqdm import tqdm
 
-from train import ewc, make_loss_sce, make_step, nc, reg
+from train import ah, ewc, make_loss_sce, make_step, nc, reg
 from evaluate.softmax import accuracy
 from torchds import fetch
 from torchds.dataset_sequences.splitmnist import SplitMNIST
-from .models import make_state, cnn, fcnn
+from .models import make_state, sr
+from .pretrain.models import make_state_pretrained
+from .pretrain.models.cnn import Model
 
 plt.style.use('bmh')
+
+params = PyTreeCheckpointer().restore(
+    files('experiments.pretrained_splitmnist.pretrain') / 'cnn'
+)
+state = make_state_pretrained(Model()).replace(params=params)
+
+
+@jit
+def apply(x):
+    return state.apply_fn(
+        {"params": state.params}, x,
+        method=lambda m, x: m.feature_extractor(x)
+    )
+
 
 splitmnist_train = SplitMNIST()
 splitmnist_test = SplitMNIST(train=False)
@@ -24,21 +42,23 @@ labels = [
     'Joint training',
     'Fine-tuning',
     'Elastic Weight Consolidation',
+    'Autodiff Hessian',
     'Neural Consolidation'
 ]
-algos = [reg, reg, ewc, nc]
+algos = [reg, reg, ewc, ah, nc]
 hyperparams_inits = [
     {'precision': 0.1},
     {'precision': 0.1},
     {'precision': 0.1, 'lambda': 1.0},
-    {'precision': 0.1, 'radius': 20.0, 'size': 100}
+    {'precision': 0.1},
+    {'precision': 0.1, 'radius': 30.0, 'size': 10000}
 ]
-markers = 'ovsP'
-for name, model in zip(tqdm(['fcnn', 'cnn'], unit='model'), [fcnn, cnn]):
+markers = 'ovsPX'
+for name, model in zip(tqdm(['sr'], unit='model'), [sr]):
     fig, ax = plt.subplots(figsize=(12, 6.75))
     state_main_init, state_consolidator_init = make_state(model.Main(), model.Consolidator())
-    hyperparams_inits[3]['state_consolidator'] = state_consolidator_init
-    xs = range(1, len(splitmnist_train) + 1)
+    hyperparams_inits[4]['state_consolidator'] = state_consolidator_init
+    xs = range(1, len(SplitMNIST()) + 1)
     for i, label in enumerate(tqdm(labels, leave=False, unit='algorithm')):
         hyperparams = deepcopy(hyperparams_inits[i])
         state_main = state_main_init
@@ -52,14 +72,21 @@ for name, model in zip(tqdm(['fcnn', 'cnn'], unit='model'), [fcnn, cnn]):
                 state_main, hyperparams, loss_basic
             )
             step = make_step(loss)
-            for x, y in fetch(dataset, 10, 64):
+            for x, y in map(lambda x: (apply(x[0]), x[1]), fetch(dataset, 10, 64)):
                 state_main = step(state_main, x, y)
             algos[i].update_hyperparams(
-                state_main, hyperparams, loss_basic, fetch(dataset, 1, 1024)
+                state_main, hyperparams, loss_basic,
+                map(lambda x: (apply(x[0]), x[1]), fetch(dataset, 1, 1024))
             )
             aa.append(
                 np.mean([
-                    accuracy(state_main, fetch(dataset, 1, 1024))
+                    accuracy(
+                        state_main,
+                        map(
+                            lambda x: (apply(x[0]), x[1]),
+                            fetch(dataset, 1, 1024)
+                        )
+                    )
                     for dataset in list(splitmnist_test)[:j + 1]
                 ])
             )
@@ -69,4 +96,4 @@ for name, model in zip(tqdm(['fcnn', 'cnn'], unit='model'), [fcnn, cnn]):
     ax.set_xlabel('Time')
     ax.set_ylabel('Average Accuracy')
     ax.legend()
-    fig.savefig(f'plots/splitmnist_aa_{name}.png')
+    fig.savefig(f'plots/pretrained_splitmnist_aa_{name}.png')
