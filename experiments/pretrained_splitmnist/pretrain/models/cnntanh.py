@@ -1,4 +1,4 @@
-"""Convolutional neural network for pre-training for Split MNIST."""
+"""CNN with tanh-output features for pre-training for Split MNIST."""
 
 from flax import linen as nn
 
@@ -25,5 +25,5 @@ class FeatureExtractor(nn.Module):
         x = nn.avg_pool(x, (2, 2), strides=(2, 2))
         x = x.reshape((x.shape[0], -1))
         x = nn.Dense(32)(x)
-        x = nn.swish(x)
+        x = nn.tanh(x)
         return x

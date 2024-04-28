@@ -24,7 +24,7 @@ labels = [
     'Joint training',
     'Fine-tuning',
     'Elastic Weight Consolidation',
-    'Autodiff Hessian',
+    'Autodiff Quadratic Consolidation',
     'Neural Consolidation'
 ]
 algos = [reg, reg, ewc, ah, nc]
@@ -33,7 +33,7 @@ hyperparams_inits = [
     {'precision': 0.1},
     {'precision': 0.1, 'lambda': 1.0},
     {'precision': 0.1},
-    {'precision': 0.1, 'radius': 20.0, 'size': 10000}
+    {'precision': 0.1, 'radius': 20.0, 'size': 100000}
 ]
 markers = 'ovsPX'
 for name, model in zip(tqdm(['sreg', 'nnet'], unit='model'), [sreg, nnet]):

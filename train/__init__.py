@@ -1,6 +1,6 @@
 """Training package."""
 
-from jax import grad, jit
+from jax import grad, jit, random, tree_util
 import optax
 
 
@@ -34,4 +34,12 @@ def make_step(loss):
         lambda state, x, y: state.apply_gradients(
             grads=grad(loss)(state.params, x, y)
         )
+    )
+
+
+def normaltree(key, n, tree):
+    keys = random.split(key, len(tree_util.tree_leaves(tree)))
+    keys = tree_util.tree_unflatten(tree_util.tree_structure(tree), keys)
+    return tree_util.tree_map(
+        lambda x, key: random.normal(key, (n, *x.shape)), tree, keys
     )

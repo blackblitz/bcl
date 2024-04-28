@@ -34,7 +34,7 @@ hyperparams_inits = [
     {'precision': 0.1, 'radius': 20.0, 'size': 100}
 ]
 markers = 'ovsP'
-for name, model in zip(tqdm(['fcnn', 'cnn'], unit='model'), [fcnn, cnn]):
+for name, model in zip(tqdm(['cnn'], unit='model'), [cnn]):
     fig, ax = plt.subplots(figsize=(12, 6.75))
     state_main_init, state_consolidator_init = make_state(model.Main(), model.Consolidator())
     hyperparams_inits[3]['state_consolidator'] = state_consolidator_init
