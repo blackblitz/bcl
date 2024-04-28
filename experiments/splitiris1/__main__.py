@@ -36,8 +36,8 @@ splitiris1_test = SplitIris1(train=False)
 labels = [
     'Joint training',
     'Fine-tuning',
-    'Elastic Weight Consolidation',
-    'Autodiff Hessian',
+    'Elastic Weight\nConsolidation',
+    'Autodiff Quadratic\nConsolidation',
     'Neural Consolidation'
 ]
 algos = [reg, reg, ewc, ah, nc]
@@ -46,7 +46,7 @@ hyperparams_inits = [
     {'precision': 0.1},
     {'precision': 0.1, 'lambda': 1.0},
     {'precision': 0.1},
-    {'precision': 0.1, 'radius': 20.0, 'size': 10000}
+    {'precision': 0.1, 'radius': 20.0, 'size': 100000}
 ]
 for name, model in zip(tqdm(['lreg', 'nnet'], unit='model'), [lreg, nnet]):
     fig, axes = plt.subplots(3, len(labels), sharex=True, sharey=True, figsize=(12, 6.75))

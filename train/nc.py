@@ -36,10 +36,10 @@ def make_loss_consolidator_(hyperparams, loss_target):
 
 def make_loss_consolidator(hyperparams, loss_target, batches):
     pflat, punflatten = flatten_util.ravel_pytree(hyperparams['minimum'])
-    ball = random.ball(
+    sample = random.ball(
         random.PRNGKey(1337), len(pflat), shape=(hyperparams['size'],)
     )
-    pflats = pflat + hyperparams['radius'] * ball
+    pflats = pflat + hyperparams['radius'] * sample
     loss_true = sum(
         vmap(
             loss_target, in_axes=(0, None, None)

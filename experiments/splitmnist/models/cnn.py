@@ -8,7 +8,7 @@ class Main(nn.Module):
     def __call__(self, x):
         x = nn.Conv(8, (3, 3))(x)
         x = nn.swish(x)
-        x = nn.max_pool(x, (8, 8), strides=(8, 8))
+        x = nn.avg_pool(x, (8, 8), strides=(8, 8))
         x = x.reshape((x.shape[0], -1))
         x = nn.Dense(8)(x)
         x = nn.swish(x)
