@@ -11,7 +11,8 @@ from tqdm import tqdm
 
 from .models import cnnswish, cnntanh, make_state_pretrained
 from evaluate.softmax import accuracy
-from torchds import fetch
+from dataio import iter_batches
+from dataio.datasets import memmap_dataset
 from train import make_loss_sce, make_step
 
 
@@ -39,9 +40,11 @@ for name, model in zip(['cnnswish', 'cnntanh'], [cnnswish, cnntanh]):
     state = make_state_pretrained(model.Model())
     loss = make_loss_sce(state)
     step = make_step(loss)
-    for i, (x, y) in tqdm(enumerate(fetch(emnist_train, 3,  64))):
+    for i, (x, y) in tqdm(enumerate(
+        iter_batches(10, 64, *memmap_dataset(emnist_train))
+    )):
         state = step(state, x, y)
-    print(accuracy(state, fetch(emnist_test, 1, 1024)))
+    print(accuracy(state, iter_batches(1, 1024, *memmap_dataset(emnist_train))))
     path = files('experiments.pretrained_splitmnist.pretrain') / name
     rmtree(path)
     PyTreeCheckpointer().save(
