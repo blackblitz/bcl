@@ -38,7 +38,10 @@ hyperparams_inits = [
     {'precision': 0.1},
     {'precision': 0.1, 'lambda': 1.0},
     {'precision': 0.1},
-    {'precision': 0.1, 'radius': 20.0, 'size': 100000}
+    {
+        'precision': 0.1, 'radius': 20.0, 'sample_size': 100000,
+        'batch_size': 64, 'n_epochs': 10
+    }
 ]
 markers = 'ovsPX'
 for name, model in zip(tqdm(['cnnswish', 'cnntanh'], unit='model'), [cnnswish, cnntanh]):
