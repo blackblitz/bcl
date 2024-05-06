@@ -65,10 +65,6 @@ for name, model in zip(tqdm(['sreg', 'nnet'], unit='model'), [sreg, nnet]):
         ):
             x, y = memmap_dataset(dataset)
             trainer.train(1000, None, 1024, x, y)
-            #trainer.update_loss()
-            #trainer.update_state(1000, None, x, y)
-            #trainers[4].hyperparams['state_consolidator'] = state_consolidator
-            #trainer.update_hyperparams(x, y)
             aa.append(
                 np.mean([
                     accuracy(
