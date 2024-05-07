@@ -47,7 +47,7 @@ for name, model in zip(['cnnswish', 'cnntanh'], [cnnswish, cnntanh]):
     for i, (x_batch, y_batch) in tqdm(enumerate(iter_batches(10, 64, x, y))):
         state = step(state, x_batch, y_batch)
     x, y = memmap_dataset(emnist_test)
-    print(accuracy(predict_softmax, state, x, y))
+    print(accuracy(predict_softmax, 1024, state, x, y))
     path = files('experiments.pretrained_splitmnist.pretrain') / name
     rmtree(path)
     PyTreeCheckpointer().save(
