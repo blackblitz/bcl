@@ -35,7 +35,6 @@ for name, model in zip(tqdm(['cnn'], unit='model'), [cnn]):
         'Joint training',
         'Fine-tuning',
         'Elastic Weight Consolidation',
-        'Autodiff Quadratic Consolidation',
         'Neural Consolidation'
     ], leave=False, unit='algorithm')
     trainers = [
@@ -44,13 +43,10 @@ for name, model in zip(tqdm(['cnn'], unit='model'), [cnn]):
         ElasticWeightConsolidation(
             state_main, {'precision': 0.1, 'lambda': 1.0}, loss_basic
         ),
-        AutodiffQuadraticConsolidation(
-            state_main, {'precision': 0.1}, loss_basic
-        ),
         NeuralConsolidation(
             state_main,
             {
-                'precision': 0.1, 'scale': 20.0, 'size': 1024, 'nsteps': 10000,
+                'precision': 0.1, 'scale': 20.0, 'size': 1024, 'nsteps': 1000,
                 'state_consolidator_init': state_consolidator
             },
             loss_basic
@@ -64,7 +60,7 @@ for name, model in zip(tqdm(['cnn'], unit='model'), [cnn]):
             accumulate_full(datasets) if i == 0 else datasets
         ):
             x, y = memmap_dataset(dataset)
-            trainer.train(10, 64, 1024, x, y)
+            trainer.train(10, 64, 256, x, y)
             aa.append(
                 np.mean([
                     accuracy(
