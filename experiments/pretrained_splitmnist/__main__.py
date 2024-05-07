@@ -1,7 +1,5 @@
 """Script for Pretrained Split MNIST."""
 
-from copy import deepcopy
-from itertools import accumulate
 from importlib.resources import files
 
 import jax.numpy as jnp
@@ -9,13 +7,18 @@ from jax import jit, random
 import matplotlib.pyplot as plt
 import numpy as np
 from orbax.checkpoint import PyTreeCheckpointer
-from torch.utils.data import ConcatDataset
+from optax import softmax_cross_entropy_with_integer_labels
 from tqdm import tqdm
 
-from train import ah, ewc, make_loss_sce, make_step, nc, reg
-from evaluate.softmax import accuracy
-from torchds import fetch
-from torchds.dataset_sequences.splitmnist import SplitMNIST
+from train.aqc import AutodiffQuadraticConsolidation
+from train.ewc import ElasticWeightConsolidation
+from train.loss import make_loss_multi_output
+from train.nc import NeuralConsolidation
+from train.reg import RegularTrainer
+from evaluate import accuracy, predict_softmax
+from dataio.datasets import memmap_dataset
+from dataio.dataset_sequences import accumulate_full
+from dataio.dataset_sequences.splitmnist import SplitMNIST
 from .models import make_state, sr
 from .pretrain.models import cnnswish, cnntanh, make_state_pretrained
 
@@ -25,73 +28,67 @@ plt.style.use('bmh')
 
 splitmnist_train = SplitMNIST()
 splitmnist_test = SplitMNIST(train=False)
-labels = [
-    'Joint training',
-    'Fine-tuning',
-    'Elastic Weight Consolidation',
-    'Autodiff Quadratic Consolidation',
-    'Neural Consolidation'
-]
-algos = [reg, reg, ewc, ah, nc]
-hyperparams_inits = [
-    {'precision': 0.1},
-    {'precision': 0.1},
-    {'precision': 0.1, 'lambda': 1.0},
-    {'precision': 0.1},
-    {
-        'precision': 0.1, 'radius': 20.0, 'sample_size': 100000,
-        'batch_size': 64, 'n_epochs': 10
-    }
-]
 markers = 'ovsPX'
 for name, model in zip(tqdm(['cnnswish', 'cnntanh'], unit='model'), [cnnswish, cnntanh]):
     params = PyTreeCheckpointer().restore(
         files('experiments.pretrained_splitmnist.pretrain') / name
     )
     state = make_state_pretrained(model.Model()).replace(params=params)
-
-
-    @jit
-    def apply(x):
-        return state.apply_fn(
+    apply_x = jit(
+        lambda x: state.apply_fn(
             {"params": state.params}, x,
             method=lambda m, x: m.feature_extractor(x)
         )
-
-
+    )
     fig, ax = plt.subplots(figsize=(12, 6.75))
-    state_main_init, state_consolidator_init = make_state(sr.Main(), sr.Consolidator())
-    hyperparams_inits[4]['state_consolidator'] = state_consolidator_init
-    xs = range(1, len(SplitMNIST()) + 1)
-    for i, label in enumerate(tqdm(labels, leave=False, unit='algorithm')):
-        hyperparams = deepcopy(hyperparams_inits[i])
-        state_main = state_main_init
-        loss_basic = make_loss_sce(state_main)
+    state_main, state_consolidator = make_state(
+        sr.Main(), sr.Consolidator()
+    )
+    loss_basic = make_loss_multi_output(
+        state_main, softmax_cross_entropy_with_integer_labels
+    )
+    labels = tqdm([
+        'Joint training',
+        'Fine-tuning',
+        'Elastic Weight Consolidation',
+        'Autodiff Quadratic Consolidation',
+        'Neural Consolidation'
+    ], leave=False, unit='algorithm')
+    trainers = [
+        RegularTrainer(state_main, {'precision': 0.1}, loss_basic),
+        RegularTrainer(state_main, {'precision': 0.1}, loss_basic),
+        ElasticWeightConsolidation(
+            state_main, {'precision': 0.1, 'lambda': 1.0}, loss_basic
+        ),
+        AutodiffQuadraticConsolidation(
+            state_main, {'precision': 0.1}, loss_basic
+        ),
+        NeuralConsolidation(
+            state_main,
+            {
+                'precision': 0.1, 'scale': 20.0, 'size': 1024, 'nsteps': 10000,
+                'state_consolidator_init': state_consolidator
+            },
+            loss_basic
+        )
+    ]
+    xs = range(1, len(splitmnist_train) + 1)
+    for i, (label, trainer) in enumerate(zip(labels, trainers)):
         aa = []
         datasets = tqdm(splitmnist_train, leave=False, unit='task')
-        if label == 'Joint training':
-            datasets = accumulate(datasets, func=lambda x, y: ConcatDataset([x, y]))
-        for j, dataset in enumerate(datasets):
-            loss = (reg.make_loss if j == 0 else algos[i].make_loss)(
-                state_main, hyperparams, loss_basic
-            )
-            step = make_step(loss)
-            for x, y in map(lambda x: (apply(x[0]), x[1]), fetch(dataset, 10, 64)):
-                state_main = step(state_main, x, y)
-            algos[i].update_hyperparams(
-                state_main, hyperparams, loss_basic,
-                map(lambda x: (apply(x[0]), x[1]), fetch(dataset, 1, 1024))
+        for j, dataset in enumerate(
+            accumulate_full(datasets) if i == 0 else datasets
+        ):
+            trainer.train(
+                10, 64, 1024,
+                *memmap_dataset(dataset, apply_x=apply_x)
             )
             aa.append(
                 np.mean([
                     accuracy(
-                        state_main,
-                        map(
-                            lambda x: (apply(x[0]), x[1]),
-                            fetch(dataset, 1, 1024)
-                        )
-                    )
-                    for dataset in list(splitmnist_test)[:j + 1]
+                        predict_softmax, 1024, trainer.state,
+                        *memmap_dataset(d, apply_x=apply_x)
+                    ) for d in list(splitmnist_test)[: j + 1]
                 ])
             )
         ax.plot(xs, aa, marker=markers[i], markersize=10, alpha=0.5, label=label)

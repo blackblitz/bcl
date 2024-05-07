@@ -3,17 +3,18 @@
 from importlib.resources import files
 
 from flax.training import orbax_utils
-from jax.nn import softmax
 import numpy as np
+from optax import softmax_cross_entropy_with_integer_labels
 from orbax.checkpoint import PyTreeCheckpointer
 from torchvision.datasets import EMNIST
 from tqdm import tqdm
 
 from .models import cnnswish, cnntanh, make_state_pretrained
-from evaluate.softmax import accuracy
+from evaluate import accuracy, predict_softmax
 from dataio import iter_batches
 from dataio.datasets import memmap_dataset
-from train import make_loss_sce, make_step
+from train import make_step
+from train.loss import make_loss_multi_output
 
 
 def rmtree(path):
@@ -38,13 +39,15 @@ emnist_test = EMNIST(
 )
 for name, model in zip(['cnnswish', 'cnntanh'], [cnnswish, cnntanh]):
     state = make_state_pretrained(model.Model())
-    loss = make_loss_sce(state)
+    loss = make_loss_multi_output(
+        state, softmax_cross_entropy_with_integer_labels
+    )
     step = make_step(loss)
-    for i, (x, y) in tqdm(enumerate(
-        iter_batches(10, 64, *memmap_dataset(emnist_train))
-    )):
-        state = step(state, x, y)
-    print(accuracy(state, iter_batches(1, 1024, *memmap_dataset(emnist_train))))
+    x, y = memmap_dataset(emnist_train)
+    for i, (x_batch, y_batch) in tqdm(enumerate(iter_batches(10, 64, x, y))):
+        state = step(state, x_batch, y_batch)
+    x, y = memmap_dataset(emnist_test)
+    print(accuracy(predict_softmax, state, x, y))
     path = files('experiments.pretrained_splitmnist.pretrain') / name
     rmtree(path)
     PyTreeCheckpointer().save(
