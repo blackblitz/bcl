@@ -1,83 +1,75 @@
 """Script for Split Iris."""
 
-import jax.numpy as jnp
-from jax import random
-import matplotlib.pyplot as plt
-import numpy as np
-from optax import softmax_cross_entropy_with_integer_labels
+import msgpack
 from tqdm import tqdm
 
-from train.aqc import AutodiffQuadraticConsolidation
-from train.ewc import ElasticWeightConsolidation
-from train.loss import make_loss_multi_output
-from train.nc import NeuralConsolidation
-from train.reg import RegularTrainer
-from evaluate import accuracy, predict_softmax
 from dataio.datasets import memmap_dataset
 from dataio.dataset_sequences import accumulate_full
-from dataio.dataset_sequences.splitiris import SplitIris
-from .models import make_state, nnet, sreg
+from dataio.dataset_sequences.splitsklearn import SplitIris
+from evaluate import accuracy
+from train.qc import (
+    AutodiffQuadraticConsolidation,
+    ElasticWeightConsolidation,
+    SynapticIntelligence
+)
+from train.nc import NeuralConsolidation
+from train.reg import RegularTrainer
 
-plt.style.use('bmh')
+from .models import make_state, nnet, sreg
 
 splitiris_train = SplitIris()
 splitiris_test = SplitIris(train=False)
-markers = 'ovsPX'
+labels = [
+    'Joint training',
+    'Fine-tuning',
+    'Elastic Weight Consolidation',
+    'Synaptic Intelligence',
+    'Autodiff Quadratic Consolidation',
+    'Neural Consolidation'
+]
+trainer_kwargs = {
+    'batch_size_hyperparams': None, 'batch_size_state': None, 'n_epochs': 1000
+}
+result = {}
 for name, model in zip(tqdm(['sreg', 'nnet'], unit='model'), [sreg, nnet]):
-    fig, ax = plt.subplots(figsize=(12, 6.75))
+    result[name] = {label: [] for label in labels}
     state_main, state_consolidator = make_state(
         model.Main(), model.Consolidator()
     )
-    loss_basic = make_loss_multi_output(
-        state_main, softmax_cross_entropy_with_integer_labels
-    )
-    labels = tqdm([
-        'Joint training',
-        'Fine-tuning',
-        'Elastic Weight Consolidation',
-        'Autodiff Quadratic Consolidation',
-        'Neural Consolidation'
-    ], leave=False, unit='algorithm')
     trainers = [
-        RegularTrainer(state_main, {'precision': 0.1}, loss_basic),
-        RegularTrainer(state_main, {'precision': 0.1}, loss_basic),
+        RegularTrainer(state_main, {'precision': 0.1}, **trainer_kwargs),
+        RegularTrainer(state_main, {'precision': 0.1}, **trainer_kwargs),
         ElasticWeightConsolidation(
-            state_main, {'precision': 0.1, 'lambda': 1.0}, loss_basic
+            state_main, {'precision': 0.1, 'lambda': 1.0}, **trainer_kwargs
+        ),
+        SynapticIntelligence(
+            state_main, {'precision': 0.1, 'xi': 1.0}, **trainer_kwargs
         ),
         AutodiffQuadraticConsolidation(
-            state_main, {'precision': 0.1}, loss_basic
+            state_main, {'precision': 0.1}, **trainer_kwargs
         ),
         NeuralConsolidation(
             state_main,
             {
-                'precision': 0.1, 'scale': 20.0, 'size': 1024, 'nsteps': 10000,
-                'state_consolidator_init': state_consolidator
+                'precision': 0.1, 'radius': 20.0, 'size': 1024, 'nsteps': 1000,
+                'state': state_consolidator, 'reg': 0.1
             },
-            loss_basic
+            **trainer_kwargs
         )
     ]
-    xs = range(1, len(splitiris_train) + 1)
-    for i, (label, trainer) in enumerate(zip(labels, trainers)):
-        aa = []
-        datasets = tqdm(splitiris_train, leave=False, unit='task')
-        for j, dataset in enumerate(
-            accumulate_full(datasets) if i == 0 else datasets
+    for i, (label, trainer) in enumerate(
+        zip(tqdm(labels, leave=False, unit='algorithm'), trainers)
+    ):
+        datasets_train = tqdm(splitiris_train, leave=False, unit='task')
+        for j, dataset_train in enumerate(
+            accumulate_full(datasets_train) if i == 0 else datasets_train
         ):
-            x, y = memmap_dataset(dataset)
-            trainer.train(1000, None, 1024, x, y)
-            aa.append(
-                np.mean([
-                    accuracy(
-                        predict_softmax,
-                        trainer.state,
-                        *memmap_dataset(dataset)
-                    ) for dataset in list(splitiris_test)[: j + 1]
-                ])
-            )
-        ax.plot(xs, aa, marker=markers[i], markersize=10, alpha=0.5, label=label)
-    ax.set_xticks(xs)
-    ax.set_ylim([-0.1, 1.1])
-    ax.set_xlabel('Time')
-    ax.set_ylabel('Average Accuracy')
-    ax.legend()
-    fig.savefig(f'plots/splitiris_aa_{name}.png')
+            trainer.train(*memmap_dataset(dataset_train))
+            result[name][label].append([
+                accuracy(
+                    True, trainer.state,
+                    None, *memmap_dataset(dataset_test)
+                ) for dataset_test in list(splitiris_test)[: j + 1]
+            ])
+with open('results/splitiris.dat', 'wb') as file:
+    file.write(msgpack.packb(result))

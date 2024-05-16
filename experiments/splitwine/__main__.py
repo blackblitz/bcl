@@ -1,29 +1,24 @@
-"""Script for Pre-trained Split MNIST."""
+"""Script for Split Iris."""
 
-from importlib.resources import files
-
-from jax import jit
 import msgpack
-from orbax.checkpoint import PyTreeCheckpointer
 from tqdm import tqdm
 
 from dataio.datasets import memmap_dataset
 from dataio.dataset_sequences import accumulate_full
-from dataio.dataset_sequences.split10 import SplitMNIST
+from dataio.dataset_sequences.splitsklearn import SplitWine
 from evaluate import accuracy
-from train import Trainer
 from train.qc import (
     AutodiffQuadraticConsolidation,
     ElasticWeightConsolidation,
     SynapticIntelligence
 )
 from train.nc import NeuralConsolidation
+from train.reg import RegularTrainer
 
-from .models import make_state, sreg
-from .pretrain.models import cnnswish, cnntanh, make_state_pretrained
+from .models import make_state, nnet, sreg
 
-splitmnist_train = SplitMNIST()
-splitmnist_test = SplitMNIST(train=False)
+splitwine_train = SplitWine()
+splitwine_test = SplitWine(train=False)
 labels = [
     'Joint training',
     'Fine-tuning',
@@ -33,30 +28,17 @@ labels = [
     'Neural Consolidation'
 ]
 trainer_kwargs = {
-    'batch_size_hyperparams': 1024, 'batch_size_state': 64, 'n_epochs': 10
+    'batch_size_hyperparams': None, 'batch_size_state': None, 'n_epochs': 1000
 }
 result = {}
-for name, model in zip(
-    tqdm(['cnnswish', 'cnntanh'], unit='model'),
-    [cnnswish, cnntanh]
-):
+for name, model in zip(tqdm(['sreg', 'nnet'], unit='model'), [sreg, nnet]):
     result[name] = {label: [] for label in labels}
-    params = PyTreeCheckpointer().restore(
-        files('experiments.pretrained_splitmnist.pretrain') / name
-    )
-    state = make_state_pretrained(model.Model()).replace(params=params)
-    apply_x = jit(
-        lambda x: state.apply_fn(
-            {"params": state.params}, x,
-            method=lambda m, x: m.feature_extractor(x)
-        )
-    )
     state_main, state_consolidator = make_state(
-        sreg.Main(), sreg.Consolidator()
+        model.Main(), model.Consolidator()
     )
     trainers = [
-        Trainer(state_main, {'precision': 0.1}, **trainer_kwargs),
-        Trainer(state_main, {'precision': 0.1}, **trainer_kwargs),
+        RegularTrainer(state_main, {'precision': 0.1}, **trainer_kwargs),
+        RegularTrainer(state_main, {'precision': 0.1}, **trainer_kwargs),
         ElasticWeightConsolidation(
             state_main, {'precision': 0.1, 'lambda': 1.0}, **trainer_kwargs
         ),
@@ -78,16 +60,16 @@ for name, model in zip(
     for i, (label, trainer) in enumerate(
         zip(tqdm(labels, leave=False, unit='algorithm'), trainers)
     ):
-        datasets_train = tqdm(splitmnist_train, leave=False, unit='task')
+        datasets_train = tqdm(splitwine_train, leave=False, unit='task')
         for j, dataset_train in enumerate(
             accumulate_full(datasets_train) if i == 0 else datasets_train
         ):
-            trainer.train(*memmap_dataset(dataset_train, apply_x=apply_x))
+            trainer.train(*memmap_dataset(dataset_train))
             result[name][label].append([
                 accuracy(
                     True, trainer.state,
-                    None, *memmap_dataset(dataset_test, apply_x=apply_x)
-                ) for dataset_test in list(splitmnist_test)[: j + 1]
+                    None, *memmap_dataset(dataset_test)
+                ) for dataset_test in list(splitwine_test)[: j + 1]
             ])
-with open('results/pretrained_splitmnist.dat', 'wb') as file:
+with open('results/splitwine.dat', 'wb') as file:
     file.write(msgpack.packb(result))

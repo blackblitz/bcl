@@ -1,4 +1,4 @@
-"""Script for Pre-trained Split MNIST."""
+"""Script for Pre-trained Split CIFAR-10."""
 
 from importlib.resources import files
 
@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 from dataio.datasets import memmap_dataset
 from dataio.dataset_sequences import accumulate_full
-from dataio.dataset_sequences.split10 import SplitMNIST
+from dataio.dataset_sequences.split10 import SplitCIFAR10
 from evaluate import accuracy
 from train import Trainer
 from train.qc import (
@@ -22,8 +22,8 @@ from train.nc import NeuralConsolidation
 from .models import make_state, sreg
 from .pretrain.models import cnnswish, cnntanh, make_state_pretrained
 
-splitmnist_train = SplitMNIST()
-splitmnist_test = SplitMNIST(train=False)
+splitcifar10_train = SplitCIFAR10()
+splitcifar10_test = SplitCIFAR10(train=False)
 labels = [
     'Joint training',
     'Fine-tuning',
@@ -33,7 +33,7 @@ labels = [
     'Neural Consolidation'
 ]
 trainer_kwargs = {
-    'batch_size_hyperparams': 1024, 'batch_size_state': 64, 'n_epochs': 10
+    'batch_size_hyperparams': 1024, 'batch_size_state': 64, 'n_epochs': 100
 }
 result = {}
 for name, model in zip(
@@ -42,7 +42,7 @@ for name, model in zip(
 ):
     result[name] = {label: [] for label in labels}
     params = PyTreeCheckpointer().restore(
-        files('experiments.pretrained_splitmnist.pretrain') / name
+        files('experiments.pretrained_splitcifar10.pretrain') / name
     )
     state = make_state_pretrained(model.Model()).replace(params=params)
     apply_x = jit(
@@ -78,7 +78,7 @@ for name, model in zip(
     for i, (label, trainer) in enumerate(
         zip(tqdm(labels, leave=False, unit='algorithm'), trainers)
     ):
-        datasets_train = tqdm(splitmnist_train, leave=False, unit='task')
+        datasets_train = tqdm(splitcifar10_train, leave=False, unit='task')
         for j, dataset_train in enumerate(
             accumulate_full(datasets_train) if i == 0 else datasets_train
         ):
@@ -87,7 +87,7 @@ for name, model in zip(
                 accuracy(
                     True, trainer.state,
                     None, *memmap_dataset(dataset_test, apply_x=apply_x)
-                ) for dataset_test in list(splitmnist_test)[: j + 1]
+                ) for dataset_test in list(splitcifar10_test)[: j + 1]
             ])
-with open('results/pretrained_splitmnist.dat', 'wb') as file:
+with open('results/pretrained_splitcifar10.dat', 'wb') as file:
     file.write(msgpack.packb(result))

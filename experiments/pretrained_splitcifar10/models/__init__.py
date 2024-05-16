@@ -1,21 +1,20 @@
-"""Models for Permuted Iris."""
+"""Models for Pre-trained Split CIFAR-10."""
 
+from flax.training.train_state import TrainState
 import jax.numpy as jnp
-from jax import flatten_util, random, tree_util
+from jax import flatten_util, random
 import optax
-
-from train import TrainState
 
 
 def make_state(main, consolidator):
-    x = jnp.zeros((1, 4))
+    """Make main state and consolidator state."""
+    x = jnp.zeros((1, 128))
     keys = random.split(random.PRNGKey(1337), num=3)
     params_main = main.init(keys[0], x)['params']
     state_main = TrainState.create(
         apply_fn=main.apply,
         params=params_main,
-        tx=optax.adam(0.01),
-        hyperparams={}
+        tx=optax.adam(0.01)
     )
     pflat = flatten_util.ravel_pytree(params_main)[0]
     params_consolidator = consolidator.init(
@@ -24,11 +23,6 @@ def make_state(main, consolidator):
     state_consolidator = TrainState.create(
         apply_fn=consolidator.apply,
         params=params_consolidator,
-        tx=optax.adam(0.01),
-        hyperparams={
-            'minimum': tree_util.tree_map(jnp.zeros_like, params_main),
-            'radius': 20.0,
-            'ball': random.ball(keys[2], len(pflat), shape=(10000,))
-        }
+        tx=optax.adam(0.01)
     )
     return state_main, state_consolidator

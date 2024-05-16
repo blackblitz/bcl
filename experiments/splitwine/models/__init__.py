@@ -1,4 +1,4 @@
-"""Models for Split Iris 2."""
+"""Models for Split Wine."""
 
 from flax.training.train_state import TrainState
 import jax.numpy as jnp
@@ -8,7 +8,7 @@ import optax
 
 def make_state(main, consolidator):
     """Make main state and consolidator state."""
-    x = jnp.zeros((1, 2))
+    x = jnp.zeros((1, 13))
     keys = random.split(random.PRNGKey(1337), num=3)
     params_main = main.init(keys[0], x)['params']
     state_main = TrainState.create(

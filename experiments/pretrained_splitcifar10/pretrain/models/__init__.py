@@ -8,9 +8,8 @@ import optax
 
 def make_state_pretrained(model):
     """Make state for the pre-trained model."""
-    x = jnp.zeros((1, 28, 28, 1))
-    keys = random.split(random.PRNGKey(1337), num=3)
-    params = model.init(keys[0], x)['params']
+    x = jnp.zeros((1, 32, 32, 3))
+    params = model.init(random.PRNGKey(1337), x)['params']
     state = TrainState.create(
         apply_fn=model.apply,
         params=params,
