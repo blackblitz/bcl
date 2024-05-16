@@ -1,29 +1,25 @@
 """Loss functions."""
 
-from operator import add
+from operator import add, itemgetter
 
-from jax import grad, jit, random, tree_util
+import numpy as np
+from jax import grad, jit, tree_util
 
 
-def make_loss_single_output(state, loss_point):
+def make_loss(state, loss_point, multi=True):
+    """Make a loss function."""
+    get = itemgetter(np.s_[:] if multi else np.s_[:, 0])
     return jit(
         lambda params, x, y: loss_point(
-            state.apply_fn({'params': params}, x)[:, 0], y
+            get(state.apply_fn({'params': params}, x)), y
         ).sum()
     )
 
 
-def make_loss_multi_output(state, loss_point):
+def make_loss_reg(precision, loss_basic):
+    """Make a loss function with a regularization term."""
     return jit(
-        lambda params, x, y: loss_point(
-            state.apply_fn({'params': params}, x), y
-        ).sum()
-    )
-
-
-def make_loss_reg(state, precision, loss_basic):
-    return jit(
-        lambda params, x, y: 
+        lambda params, x, y:
         tree_util.tree_reduce(
             add,
             tree_util.tree_map(
@@ -34,6 +30,7 @@ def make_loss_reg(state, precision, loss_basic):
 
 
 def make_step(loss):
+    """Make a gradient-descent step function for a loss function."""
     return jit(
         lambda state, x, y: state.apply_gradients(
             grads=grad(loss)(state.params, x, y)

@@ -1,42 +1,64 @@
 """Training package."""
 
-from abc import ABC, abstractmethod
-
-from jax import random, tree_util
+from optax import (
+    sigmoid_binary_cross_entropy, softmax_cross_entropy_with_integer_labels
+)
 
 from dataio import iter_batches
 
-from .loss import make_step
+from .loss import make_loss, make_loss_reg, make_step
 
 
-def normaltree(key, n, tree):
-    keys = random.split(key, len(tree_util.tree_leaves(tree)))
-    keys = tree_util.tree_unflatten(tree_util.tree_structure(tree), keys)
-    return tree_util.tree_map(
-        lambda x, key: random.normal(key, (n, *x.shape)), tree, keys
-    )
+class Trainer:
+    """Trainer for continual learning."""
 
-
-class Trainer(ABC):
-    def __init__(self, state, hyperparams, loss_basic):
+    def __init__(
+        self, state, hyperparams,
+        batch_size_hyperparams=1024, batch_size_state=64,
+        multiclass=True, n_epochs=10
+    ):
+        """Intialize self."""
         self.state = state
         self.hyperparams = hyperparams
-        self.loss_basic = loss_basic
+        self.batch_size_hyperparams = batch_size_hyperparams
+        self.batch_size_state = batch_size_state
+        self.multiclass = multiclass
+        self.n_epochs = n_epochs
+        if multiclass:
+            self.loss_basic = make_loss(
+                self.state,
+                softmax_cross_entropy_with_integer_labels,
+                multi=True
+            )
+        else:
+            self.loss_basic = make_loss(
+                self.state,
+                sigmoid_binary_cross_entropy,
+                multi=False
+            )
+        self.loss = None
+        self.n_obs = 0
 
-    def train(self, n_epochs, minibatch_size, batch_size, x, y):
-        self.update_loss()
-        self.update_state(n_epochs, minibatch_size, x, y)
-        self.update_hyperparams(batch_size, x, y)
+    def train(self, x, y):
+        """Train self."""
+        self.update_loss(x, y)
+        self.update_state(x, y)
+        self.update_hyperparams(x, y)
+        self.n_obs += len(y)
 
-    @abstractmethod
-    def update_loss(self):
-        pass
+    def update_loss(self, x, y):  # pylint: disable=unused-argument
+        """Update loss function."""
+        self.loss = make_loss_reg(
+            self.hyperparams['precision'], self.loss_basic
+        )
 
-    def update_state(self, n_epochs, minibatch_size, x, y):
+    def update_state(self, x, y):
+        """Update state."""
         step = make_step(self.loss)
-        for minibatch_x, minibatch_y in iter_batches(n_epochs, minibatch_size, x, y):
-            self.state = step(self.state, minibatch_x, minibatch_y)
+        for x_batch, y_batch in iter_batches(
+            self.n_epochs, self.batch_size_state, x, y
+        ):
+            self.state = step(self.state, x_batch, y_batch)
 
-    @abstractmethod
-    def update_hyperparams(self, batch_size, x, y):
-        pass
+    def update_hyperparams(self, x, y):
+        """Update hyperparameters."""

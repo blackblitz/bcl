@@ -2,11 +2,12 @@
 
 from flax.training.train_state import TrainState
 import jax.numpy as jnp
-from jax import flatten_util, random, tree_util
+from jax import flatten_util, random
 import optax
 
 
 def make_state(main, consolidator):
+    """Make main state and consolidator state."""
     x = jnp.zeros((1, 32))
     keys = random.split(random.PRNGKey(1337), num=3)
     params_main = main.init(keys[0], x)['params']

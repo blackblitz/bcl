@@ -4,8 +4,11 @@ from flax import linen as nn
 
 
 class Main(nn.Module):
+    """Main model."""
+
     @nn.compact
     def __call__(self, x):
+        """Apply model."""
         x = nn.Conv(8, (3, 3))(x)
         x = nn.swish(x)
         x = nn.avg_pool(x, (8, 8), strides=(8, 8))
@@ -17,8 +20,11 @@ class Main(nn.Module):
 
 
 class Consolidator(nn.Module):
+    """Main model."""
+
     @nn.compact
     def __call__(self, x):
+        """Apply model."""
         x = nn.Dense(200)(x)
         x = nn.swish(x)
         x = nn.Dense(200)(x)

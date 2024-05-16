@@ -6,6 +6,7 @@ from jax import random
 
 
 def iter_batches(n_epochs, batch_size, x, y, shuffle=True):
+    """Iterate batches of arrays `x` and `y`."""
     for key in random.split(random.PRNGKey(1337), num=n_epochs):
         with jax.default_device(jax.devices('cpu')[0]):
             indices = (
@@ -16,5 +17,5 @@ def iter_batches(n_epochs, batch_size, x, y, shuffle=True):
             yield x[indices], y[indices]
         else:
             for i in range(0, len(indices), batch_size):
-                idx = indices[i : i + batch_size]
+                idx = indices[i : i + batch_size]  # noqa: E203
                 yield x[idx], y[idx]
