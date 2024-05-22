@@ -1,5 +1,7 @@
 __pycache__/
+ckpt/
 data/
 .ipynb_checkpoints/
 plots/
+results/
 *.npy

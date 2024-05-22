@@ -18,9 +18,9 @@ class Consolidator(nn.Module):
     @nn.compact
     def __call__(self, x):
         """Apply model."""
-        x = nn.Dense(200)(x)
+        x = nn.Dense(50)(x)
         x = nn.swish(x)
-        x = nn.Dense(200)(x)
+        x = nn.Dense(50)(x)
         x = nn.swish(x)
         x = nn.Dense(1)(x)
         return x
