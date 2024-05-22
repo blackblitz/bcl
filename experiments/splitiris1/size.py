@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 from dataio.datasets import memmap_dataset
 from dataio.dataset_sequences import accumulate_full
-from dataio.dataset_sequences.splitiris import SplitIris1
+from dataio.dataset_sequences.splitsklearn import SplitIris1
 from train import Trainer
 from train.nc import NeuralConsolidation
 from .models import lreg, make_state, nnet
