@@ -39,7 +39,7 @@ for name, model in zip(['cnnswish', 'cnntanh'], [cnnswish, cnntanh]):
     )):
         state = step(state, x_batch, y_batch)
     print(accuracy(True, state, 1024, *memmap_dataset(emnist_test)))
-    path = files('experiments.pretrained_splitmnist.pretrain') / name
+    path = files('experiments.pretrained_splitmnist.pretrain') / 'ckpt' / name
     rmtree(path)
     PyTreeCheckpointer().save(
         path,

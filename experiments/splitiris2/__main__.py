@@ -59,7 +59,7 @@ labels = [
 trainer_kwargs = {
     'batch_size_hyperparams': None, 'batch_size_state': None, 'n_epochs': 1000
 }
-for name, model in zip(tqdm(['sreg', 'nnet']), [sreg, nnet]):
+for name, model in zip(tqdm(['sreg', 'nnet'], unit='model'), [sreg, nnet]):
     fig = plt.figure(figsize=(12, 6.75))
     axes = ImageGrid(
         fig, 111, nrows_ncols=(3, 6), share_all=True,

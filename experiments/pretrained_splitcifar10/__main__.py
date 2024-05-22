@@ -42,7 +42,7 @@ for name, model in zip(
 ):
     result[name] = {label: [] for label in labels}
     params = PyTreeCheckpointer().restore(
-        files('experiments.pretrained_splitcifar10.pretrain') / name
+        files('experiments.pretrained_splitcifar10.pretrain') / 'ckpt' / name
     )
     state = make_state_pretrained(model.Model()).replace(params=params)
     apply_x = jit(
