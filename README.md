@@ -28,10 +28,12 @@ Split Iris 1 and Split Iris 2 produce visualizations, which are stored as `png` 
 
 ```
 python -m experiments.splitiris1
+python -m experiments.splitiris1.radius
+python -m experiments.splitiris1.size
 python -m experiments.splitiris2
 ```
 
-Split Iris, Split Wine, Split MNIST with pre-training and Split CIFAR-10 with pre-training produce results, which are stored as `msgpack` data files under `results`:
+Split Iris, Split Wine, Pre-trained Split MNIST and Pre-trained Split CIFAR-10 produce results of average accuracy as percentage, which are stored as `msgpack` data files under `results`:
 
 ```
 python -m experiments.splitiris
