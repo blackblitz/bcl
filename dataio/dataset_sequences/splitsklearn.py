@@ -61,6 +61,28 @@ class SplitIris2(SplitIris):
         )
 
 
+class Iris2(Sequence):
+    """Iris 2 dataset."""
+
+    def __init__(self, train=True):
+        """Initialize self."""
+        self.dataset = SklearnDataset(
+            load_iris,
+            transform=lambda x: x[[2, 3]],
+            train=train
+        )
+
+    def __len__(self):
+        """Return the length of the dataset sequence."""
+        return 1
+
+    def __getitem__(self, index):
+        """Get dataset by index."""
+        if index not in range(self.__len__()):
+            raise IndexError()
+        return self.dataset
+
+
 class SplitWine(SplitSklearn):
     """Split Wine."""
 

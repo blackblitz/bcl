@@ -1,0 +1,178 @@
+[dataset_sequence]
+name = "sinusoid"
+pass_batch_size = 128
+
+[dataset_sequence.spec]
+validation = false
+
+[model]
+module = "models.fcnn"
+name = "FCNN3"
+
+[model.spec]
+dense0 = 20
+dense1 = 20
+dense2 = 1
+
+[[trainers]]
+id = "joint"
+module = "train.replay"
+name = "Joint"
+
+[trainers.hyperparams]
+basic_loss_fn = "sigmoid"
+draw_batch_size = 32
+init_coreset = false
+init_state_key = 1337
+input_shape = [ 1, 2 ]
+lr = 0.01
+memmap = false
+n_epochs = 1000
+precision = 0.01
+shuffle_key = 1337
+
+[trainers.predictor]
+module = "evaluate.predict.map"
+name = "SigmoidMAPPredictor"
+
+[[trainers]]
+id = "finetuning"
+module = "train"
+name = "Finetuning"
+
+[trainers.hyperparams]
+basic_loss_fn = "sigmoid"
+draw_batch_size = 32
+init_coreset = false
+init_state_key = 1337
+input_shape = [ 1, 2 ]
+lr = 0.01
+memmap = false
+n_epochs = 1000
+precision = 0.01
+shuffle_key = 1337
+
+[trainers.predictor]
+module = "evaluate.predict.map"
+name = "SigmoidMAPPredictor"
+
+[[trainers]]
+id = "replay"
+module = "train.replay"
+name = "BalancedRandomCoresetReplay"
+
+[trainers.hyperparams]
+basic_loss_fn = "sigmoid"
+coreset_selection_key = 1337
+coreset_size = 40
+draw_batch_size = 32
+init_coreset = false
+init_state_key = 1337
+input_shape = [ 1, 2 ]
+lr = 0.01
+memmap = false
+n_epochs = 1000
+precision = 0.01
+sample_key = 1337
+shuffle_key = 1337
+
+[trainers.predictor]
+module = "evaluate.predict.map"
+name = "SigmoidMAPPredictor"
+
+[[trainers]]
+id = "gvcl"
+module = "train.svi"
+name = "GaussianVCL"
+
+[trainers.hyperparams]
+basic_loss_fn = "sigmoid"
+beta = 1.0
+draw_batch_size = 32
+init_coreset = false
+init_state_key = 1337
+input_shape = [ 1, 2 ]
+lr = 0.01
+memmap = false
+n_epochs = 1000
+precision = 0.01
+sample_size = 100
+sample_key = 1337
+shuffle_key = 1337
+
+[trainers.predictor]
+module = "evaluate.predict.bma"
+name = "SigmoidGVIBMAPredictor"
+
+[trainers.predictor.spec]
+sample_key = 1337
+sample_size = 100
+
+[[trainers]]
+id = "gmvcl"
+module = "train.svi"
+name = "GaussianMixtureVCL"
+
+[trainers.hyperparams]
+basic_loss_fn = "sigmoid"
+beta = 1.0
+draw_batch_size = 32
+init_coreset = false
+init_state_key = 1337
+input_shape = [ 1, 2 ]
+lr = 0.01
+memmap = false
+n_comp = 3
+n_epochs = 1000
+precision = 0.01
+sample_size = 100
+sample_key = 1337
+shuffle_key = 1337
+
+[trainers.predictor]
+module = "evaluate.predict.bma"
+name = "SigmoidGMVIBMAPredictor"
+
+[trainers.predictor.spec]
+sample_key = 1337
+sample_size = 100
+
+[[trainers]]
+id = "gsfsvi"
+module = "train.svi"
+name = "BalancedRandomCoresetGaussianSFSVI"
+
+[trainers.hyperparams]
+basic_loss_fn = "sigmoid"
+beta = 1.0
+coreset_selection_key = 1337
+coreset_size = 40
+draw_batch_size = 32
+init_coreset = true
+init_coreset_key = 1337
+init_coreset_minval = -4
+init_coreset_maxval = 4
+init_state_key = 1337
+input_shape = [ 1, 2 ]
+lr = 0.01
+memmap = false
+n_epochs = 1000
+precision = 0.01
+sample_size = 100
+sample_key = 1337
+shuffle_key = 1337
+
+[trainers.predictor]
+module = "evaluate.predict.bma"
+name = "SigmoidGVIBMAPredictor"
+
+[trainers.predictor.spec]
+sample_key = 1337
+sample_size = 100
+
+[plotter]
+n_classes = 2
+x1_min = -0.5
+x1_max = 3.0
+x2_min = -1.0
+x2_max = 1.5

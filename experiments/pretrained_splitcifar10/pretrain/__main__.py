@@ -36,7 +36,9 @@ for name, model in zip(['cnnswish', 'cnntanh'], [cnnswish, cnntanh]):
     )):
         state = step(state, x_batch, y_batch)
     print(accuracy(True, state, 1024, *memmap_dataset(cifar100_test)))
-    path = files('experiments.pretrained_splitcifar10.pretrain') / 'ckpt' / name
+    path = files(
+        'experiments.pretrained_splitcifar10.pretrain'
+    ) / 'ckpt' / name
     rmtree(path)
     PyTreeCheckpointer().save(
         path,

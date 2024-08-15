@@ -1,10 +1,15 @@
 """Dataset sequences."""
 
-from itertools import accumulate
+from .toy import sinusoid
+from .split import (
+    split_iris, split_iris_1, split_iris_2, split_mnist, split_cifar10
+)
 
-from torch.utils.data import ConcatDataset
-
-
-def accumulate_full(datasets):
-    """Accumulate by concatenating the datasets."""
-    return accumulate(datasets, func=lambda x, y: ConcatDataset([x, y]))
+__all__ = [
+    'sinusoid',
+    'split_iris',
+    'split_iris_1',
+    'split_iris_2',
+    'split_mnist',
+    'split_cifar10'
+]

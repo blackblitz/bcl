@@ -1,22 +1,39 @@
 """Loss functions."""
 
-from operator import add, itemgetter
+from operator import add
 
-import numpy as np
-from jax import grad, jit, tree_util
+from jax import jit, tree_util
+import optax
 
 
-def make_loss(state, loss_point, multi=True):
-    """Make a loss function."""
-    get = itemgetter(np.s_[:] if multi else np.s_[:, 0])
+def sigmoid(apply):
+    """Return a loss function for sigmoid cross-entropy."""
     return jit(
-        lambda params, x, y: loss_point(
-            get(state.apply_fn({'params': params}, x)), y
+        lambda params, x, y: optax.sigmoid_binary_cross_entropy(
+            apply({'params': params}, x)[:, 0], y
         ).sum()
     )
 
 
-def make_loss_reg(precision, loss_basic):
+def softmax(apply):
+    """Return a loss function for softmax cross-entropy."""
+    return jit(
+        lambda params, x, y: optax.softmax_cross_entropy_with_integer_labels(
+            apply({'params': params}, x), y
+        ).sum()
+    )
+
+
+def huber(apply):
+    """Return a loss function for Huber."""
+    return jit(
+        lambda params, x, y: optax.huber_loss(
+            apply({'params': params}, x)[:, 0], y
+        ).sum()
+    )
+
+
+def reg(precision, basic_loss_fn):
     """Make a loss function with a regularization term."""
     return jit(
         lambda params, x, y:
@@ -25,14 +42,5 @@ def make_loss_reg(precision, loss_basic):
             tree_util.tree_map(
                 lambda x: 0.5 * (precision * x ** 2).sum(), params
             )
-        ) + loss_basic(params, x, y)
-    )
-
-
-def make_step(loss):
-    """Make a gradient-descent step function for a loss function."""
-    return jit(
-        lambda state, x, y: state.apply_gradients(
-            grads=grad(loss)(state.params, x, y)
-        )
+        ) + basic_loss_fn(params, x, y)
     )

@@ -1,64 +1,86 @@
 """Training package."""
 
-from optax import (
-    sigmoid_binary_cross_entropy, softmax_cross_entropy_with_integer_labels
-)
+from abc import ABC, abstractmethod
 
-from dataio import iter_batches
+from flax.training.train_state import TrainState
+from jax import grad, jit, random
+import numpy as np
+from optax import adam
 
-from .loss import make_loss, make_loss_reg, make_step
+from dataio import draw_batches
+from dataio.datasets import to_arrays
+
+from . import loss
 
 
-class Trainer:
-    """Trainer for continual learning."""
+def make_step(loss_fn):
+    """Make a gradient-descent step function for a loss function."""
+    return jit(
+        lambda state, x, y: state.apply_gradients(
+            grads=grad(loss_fn)(state.params, x, y)
+        )
+    )
 
-    def __init__(
-        self, state, hyperparams,
-        batch_size_hyperparams=1024, batch_size_state=64,
-        multiclass=True, n_epochs=10
-    ):
+
+class ContinualTrainer(ABC):
+    """Abstract base class for continual learning."""
+
+    def __init__(self, model, make_predictor, hyperparams):
         """Intialize self."""
-        self.state = state
+        self.model = model
+        self.make_predictor = make_predictor
         self.hyperparams = hyperparams
-        self.batch_size_hyperparams = batch_size_hyperparams
-        self.batch_size_state = batch_size_state
-        self.multiclass = multiclass
-        self.n_epochs = n_epochs
-        if multiclass:
-            self.loss_basic = make_loss(
-                self.state,
-                softmax_cross_entropy_with_integer_labels,
-                multi=True
-            )
-        else:
-            self.loss_basic = make_loss(
-                self.state,
-                sigmoid_binary_cross_entropy,
-                multi=False
-            )
-        self.loss = None
-        self.n_obs = 0
+        self.basic_loss_fn = getattr(
+            loss,
+            self.hyperparams['basic_loss_fn']
+        )(self.model.apply)
 
-    def train(self, x, y):
-        """Train self."""
-        self.update_loss(x, y)
-        self.update_state(x, y)
-        self.update_hyperparams(x, y)
-        self.n_obs += len(y)
+    @abstractmethod
+    def train(self, dataset):
+        """Train with a dataset."""
 
-    def update_loss(self, x, y):  # pylint: disable=unused-argument
-        """Update loss function."""
-        self.loss = make_loss_reg(
-            self.hyperparams['precision'], self.loss_basic
+
+class InitStateMixin:
+    """Mixin for initializing the state for MAP prediction."""
+
+    def _init_state(self):
+        """Initialize the state."""
+        return TrainState.create(
+            apply_fn=self.model.apply,
+            params=self.model.init(
+                random.PRNGKey(self.hyperparams['init_state_key']),
+                np.zeros(self.hyperparams['input_shape'])
+            )['params'],
+            tx=adam(self.hyperparams['lr'])
         )
 
-    def update_state(self, x, y):
-        """Update state."""
-        step = make_step(self.loss)
-        for x_batch, y_batch in iter_batches(
-            self.n_epochs, self.batch_size_state, x, y
-        ):
-            self.state = step(self.state, x_batch, y_batch)
 
-    def update_hyperparams(self, x, y):
-        """Update hyperparameters."""
+class UpdateStateMixin:
+    """Mixin for updating the state."""
+
+    def _update_state(self, xs, ys):
+        """Update the state."""
+        step = make_step(self.loss_fn)
+        for key in random.split(
+            random.PRNGKey(self.hyperparams['shuffle_key']),
+            num=self.hyperparams['n_epochs']
+        ):
+            for xs_batch, ys_batch in draw_batches(
+                key, self.hyperparams['draw_batch_size'], xs, ys
+            ):
+                self.state = step(self.state, xs_batch, ys_batch)
+
+
+class Finetuning(ContinualTrainer, InitStateMixin, UpdateStateMixin):
+    """Fine-tuning for continual learning."""
+
+    def __init__(self, model, make_predictor, hyperparams):
+        """Initialize self."""
+        super().__init__(model, make_predictor, hyperparams)
+        self.state = self._init_state()
+        self.loss_fn = loss.reg(self.hyperparams['precision'], self.basic_loss_fn)
+
+    def train(self, dataset):
+        """Train with a dataset."""
+        xs, ys = to_arrays(dataset, memmap=self.hyperparams['memmap'])
+        self._update_state(xs, ys)

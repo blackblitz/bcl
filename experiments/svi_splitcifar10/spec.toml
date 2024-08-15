@@ -1,0 +1,158 @@
+[dataset_sequence]
+module = "dataio.dataset_sequences.split10"
+name = "SplitCIFAR10"
+
+[model]
+module = "models.cnn"
+name = "CNN7"
+
+[model.spec]
+conv0 = 32
+conv1 = 32
+conv2 = 64
+conv3 = 64
+dense0 = 64
+dense1 = 32
+dense2 = 10
+
+[[trainers]]
+id = "joint"
+module = "train.replay"
+name = "Joint"
+
+[trainers.hyperparams]
+draw_batch_size = 64
+init_key = 1337
+input_shape = [ 1, 32, 32, 3 ]
+loss_basic = "softmax"
+lr = 0.01
+mem_map = true
+n_epochs = 100
+precision = 0.1
+shuffle_key = 1337
+
+[trainers.predictor]
+module = "evaluate.predict.map"
+name = "SoftmaxMAPPredictor"
+
+[[trainers]]
+id = "finetuning"
+module = "train"
+name = "Finetuning"
+
+[trainers.hyperparams]
+draw_batch_size = 64
+init_key = 1337
+input_shape = [ 1, 32, 32, 3 ]
+loss_basic = "softmax"
+lr = 0.01
+mem_map = true
+n_epochs = 100
+precision = 0.1
+shuffle_key = 1337
+
+[trainers.predictor]
+module = "evaluate.predict.map"
+name = "SoftmaxMAPPredictor"
+
+[[trainers]]
+id = "replay"
+module = "train.replay"
+name = "BalancedRandomCoresetReplay"
+
+[trainers.hyperparams]
+draw_batch_size = 64
+coreset_size = 200
+init_key = 1337
+input_shape = [ 1, 32, 32, 3 ]
+loss_basic = "softmax"
+lr = 0.01
+mem_map = true
+n_epochs = 100
+precision = 0.1
+sample_key = 1337
+shuffle_key = 1337
+
+[trainers.predictor]
+module = "evaluate.predict.map"
+name = "SoftmaxMAPPredictor"
+
+[[trainers]]
+id = "gvcl"
+module = "train.svi"
+name = "GaussianVCL"
+
+[trainers.hyperparams]
+draw_batch_size = 64
+init_key = 1337
+input_shape = [ 1, 32, 32, 3 ]
+loss_basic = "softmax"
+lr = 0.01
+mem_map = true
+n_epochs = 100
+precision = 0.1
+sample_size = 100
+sample_key = 1337
+shuffle_key = 1337
+
+[trainers.predictor]
+module = "evaluate.predict.bma"
+name = "SoftmaxGVIBMAPredictor"
+
+[trainers.predictor.spec]
+sample_key = 1337
+sample_size = 100
+
+[[trainers]]
+id = "gmvcl"
+module = "train.svi"
+name = "GaussianMixtureVCL"
+
+[trainers.hyperparams]
+draw_batch_size = 64
+init_key = 1337
+input_shape = [ 1, 32, 32, 3 ]
+loss_basic = "softmax"
+lr = 0.01
+mem_map = true
+n_comp = 3
+n_epochs = 100
+precision = 0.1
+sample_size = 100
+sample_key = 1337
+shuffle_key = 1337
+
+[trainers.predictor]
+module = "evaluate.predict.bma"
+name = "SoftmaxGMVIBMAPredictor"
+
+[trainers.predictor.spec]
+sample_key = 1337
+sample_size = 100
+
+[[trainers]]
+id = "gsfsvi"
+module = "train.svi"
+name = "BalancedRandomCoresetGaussianSFSVI"
+
+[trainers.hyperparams]
+draw_batch_size = 64
+coreset_size = 200
+init_key = 1337
+input_shape = [ 1, 32, 32, 3 ]
+loss_basic = "softmax"
+lr = 0.01
+mem_map = true
+n_epochs = 100
+precision = 0.1
+sample_size = 100
+sample_key = 1337
+shuffle_key = 1337
+
+[trainers.predictor]
+module = "evaluate.predict.bma"
+name = "SoftmaxGVIBMAPredictor"
+
+[trainers.predictor.spec]
+sample_key = 1337
+sample_size = 100
