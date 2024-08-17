@@ -1,7 +1,6 @@
 """Metrics."""
 
 from dataio import pass_batches
-from dataio.datasets import to_arrays
 
 
 def accuracy(batch_size, predictor, xs, ys):

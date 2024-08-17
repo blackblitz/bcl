@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 
 from jax import vmap
 
-from . import Predictor, SigmoidMixin, SoftmaxMixin
+from .base import Predictor, SigmoidMixin, SoftmaxMixin
 from train.svi import GaussianSVIMixin, GaussianMixtureSVIMixin
 
 
@@ -13,7 +13,7 @@ class VIBMAPredictor(Predictor):
     """VIBMA predictor."""
 
     params: dict
-    sample_key: int
+    sample_seed: int
     sample_size: int
     params_sample: dict = field(init=False)
 
@@ -36,7 +36,7 @@ class GaussianMixin:
         self.params_sample = GaussianSVIMixin.sample_params(
             self.params,
             GaussianSVIMixin.sample_std(
-                self.sample_key, self.sample_size, self.params
+                self.sample_seed, self.sample_size, self.params
             )
         )
 
@@ -49,7 +49,7 @@ class GaussianMixtureMixin:
         self.params_sample = GaussianMixtureSVIMixin.sample_params(
             self.params,
             GaussianMixtureSVIMixin.sample_std(
-                self.sample_key, self.sample_size, self.params
+                self.sample_seed, self.sample_size, self.params
             )
         )
 

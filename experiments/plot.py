@@ -11,7 +11,10 @@ from matplotlib.colors import ListedColormap
 import numpy as np
 from orbax.checkpoint import PyTreeCheckpointer
 
+from dataio import dataset_sequences
 from dataio.dataset_sequences.datasets import dataset_to_arrays
+from evaluate import predict
+import models
 
 plt.style.use('bmh')
 
@@ -71,18 +74,14 @@ with open(path / 'spec.toml', 'rb') as file:
 plotter = Plotter(**spec['plotter'])
 
 dataset_sequence = getattr(
-    import_module('dataio.dataset_sequences'),
-    spec['dataset_sequence']['name']
+    dataset_sequences, spec['dataset_sequence']['name']
 )(**spec['dataset_sequence']['spec'])['training']
-model = getattr(
-    import_module(spec['model']['module']),
-    spec['model']['name']
-)(**spec['model']['spec'])
+model = getattr(models, spec['model']['name'])(**spec['model']['spec'])
 make_predictors = [
     (
         trainer['id'],
         partial(
-            getattr(import_module(predictor['module']), predictor['name']),
+            getattr(predict, predictor['name']),
             **predictor.get('spec', {})
         )
     ) for trainer in spec['trainers']

@@ -1,43 +1,25 @@
 [dataset_sequence]
-name = "sinusoid"
+name = "iris_2"
 pass_batch_size = 128
 
 [dataset_sequence.spec]
 validation = false
 
 [model]
+module = "models.fcnn"
 name = "FCNN3"
 
 [model.spec]
 dense0 = 20
 dense1 = 20
-dense2 = 1
-
-[[trainers]]
-id = "joint"
-name = "Joint"
-
-[trainers.hyperparams]
-basic_loss_fn = "sigmoid"
-draw_batch_size = 32
-init_coreset = false
-init_state_seed = 1337
-input_shape = [ 1, 2 ]
-lr = 0.01
-memmap = false
-n_epochs = 1000
-precision = 0.01
-shuffle_seed = 1337
-
-[trainers.predictor]
-name = "SigmoidMAPPredictor"
+dense2 = 3
 
 [[trainers]]
 id = "finetuning"
 name = "Finetuning"
 
 [trainers.hyperparams]
-basic_loss_fn = "sigmoid"
+basic_loss_fn = "softmax"
 draw_batch_size = 32
 init_coreset = false
 init_state_seed = 1337
@@ -49,36 +31,15 @@ precision = 0.01
 shuffle_seed = 1337
 
 [trainers.predictor]
-name = "SigmoidMAPPredictor"
-
-[[trainers]]
-id = "replay"
-name = "BalancedRandomCoresetReplay"
-
-[trainers.hyperparams]
-basic_loss_fn = "sigmoid"
-coreset_selection_seed = 1337
-coreset_size = 40
-draw_batch_size = 32
-init_coreset = false
-init_state_seed = 1337
-input_shape = [ 1, 2 ]
-lr = 0.01
-memmap = false
-n_epochs = 1000
-precision = 0.01
-sample_seed = 1337
-shuffle_seed = 1337
-
-[trainers.predictor]
-name = "SigmoidMAPPredictor"
+module = "evaluate.predict.map"
+name = "SoftmaxMAPPredictor"
 
 [[trainers]]
 id = "gvcl"
 name = "GaussianVCL"
 
 [trainers.hyperparams]
-basic_loss_fn = "sigmoid"
+basic_loss_fn = "softmax"
 beta = 1.0
 draw_batch_size = 32
 init_coreset = false
@@ -93,7 +54,8 @@ sample_seed = 1337
 shuffle_seed = 1337
 
 [trainers.predictor]
-name = "SigmoidGVIBMAPredictor"
+module = "evaluate.predict.bma"
+name = "SoftmaxGVIBMAPredictor"
 
 [trainers.predictor.spec]
 sample_seed = 1337
@@ -104,7 +66,7 @@ id = "gmvcl"
 name = "GaussianMixtureVCL"
 
 [trainers.hyperparams]
-basic_loss_fn = "sigmoid"
+basic_loss_fn = "softmax"
 beta = 1.0
 draw_batch_size = 32
 init_coreset = false
@@ -120,7 +82,8 @@ sample_seed = 1337
 shuffle_seed = 1337
 
 [trainers.predictor]
-name = "SigmoidGMVIBMAPredictor"
+module = "evaluate.predict.bma"
+name = "SoftmaxGMVIBMAPredictor"
 
 [trainers.predictor.spec]
 sample_seed = 1337
@@ -131,7 +94,7 @@ id = "gsfsvi"
 name = "BalancedRandomCoresetGaussianSFSVI"
 
 [trainers.hyperparams]
-basic_loss_fn = "sigmoid"
+basic_loss_fn = "softmax"
 beta = 1.0
 coreset_selection_seed = 1337
 coreset_size = 40
@@ -151,7 +114,8 @@ sample_seed = 1337
 shuffle_seed = 1337
 
 [trainers.predictor]
-name = "SigmoidGVIBMAPredictor"
+module = "evaluate.predict.bma"
+name = "SoftmaxGVIBMAPredictor"
 
 [trainers.predictor.spec]
 sample_seed = 1337
@@ -162,7 +126,7 @@ id = "gmsfsvi"
 name = "BalancedRandomCoresetGaussianMixtureSFSVI"
 
 [trainers.hyperparams]
-basic_loss_fn = "sigmoid"
+basic_loss_fn = "softmax"
 beta = 1.0
 coreset_selection_seed = 1337
 coreset_size = 40
@@ -183,15 +147,16 @@ sample_seed = 1337
 shuffle_seed = 1337
 
 [trainers.predictor]
-name = "SigmoidGMVIBMAPredictor"
+module = "evaluate.predict.bma"
+name = "SoftmaxGMVIBMAPredictor"
 
 [trainers.predictor.spec]
 sample_seed = 1337
 sample_size = 100
 
 [plotter]
-n_classes = 2
-x1_min = -0.5
-x1_max = 3.0
-x2_min = -1.0
-x2_max = 1.5
+n_classes = 3
+x1_min = 0.0
+x1_max = 7.0
+x2_min = 0.0
+x2_max = 3.0

@@ -2,12 +2,24 @@
 
 from jax import random
 import numpy as np
+from sklearn.datasets import load_iris
 
 from ..datasets import ArrayDataset
+from .split import split_random
+
+seed = 1337
+
+
+def iris_2(validation=False):
+    """Make the singleton Iris 2 dataset sequence."""
+    iris = load_iris()
+    train = ArrayDataset(iris['data'][:, 2: 4], iris['target'])
+    train, test = split_random(random.PRNGKey(seed), 0.2, train)
+    return {'training': [train], 'testing': [test]}
 
 
 def sinusoid(validation=False):
-    """Make the sinusoid dataset from https://github.com/timrudner/S-FSVI."""
+    """Make the sinusoid dataset sequence from https://github.com/timrudner/S-FSVI."""
     mean0 = np.array([
         [0, 0.2],
         [0.6, 0.9],
@@ -37,7 +49,7 @@ def sinusoid(validation=False):
         [0.05, 0.22]
     ])
     size = 20
-    keys = random.split(random.PRNGKey(1337), num=6)
+    keys = random.split(random.PRNGKey(seed), num=6)
     samples = [
         np.asarray(random.normal(key, shape=(size, 2)))
         for key in keys

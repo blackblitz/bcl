@@ -10,7 +10,10 @@ from flax.training import orbax_utils
 from orbax.checkpoint import PyTreeCheckpointer
 from tqdm import tqdm
 
+from dataio import dataset_sequences
 from dataio.path import clear
+from evaluate import predict
+import models
 
 parser = argparse.ArgumentParser()
 parser.add_argument('experiment_id')
@@ -19,22 +22,16 @@ path = Path('experiments') / args.experiment_id
 with open(path / 'spec.toml', 'rb') as file:
     spec = tomllib.load(file)
 dataset_sequence = getattr(
-    import_module('dataio.dataset_sequences'),
-    spec['dataset_sequence']['name']
+    dataset_sequences, spec['dataset_sequence']['name']
 )(**spec['dataset_sequence']['spec'])['training']
-model = getattr(
-    import_module(spec['model']['module']),
-    spec['model']['name']
-)(**spec['model']['spec'])
+model = getattr(models, spec['model']['name'])(**spec['model']['spec'])
 trainers = [
     (
         trainer['id'],
         trainer['hyperparams'],
-        getattr(
-            import_module(trainer['module']), trainer['name']
-        ),
+        getattr(import_module('train'), trainer['name']),
         partial(
-            getattr(import_module(predictor['module']), predictor['name']),
+            getattr(predict, predictor['name']),
             apply=model.apply, **predictor.get('spec', {})
         )
     ) for trainer in spec['trainers']

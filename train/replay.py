@@ -4,12 +4,11 @@ from abc import abstractmethod
 
 import numpy as np
 from jax import random
-from jax.nn import sigmoid, softmax
 from torch.utils.data import ConcatDataset, Subset
 
 from dataio.datasets import ArrayDataset, to_arrays
 
-from . import ContinualTrainer, InitStateMixin, UpdateStateMixin
+from .base import ContinualTrainer, InitStateMixin, UpdateStateMixin
 from . import loss
 
 
@@ -19,7 +18,7 @@ class InitCoresetMixin:
     def _init_coreset(self):
         """Initialize the coreset."""
         xs = np.asarray(random.uniform(
-            random.PRNGKey(self.hyperparams['init_coreset_key']),
+            random.PRNGKey(self.hyperparams['init_coreset_seed']),
             shape=(
                 self.hyperparams['coreset_size'],
                 *self.hyperparams['input_shape'][1:]
@@ -51,7 +50,9 @@ class RandomCoresetMixin:
             self.coreset = Subset(
                 self.coreset,
                 np.asarray(random.choice(
-                    random.PRNGKey(self.hyperparams['coreset_selection_key']),
+                    random.PRNGKey(
+                        self.hyperparams['coreset_selection_seed']
+                    ),
                     len(self.coreset),
                     shape=(self.hyperparams['coreset_size'],),
                     replace=False
@@ -79,7 +80,9 @@ class BalancedRandomCoresetMixin:
             self.coreset = Subset(
                 self.coreset,
                 np.asarray(random.choice(
-                    random.PRNGKey(self.hyperparams['coreset_selection_key']),
+                    random.PRNGKey(
+                        self.hyperparams['coreset_selection_seed']
+                    ),
                     len(self.coreset),
                     p=(1 / counts)[y_indices],
                     shape=(self.hyperparams['coreset_size'],),
@@ -95,7 +98,9 @@ class Replay(InitStateMixin, UpdateStateMixin, ContinualTrainer):
         """Initialize self."""
         super().__init__(model, make_predictor, hyperparams)
         self.state = self._init_state()
-        self.loss_fn = loss.reg(self.hyperparams['precision'], self.basic_loss_fn)
+        self.loss_fn = loss.reg(
+            self.hyperparams['precision'], self.basic_loss_fn
+        )
         self.coreset = []
 
     def train(self, dataset):

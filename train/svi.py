@@ -1,19 +1,18 @@
 """Sequential variational inference."""
 
 from abc import abstractmethod
-from operator import add, truediv
+from operator import add, sub, truediv
 
 from flax.training.train_state import TrainState
 import jax.numpy as jnp
-from jax import grad, jacrev, jit, random, tree_util, vmap
+from jax import jacrev, jit, random, tree_util, vmap
 from jax.nn import softmax, softplus
 from jax.scipy.special import rel_entr
 from optax import adam
-from torch.utils.data import ConcatDataset
 
 from dataio.datasets import to_arrays
 
-from . import ContinualTrainer, UpdateStateMixin
+from .base import ContinualTrainer, UpdateStateMixin
 from .replay import (
     InitCoresetMixin, RandomCoresetMixin, BalancedRandomCoresetMixin
 )
@@ -36,7 +35,7 @@ class GaussianSVIMixin:
     def _init_state(self):
         """Initialize the state."""
         key1, key2 = random.split(
-            random.PRNGKey(self.hyperparams['init_state_key'])
+            random.PRNGKey(self.hyperparams['init_state_seed'])
         )
         mean = self.model.init(
             key1, jnp.zeros(self.hyperparams['input_shape'])
@@ -64,10 +63,10 @@ class GaussianSVIMixin:
         }
 
     @classmethod
-    def sample_std(cls, sample_key, sample_size, var_params):
+    def sample_std(cls, seed, sample_size, var_params):
         """Generate a standard sample of the parameters."""
         return tree_gauss(
-            random.PRNGKey(sample_key),
+            random.PRNGKey(seed),
             sample_size,
             var_params['mean']
         )
@@ -89,7 +88,7 @@ class GaussianMixtureSVIMixin:
     def _init_state(self):
         """Initialize the state."""
         key1, key2 = random.split(
-            random.PRNGKey(self.hyperparams['init_state_key'])
+            random.PRNGKey(self.hyperparams['init_state_seed'])
         )
         mean = vmap(
             lambda key: self.model.init(
@@ -125,9 +124,9 @@ class GaussianMixtureSVIMixin:
         }
 
     @classmethod
-    def sample_std(cls, sample_key, sample_size, var_params):
+    def sample_std(cls, seed, sample_size, var_params):
         """Generate a standard sample of the parameters."""
-        key1, key2 = random.split(random.PRNGKey(sample_key))
+        key1, key2 = random.split(random.PRNGKey(seed))
         return {
             'gauss': tree_gauss(key1, sample_size, var_params['mean']),
             'gumbel': random.gumbel(
@@ -164,7 +163,7 @@ class SVI(UpdateStateMixin, ContinualTrainer):
         self.state = self._init_state()
         self.hyperparams |= self._init_hyperparams()
         self._std_sample = self.sample_std(
-            self.hyperparams['sample_key'],
+            self.hyperparams['sample_seed'],
             self.hyperparams['sample_size'],
             self.state.params
         )
@@ -186,7 +185,7 @@ class SVI(UpdateStateMixin, ContinualTrainer):
 
     @classmethod
     @abstractmethod
-    def sample_std(cls, sample_key, sample_size, var_params):
+    def sample_std(cls, sample_seed, sample_size, var_params):
         """Generate a standard sample of the parameters."""
 
     @classmethod
@@ -304,19 +303,17 @@ class GaussianSFSVIMixin:
     """Gaussian sequential function-space variational inference."""
 
     @classmethod
-    def _fvar(cls, jac, mean, var):
+    def _fvar(cls, jac, var):
         """Compute the function-space variance."""
         return vmap(vmap(
-            lambda var, jacmean: tree_util.tree_reduce(
+            lambda var, jac: tree_util.tree_reduce(
                 add,
                 tree_util.tree_map(
-                    lambda v, j: (v * j ** 2).sum(), var, jacmean
+                    lambda v, j: (v * j ** 2).sum(), var, jac
                 )
             ),
             in_axes=(None, 0)
-        ), in_axes=(None, 0))(
-            var, jac(mean)
-        )
+        ), in_axes=(None, 0))(var, jac)
 
     @classmethod
     def _kldiv(cls, params, hyperparams, apply, core):
@@ -325,14 +322,15 @@ class GaussianSFSVIMixin:
         var_var = msd2var(params['msd'])
         mean_prior = hyperparams['mean']
         var_prior = msd2var(hyperparams['msd'])
-        jac = jacrev(lambda params: apply({'params': params}, core))
+        jac_at = jacrev(lambda params: apply({'params': params}, core))
         fmean_var = apply({'params': mean_var}, core)
         fmean_prior = apply({'params': mean_prior}, core)
-        fvar_var = cls._fvar(jac, mean_var, var_var)
-        fvar_prior = cls._fvar(jac, mean_prior, var_prior)
+        fvar_var = cls._fvar(jac_at(mean_var), var_var)
+        fvar_prior = cls._fvar(jac_at(mean_prior), var_prior)
+        fvar_ratio = fvar_var / fvar_prior
         return 0.5 * (
-            jnp.log(fvar_prior) - jnp.log(fvar_var) + fvar_var / fvar_prior
-            - 1 + (fmean_var - fmean_prior) ** 2 / fvar_prior
+            (fmean_var - fmean_prior) ** 2 / fvar_prior - 1
+            - jnp.log(fvar_ratio) + fvar_ratio
         ).mean(axis=0).sum()
 
 
@@ -340,42 +338,52 @@ class GaussianMixtureSFSVIMixin:
     """Gaussian-mixture sequential function-space variational inference."""
 
     @classmethod
-    def _fmean(cls, apply, jac, mean, core):
+    def _fmean(cls, apply, jac, center, mean, core):
         """Compute the function-space mean."""
-        center = tree_util.tree_map(lambda x: x.mean(axis=0), mean)
         return vmap(
             lambda m:
             apply({'params': center}, core)
-            + vmap(tree_dot, in_axes=(1, None))(jac(center), (m - center))
+            + vmap(tree_dot, in_axes=(1, None))(
+                jac, tree_util.tree_map(sub, m, center)
+            )
         )(mean)
 
     @classmethod
-    def _fvar(cls, jac, mean, var):
+    def _fvar(cls, jac, var):
         """Compute the function-space variance."""
-        return vmap(
-            GaussianSFSVIMixin._fvar, in_axes=(None, 0, 0, 0)
-        )(cls, jac, mean, var)
+        return vmap(GaussianSFSVIMixin._fvar, in_axes=(None, 0))(jac, var)
 
     @classmethod
     def _kldiv(cls, params, hyperparams, apply, core):
         """Compute KL divergence."""
         mean_var = params['mean']
+        center_var = tree_util.tree_map(lambda x: x.mean(axis=0), mean_var)
         var_var = msd2var(params['msd'])
         mean_prior = hyperparams['mean']
+        center_prior = tree_util.tree_map(
+            lambda x: x.mean(axis=0), mean_prior
+        )
         var_prior = msd2var(hyperparams['msd'])
-        jac = jacfwd(lambda params: apply({'params': params}, core))
-        fmean_var = cls._fmean(apply, jac, mean_var, core)
-        fmean_prior = cls._fmean(apply, jac, mean_prior, core)
-        fvar_var = cls._fvar(jac, mean_var, var_var)
-        fvar_prior = cls._fvar(jac, mean_prior,  var_prior)
+        jac_at = jacrev(lambda params: apply({'params': params}, core))
+        jac_var = jac_at(center_var)
+        jac_prior = jac_at(center_prior)
+        fmean_var = cls._fmean(apply, jac_var, center_var, mean_var, core)
+        fmean_prior = cls._fmean(
+            apply, jac_prior, center_prior, mean_prior, core
+        )
+        fvar_var = cls._fvar(jac_var, var_var)
+        fvar_prior = cls._fvar(jac_prior,  var_prior)
+        fvar_ratio = fvar_var / fvar_prior
         p_var = softmax(params['logit'])
         p_prior = softmax(hyperparams['logit'])
         d_cat = rel_entr(p_var, p_prior).sum()
         d_gauss = 0.5 * (
-            jnp.log(fvar_prior) - jnp.log(fvar_var) + fvar_var / fvar_prior
-            - 1 + (fmean_var - fmean_prior) ** 2 / fvar_prior
+            (fmean_var - fmean_prior) ** 2 / fvar_prior - 1
+            - jnp.log(fvar_ratio) + fvar_ratio
         )
-        return (d_cat + p_var @ d_gauss).mean(axis=0).sum()
+        return (
+            d_cat + jnp.tensordot(p_var, d_gauss, axes=(0, 0))
+        ).mean(axis=0).sum()
 
 
 class RandomCoresetGaussianSFSVI(
@@ -388,3 +396,10 @@ class BalancedRandomCoresetGaussianSFSVI(
     GaussianSFSVIMixin, BalancedRandomCoresetMixin, GaussianSVIMixin, SFSVI
 ):
     """Gaussian S-FSVI with balanced random coreset."""
+
+
+class BalancedRandomCoresetGaussianMixtureSFSVI(
+    GaussianMixtureSFSVIMixin, BalancedRandomCoresetMixin,
+    GaussianMixtureSVIMixin, SFSVI
+):
+    """Gaussian-mixture S-FSVI with balanced random coreset."""

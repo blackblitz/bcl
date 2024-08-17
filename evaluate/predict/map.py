@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from . import Predictor, SigmoidMixin, SoftmaxMixin
+from .base import Predictor, SigmoidMixin, SoftmaxMixin
 
 
 @dataclass
