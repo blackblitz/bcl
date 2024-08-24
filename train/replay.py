@@ -1,12 +1,13 @@
 """Replay."""
 
 from abc import abstractmethod
+from pathlib import Path
 
 import numpy as np
 from jax import random
 from torch.utils.data import ConcatDataset, Subset
 
-from dataio.datasets import ArrayDataset, to_arrays
+from dataio.dataset_sequences.datasets import ArrayDataset, dataset_to_arrays
 
 from .base import ContinualTrainer, InitStateMixin, UpdateStateMixin
 from . import loss
@@ -67,10 +68,9 @@ class BalancedRandomCoresetMixin:
         """Update coreset."""
         self.coreset = ConcatDataset([self.coreset, dataset])
         if len(self.coreset) > self.hyperparams['coreset_size']:
-            _, ys = to_arrays(
-                self.coreset,
-                memmap=self.hyperparams['memmap']
-            )
+            path = Path('data.npy')
+            _, ys = dataset_to_arrays(self.coreset, path)
+            path.unlink()
             classes, counts = np.unique(ys, return_counts=True)
             y_indices = np.select(
                 [ys == c for c in classes],
@@ -105,11 +105,12 @@ class Replay(InitStateMixin, UpdateStateMixin, ContinualTrainer):
 
     def train(self, dataset):
         """Train with a dataset."""
-        xs, ys = to_arrays(
-            ConcatDataset([self.coreset, dataset]),
-            memmap=self.hyperparams['memmap']
+        path = Path('data.npy')
+        xs, ys = dataset_to_arrays(
+            ConcatDataset([self.coreset, dataset]), path
         )
         self._update_state(xs, ys)
+        path.unlink()
         self._update_coreset(dataset)
 
     @abstractmethod

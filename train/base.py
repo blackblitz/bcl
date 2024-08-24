@@ -1,6 +1,7 @@
 """Base classes."""
 
 from abc import ABC, abstractmethod
+from pathlib import Path
 
 from flax.training.train_state import TrainState
 from jax import grad, jit, random
@@ -8,7 +9,7 @@ import numpy as np
 from optax import adam
 
 from dataio import draw_batches
-from dataio.datasets import to_arrays
+from dataio.dataset_sequences.datasets import dataset_to_arrays
 
 from . import loss
 
@@ -16,8 +17,8 @@ from . import loss
 def make_step(loss_fn):
     """Make a gradient-descent step function for a loss function."""
     return jit(
-        lambda state, x, y: state.apply_gradients(
-            grads=grad(loss_fn)(state.params, x, y)
+        lambda state, *args: state.apply_gradients(
+            grads=grad(loss_fn)(state.params, *args)
         )
     )
 
@@ -84,5 +85,7 @@ class Finetuning(ContinualTrainer, InitStateMixin, UpdateStateMixin):
 
     def train(self, dataset):
         """Train with a dataset."""
-        xs, ys = to_arrays(dataset, memmap=self.hyperparams['memmap'])
+        path = Path('data.npy')
+        xs, ys = dataset_to_arrays(dataset, path)
         self._update_state(xs, ys)
+        path.unlink()

@@ -2,6 +2,7 @@
 
 from abc import abstractmethod
 from operator import add, sub, truediv
+from pathlib import Path
 
 from flax.training.train_state import TrainState
 import jax.numpy as jnp
@@ -10,7 +11,7 @@ from jax.nn import softmax, softplus
 from jax.scipy.special import rel_entr
 from optax import adam
 
-from dataio.datasets import to_arrays
+from dataio.dataset_sequences.datasets import dataset_to_arrays
 
 from .base import ContinualTrainer, UpdateStateMixin
 from .replay import (
@@ -171,8 +172,10 @@ class SVI(UpdateStateMixin, ContinualTrainer):
     def train(self, dataset):
         """Train self."""
         self._update_loss(dataset)
-        xs, ys = to_arrays(dataset, memmap=self.hyperparams['memmap'])
+        path = Path('data.npy')
+        xs, ys = dataset_to_arrays(dataset, path)
         self._update_state(xs, ys)
+        path.unlink()
         self.hyperparams |= self.state.params
 
     @abstractmethod
@@ -278,11 +281,9 @@ class SFSVI(SVI, InitCoresetMixin):
 
     def _update_loss(self, dataset):
         """Update loss."""
-        core, _ = to_arrays(
-            self.coreset,
-            path='core.npy',
-            memmap=self.hyperparams['memmap']
-        )
+        path = Path('core.npy')
+        core, _ = dataset_to_arrays(self.coreset, path)
+        path.unlink()
         n_batches = -(len(dataset) // -self.hyperparams['draw_batch_size'])
         self.loss_fn = jit(
             lambda params, xs, ys: (

@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+
 def clear(path):
     """Clear files and directories under a directory."""
     path = Path(path)

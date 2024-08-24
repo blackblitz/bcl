@@ -21,17 +21,15 @@ class ArrayDataset(Dataset):
         return self.xs[index], self.ys[index]
 
 
-def dataset_to_arrays(dataset, path='data.npy', memmap=False):
+def dataset_to_arrays(dataset, path):
     """Convert a dataset to arrays."""
-    dtype = dataset[0][0].dtype
-    shape = (len(dataset), *dataset[0][0].shape)
     xs = np.lib.format.open_memmap(
-        path, mode='w+', dtype=dtype, shape=shape
-    ) if memmap else np.empty(shape, dtype=dtype)
+        path, mode='w+',
+        dtype=dataset[0][0].dtype,
+        shape=(len(dataset), *dataset[0][0].shape)
+    )
     ys = np.empty(len(dataset), dtype=np.int64)
     for i, (x, y) in enumerate(dataset):
         xs[i] = x
         ys[i] = y
-    if memmap:
-        xs = np.load(path, mmap_mode='r')
-    return xs, ys
+    return np.load(path, mmap_mode='r'), ys

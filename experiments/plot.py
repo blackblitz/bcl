@@ -50,10 +50,11 @@ class Plotter:
 
     def plot_dataset(self, ax, dataset):
         """Plot x-y pairs as scatter plot."""
-        xs, ys = dataset_to_arrays(dataset, memmap=False)
+        path = Path('data.npy')
+        xs, ys = dataset_to_arrays(dataset, path)
         if self.n_classes == 2:
             cmap = ListedColormap(list('rb'))
-        return ax.scatter(
+        ax.scatter(
             xs[:, 0], xs[:, 1], c=ys,
             cmap=(
                 ListedColormap(list('rgb')) if self.n_classes == 3
@@ -61,6 +62,7 @@ class Plotter:
             ), vmin=0, vmax=self.n_classes,
             s=10.0, linewidths=0.5, edgecolors='w'
         )
+        path.unlink()
 
 
 parser = argparse.ArgumentParser()

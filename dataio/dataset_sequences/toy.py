@@ -4,7 +4,7 @@ from jax import random
 import numpy as np
 from sklearn.datasets import load_iris
 
-from ..datasets import ArrayDataset
+from .datasets import ArrayDataset
 from .split import split_random
 
 seed = 1337
