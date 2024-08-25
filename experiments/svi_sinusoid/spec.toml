@@ -18,7 +18,7 @@ id = "joint"
 name = "Joint"
 
 [trainers.hyperparams]
-basic_loss_fn = "sigmoid"
+basic_loss = "sigmoid"
 draw_batch_size = 32
 init_coreset = false
 init_state_seed = 1337
@@ -37,7 +37,7 @@ id = "finetuning"
 name = "Finetuning"
 
 [trainers.hyperparams]
-basic_loss_fn = "sigmoid"
+basic_loss = "sigmoid"
 draw_batch_size = 32
 init_coreset = false
 init_state_seed = 1337
@@ -52,10 +52,10 @@ name = "SigmoidMAPPredictor"
 
 [[trainers]]
 id = "replay"
-name = "BalancedRandomCoresetReplay"
+name = "RandomChoiceReplay"
 
 [trainers.hyperparams]
-basic_loss_fn = "sigmoid"
+basic_loss = "sigmoid"
 coreset_selection_seed = 1337
 coreset_size = 40
 draw_batch_size = 32
@@ -71,117 +71,117 @@ shuffle_seed = 1337
 [trainers.predictor]
 name = "SigmoidMAPPredictor"
 
-[[trainers]]
-id = "gvcl"
-name = "GaussianVCL"
-
-[trainers.hyperparams]
-basic_loss_fn = "sigmoid"
-beta = 1.0
-draw_batch_size = 32
-init_coreset = false
-init_state_seed = 1337
-input_shape = [ 1, 2 ]
-lr = 0.01
-n_epochs = 1000
-precision = 0.01
-sample_size = 100
-sample_seed = 1337
-shuffle_seed = 1337
-
-[trainers.predictor]
-name = "SigmoidGVIBMAPredictor"
-
-[trainers.predictor.spec]
-sample_seed = 1337
-sample_size = 100
-
-[[trainers]]
-id = "gmvcl"
-name = "GaussianMixtureVCL"
-
-[trainers.hyperparams]
-basic_loss_fn = "sigmoid"
-beta = 1.0
-draw_batch_size = 32
-init_coreset = false
-init_state_seed = 1337
-input_shape = [ 1, 2 ]
-lr = 0.01
-n_comp = 3
-n_epochs = 1000
-precision = 0.01
-sample_size = 100
-sample_seed = 1337
-shuffle_seed = 1337
-
-[trainers.predictor]
-name = "SigmoidGMVIBMAPredictor"
-
-[trainers.predictor.spec]
-sample_seed = 1337
-sample_size = 100
-
-[[trainers]]
-id = "gsfsvi"
-name = "BalancedRandomCoresetGaussianSFSVI"
-
-[trainers.hyperparams]
-basic_loss_fn = "sigmoid"
-beta = 1.0
-coreset_selection_seed = 1337
-coreset_size = 40
-draw_batch_size = 32
-init_coreset = true
-init_coreset_seed = 1337
-init_coreset_minval = -4
-init_coreset_maxval = 4
-init_state_seed = 1337
-input_shape = [ 1, 2 ]
-lr = 0.01
-n_epochs = 1000
-precision = 0.01
-sample_size = 100
-sample_seed = 1337
-shuffle_seed = 1337
-
-[trainers.predictor]
-name = "SigmoidGVIBMAPredictor"
-
-[trainers.predictor.spec]
-sample_seed = 1337
-sample_size = 100
-
-[[trainers]]
-id = "gmsfsvi"
-name = "BalancedRandomCoresetGaussianMixtureSFSVI"
-
-[trainers.hyperparams]
-basic_loss_fn = "sigmoid"
-beta = 1.0
-coreset_selection_seed = 1337
-coreset_size = 40
-draw_batch_size = 32
-init_coreset = true
-init_coreset_seed = 1337
-init_coreset_minval = -4
-init_coreset_maxval = 4
-init_state_seed = 1337
-input_shape = [ 1, 2 ]
-lr = 0.01
-n_comp = 3
-n_epochs = 1000
-precision = 0.01
-sample_size = 100
-sample_seed = 1337
-shuffle_seed = 1337
-
-[trainers.predictor]
-name = "SigmoidGMVIBMAPredictor"
-
-[trainers.predictor.spec]
-sample_seed = 1337
-sample_size = 100
+# [[trainers]]
+# id = "gvcl"
+# name = "GaussianVCL"
+# 
+# [trainers.hyperparams]
+# basic_loss = "sigmoid"
+# beta = 1.0
+# draw_batch_size = 32
+# init_coreset = false
+# init_state_seed = 1337
+# input_shape = [ 1, 2 ]
+# lr = 0.01
+# n_epochs = 1000
+# precision = 0.01
+# sample_size = 100
+# sample_seed = 1337
+# shuffle_seed = 1337
+# 
+# [trainers.predictor]
+# name = "SigmoidGVIBMAPredictor"
+# 
+# [trainers.predictor.spec]
+# sample_seed = 1337
+# sample_size = 100
+# 
+# [[trainers]]
+# id = "gmvcl"
+# name = "GaussianMixtureVCL"
+# 
+# [trainers.hyperparams]
+# basic_loss = "sigmoid"
+# beta = 1.0
+# draw_batch_size = 32
+# init_coreset = false
+# init_state_seed = 1337
+# input_shape = [ 1, 2 ]
+# lr = 0.01
+# n_comp = 3
+# n_epochs = 1000
+# precision = 0.01
+# sample_size = 100
+# sample_seed = 1337
+# shuffle_seed = 1337
+# 
+# [trainers.predictor]
+# name = "SigmoidGMVIBMAPredictor"
+# 
+# [trainers.predictor.spec]
+# sample_seed = 1337
+# sample_size = 100
+# 
+# [[trainers]]
+# id = "gsfsvi"
+# name = "BalancedRandomCoresetGaussianSFSVI"
+# 
+# [trainers.hyperparams]
+# basic_loss = "sigmoid"
+# beta = 1.0
+# coreset_selection_seed = 1337
+# coreset_size = 40
+# draw_batch_size = 32
+# init_coreset = true
+# init_coreset_seed = 1337
+# init_coreset_minval = -4
+# init_coreset_maxval = 4
+# init_state_seed = 1337
+# input_shape = [ 1, 2 ]
+# lr = 0.01
+# n_epochs = 1000
+# precision = 0.01
+# sample_size = 100
+# sample_seed = 1337
+# shuffle_seed = 1337
+# 
+# [trainers.predictor]
+# name = "SigmoidGVIBMAPredictor"
+# 
+# [trainers.predictor.spec]
+# sample_seed = 1337
+# sample_size = 100
+# 
+# [[trainers]]
+# id = "gmsfsvi"
+# name = "BalancedRandomCoresetGaussianMixtureSFSVI"
+# 
+# [trainers.hyperparams]
+# basic_loss = "sigmoid"
+# beta = 1.0
+# coreset_selection_seed = 1337
+# coreset_size = 40
+# draw_batch_size = 32
+# init_coreset = true
+# init_coreset_seed = 1337
+# init_coreset_minval = -4
+# init_coreset_maxval = 4
+# init_state_seed = 1337
+# input_shape = [ 1, 2 ]
+# lr = 0.01
+# n_comp = 3
+# n_epochs = 1000
+# precision = 0.01
+# sample_size = 100
+# sample_seed = 1337
+# shuffle_seed = 1337
+# 
+# [trainers.predictor]
+# name = "SigmoidGMVIBMAPredictor"
+# 
+# [trainers.predictor.spec]
+# sample_seed = 1337
+# sample_size = 100
 
 [plotter]
 n_classes = 2
