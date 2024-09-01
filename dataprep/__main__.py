@@ -34,6 +34,8 @@ def main():
                 path / f'{split}_xs_{i + 1}.npy',
                 path / f'{split}_ys_{i + 1}.npy'
             )
+    with open(path / 'metadata.toml', 'w') as file:
+        file.write(f'length = {i + 1}')
 
 
 if __name__ == '__main__':

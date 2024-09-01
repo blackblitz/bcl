@@ -1,4 +1,4 @@
-"""Data IO."""
+"""Array operations."""
 
 import numpy as np
 import jax
