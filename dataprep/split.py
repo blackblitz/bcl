@@ -8,7 +8,7 @@ from torchvision.datasets import CIFAR10, MNIST
 
 from .datasets import ArrayDataset
 
-root = 'data'
+root = 'pytorch'
 seed = 1337
 
 
@@ -45,33 +45,14 @@ def split_datasets_by_class(css, train, test, validation=False):
     }
 
 
-def split_iris_with_transform(transform, validation=False):
-    """Split Iris dataset by class."""
+def split_iris(validation=False):
+    """Make Split Iris."""
     iris = load_iris()
-    train = ArrayDataset(transform(iris['data']), iris['target'])
+    train = ArrayDataset(iris['data'], iris['target'])
     return split_datasets_by_class(
         np.arange(3),
         *split_random(random.PRNGKey(seed), 0.2, train),
         validation=validation
-    )
-
-
-def split_iris(validation=False):
-    """Make Split Iris."""
-    return split_iris_with_transform(lambda x: x, validation=validation)
-
-
-def split_iris_1(validation=False):
-    """Make Split Iris 1."""
-    return split_iris_with_transform(
-        lambda x: x[:, 2:3], validation=validation
-    )
-
-
-def split_iris_2(validation=False):
-    """Make Split Iris 2."""
-    return split_iris_with_transform(
-        lambda x: x[:, 2:4], validation=validation
     )
 
 
@@ -104,7 +85,7 @@ def split_cifar10(validation=False):
     """Make Split CIFAR-10."""
 
     def transform(x):
-        np.asarray(x) / 255.0
+        return np.asarray(x) / 255.0
 
     return split_datasets_by_class(
         np.arange(10).reshape((5, 2)),

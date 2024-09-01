@@ -21,15 +21,18 @@ class ArrayDataset(Dataset):
         return self.xs[index], self.ys[index]
 
 
-def dataset_to_arrays(dataset, path):
-    """Convert a dataset to arrays."""
+def write_npy(dataset, xs_path, ys_path):
+    """Write a pytorch dataset to npy files."""
     xs = np.lib.format.open_memmap(
-        path, mode='w+',
-        dtype=dataset[0][0].dtype,
+        xs_path, mode='w+',
+        dtype=np.float32,
         shape=(len(dataset), *dataset[0][0].shape)
     )
-    ys = np.empty(len(dataset), dtype=np.int64)
+    ys = np.lib.format.open_memmap(
+        ys_path, mode='w+',
+        dtype=np.uint8,
+        shape=(len(dataset),)
+    )
     for i, (x, y) in enumerate(dataset):
         xs[i] = x
         ys[i] = y
-    return np.load(path, mmap_mode='r'), ys

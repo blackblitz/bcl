@@ -3,5 +3,6 @@ ckpt/
 data/
 .ipynb_checkpoints/
 plots/
+pytorch/
 results/
 *.npy
