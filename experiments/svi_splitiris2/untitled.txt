@@ -1,2 +1,0 @@
-XLA_PYTHON_CLIENT_MEM_FRACTION=.50 XLA_FLAGS=--xla_gpu_deterministic_ops=true python -m experiments.train svi_splitmnist
-XLA_PYTHON_CLIENT_MEM_FRACTION=.75 XLA_FLAGS=--xla_gpu_deterministic_ops=true python -m experiments.train svi_splitcifar10

@@ -1,1 +1,0 @@
-"""Sequential variational inference - Sinusoid."""
