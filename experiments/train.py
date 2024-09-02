@@ -3,8 +3,7 @@
 import argparse
 from pathlib import Path
 
-from orbax.checkpoint import PyTreeCheckpointer
-from orbax.checkpoint.test_utils import erase_and_create_empty
+import orbax.checkpoint as ocp
 from tqdm import tqdm
 
 from dataops.io import iter_tasks, read_toml
@@ -35,9 +34,9 @@ def main():
     ]
 
     # create checkpointer
-    (exp_path / 'ckpt').mkdir(parents=True, exist_ok=True)
-    erase_and_create_empty(exp_path / 'ckpt')
-    ckpter = PyTreeCheckpointer()
+    ckpt_path = exp_path / 'ckpt'
+    ocp.test_utils.erase_and_create_empty(ckpt_path)
+    ckpter = ocp.StandardCheckpointer()
 
     # train and checkpoint
     for trainer_id, trainer in tqdm(trainers, leave=False, unit='trainer'):
@@ -49,7 +48,7 @@ def main():
         ):
             trainer.train(xs, ys)
             ckpter.save(
-                exp_path / f'ckpt/{trainer_id}_{j + 1}', trainer.state.params
+                ckpt_path / f'{trainer_id}_{j + 1}', trainer.state.params
             )
 
 

@@ -4,14 +4,16 @@ import argparse
 from functools import partial
 from pathlib import Path
 
+from jax import tree_util
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 import numpy as np
-from orbax.checkpoint import PyTreeCheckpointer
+import orbax.checkpoint as ocp
 
 from dataops.io import iter_tasks, read_toml
 from evaluate import predict
 import models
+import train
 
 plt.style.use('bmh')
 
@@ -77,14 +79,15 @@ def main():
     ts_path = (Path('data') / spec['task_sequence']['name']).resolve()
     metadata = read_toml(ts_path / 'metadata.toml')
 
-    # create plotter, model, predictor makers and checkpointer
+    # create plotter, model, trainers and checkpointer
     plotter = Plotter(
         args.num_classes, args.left, args.right, args.bottom, args.top
     )
     model = getattr(models, spec['model']['name'])(**spec['model']['spec'])
-    make_predictors = [
+    trainers = [
         (
             trainer['id'],
+            getattr(train, trainer['name'])(model, trainer['immutables']),
             partial(
                 getattr(predict, predictor['name']),
                 **predictor.get('spec', {})
@@ -92,17 +95,18 @@ def main():
         ) for trainer in spec['trainers']
         for predictor in [trainer['predictor']]
     ]
-    ckpter = PyTreeCheckpointer()
+    ckpter = ocp.StandardCheckpointer()
 
     # restore checkpoint, predict and plot
     fig, axes = plt.subplots(
-        metadata['length'], len(make_predictors),
+        metadata['length'], len(trainers),
         figsize=(12, 6.75), sharex=True, sharey=True
     )
-    for i, (trainer_id, make_predictor) in enumerate(make_predictors):
+    for i, (trainer_id, trainer, make_predictor) in enumerate(trainers):
         for j, (xs, ys) in enumerate(iter_tasks(ts_path, 'training')):
             params = ckpter.restore(
-                exp_path.resolve() / f'ckpt/{trainer_id}_{j + 1}'
+                exp_path.resolve() / f'ckpt/{trainer_id}_{j + 1}',
+                target=trainer.init_state().params
             )
             plotter.plot_pred(axes[j, i], make_predictor(model.apply, params))
             plotter.plot_dataset(axes[j, i], xs, ys)
