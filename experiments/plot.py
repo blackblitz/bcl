@@ -3,16 +3,13 @@
 import argparse
 from functools import partial
 from pathlib import Path
-from importlib import import_module
-import tomllib
 
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 import numpy as np
 from orbax.checkpoint import PyTreeCheckpointer
 
-from dataio import dataset_sequences
-from dataio.dataset_sequences.datasets import dataset_to_arrays
+from dataops.io import iter_tasks, read_toml
 from evaluate import predict
 import models
 
@@ -48,12 +45,8 @@ class Plotter:
             )
         )
 
-    def plot_dataset(self, ax, dataset):
+    def plot_dataset(self, ax, xs, ys):
         """Plot x-y pairs as scatter plot."""
-        path = Path('data.npy')
-        xs, ys = dataset_to_arrays(dataset, path)
-        if self.n_classes == 2:
-            cmap = ListedColormap(list('rb'))
         ax.scatter(
             xs[:, 0], xs[:, 1], c=ys,
             cmap=(
@@ -62,48 +55,62 @@ class Plotter:
             ), vmin=0, vmax=self.n_classes,
             s=10.0, linewidths=0.5, edgecolors='w'
         )
-        path.unlink()
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument('experiment_id')
-args = parser.parse_args()
+def main():
+    """Run the main script."""
+    # parse arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('experiment_id', help='experiment ID')
+    parser.add_argument(
+        'num_classes', help='number of classes', type=int, choices=[2, 3]
+    )
+    parser.add_argument('left', help='lower limit of x-axis', type=float)
+    parser.add_argument('right', help='upper limit of x-axis', type=float)
+    parser.add_argument('bottom', help='lower limit of y-axis', type=float)
+    parser.add_argument('top', help='lower limit of y-axis', type=float)
+    args = parser.parse_args()
 
-path = Path('experiments') / args.experiment_id
-with open(path / 'spec.toml', 'rb') as file:
-    spec = tomllib.load(file)
+    # read experiment specifications and metadata
+    exp_path = (Path('experiments') / args.experiment_id).resolve()
+    spec = read_toml(exp_path / 'spec.toml')
+    ts_path = (Path('data') / spec['task_sequence']['name']).resolve()
+    metadata = read_toml(ts_path / 'metadata.toml')
 
-plotter = Plotter(**spec['plotter'])
+    # create plotter, model, predictor makers and checkpointer
+    plotter = Plotter(
+        args.num_classes, args.left, args.right, args.bottom, args.top
+    )
+    model = getattr(models, spec['model']['name'])(**spec['model']['spec'])
+    make_predictors = [
+        (
+            trainer['id'],
+            partial(
+                getattr(predict, predictor['name']),
+                **predictor.get('spec', {})
+            )
+        ) for trainer in spec['trainers']
+        for predictor in [trainer['predictor']]
+    ]
+    ckpter = PyTreeCheckpointer()
 
-dataset_sequence = getattr(
-    dataset_sequences, spec['dataset_sequence']['name']
-)(**spec['dataset_sequence']['spec'])['training']
-model = getattr(models, spec['model']['name'])(**spec['model']['spec'])
-make_predictors = [
-    (
-        trainer['id'],
-        partial(
-            getattr(predict, predictor['name']),
-            **predictor.get('spec', {})
-        )
-    ) for trainer in spec['trainers']
-    for predictor in [trainer['predictor']]
-]
-ckpter = PyTreeCheckpointer()
-fig, axes = plt.subplots(
-    len(dataset_sequence), len(make_predictors),
-    figsize=(12, 6.75), sharex=True, sharey=True
-)
-if len(dataset_sequence) == 1:
-    axes = np.expand_dims(axes, 0)
-for i, (trainer_id, make_predictor) in enumerate(make_predictors):
-    for j, (task_id, task) in enumerate(enumerate(dataset_sequence, start=1)):
-        params = ckpter.restore(
-            path.resolve() / f'ckpt/{trainer_id}_{task_id}'
-        )
-        plotter.plot_pred(axes[j, i], make_predictor(model.apply, params))
-        plotter.plot_dataset(axes[j, i], task)
-        if i == 0:
-            axes[j, 0].set_ylabel(f'Task {task_id}')
-    axes[-1, i].set_xlabel(trainer_id)
-fig.savefig(path / 'result.png')
+    # restore checkpoint, predict and plot
+    fig, axes = plt.subplots(
+        metadata['length'], len(make_predictors),
+        figsize=(12, 6.75), sharex=True, sharey=True
+    )
+    for i, (trainer_id, make_predictor) in enumerate(make_predictors):
+        for j, (xs, ys) in enumerate(iter_tasks(ts_path, 'training')):
+            params = ckpter.restore(
+                exp_path.resolve() / f'ckpt/{trainer_id}_{j + 1}'
+            )
+            plotter.plot_pred(axes[j, i], make_predictor(model.apply, params))
+            plotter.plot_dataset(axes[j, i], xs, ys)
+            if i == 0:
+                axes[j, 0].set_ylabel(f'Task {j + 1}')
+        axes[-1, i].set_xlabel(trainer_id)
+    fig.savefig(exp_path / 'result.png')
+
+
+if __name__ == '__main__':
+    main()

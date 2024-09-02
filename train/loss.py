@@ -3,6 +3,7 @@
 from operator import add
 
 from jax import jit, tree_util
+import jax.numpy as jnp
 import optax
 
 
@@ -53,7 +54,7 @@ def reg(precision, basic_loss, apply):
     )
 
 
-def reg_duo(precision, basic_loss, apply):
+def reg2(precision, basic_loss, apply):
     """Make a loss function with a regularization term for dual batches."""
     match basic_loss:
         case 'sigmoid':

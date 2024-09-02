@@ -1,8 +1,8 @@
 __pycache__/
 ckpt/
+coreset.zarr/
 data/
 .ipynb_checkpoints/
 plots/
 pytorch/
 results/
-*.npy

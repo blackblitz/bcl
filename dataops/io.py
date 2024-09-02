@@ -30,7 +30,7 @@ def zarr_to_memmap(group, xs_path, ys_path):
 def iter_tasks(path, split):
     """Iterate through a task sequence."""
     path = Path(path)
-    length = read_metadata(path / 'metadata.toml')['length']
+    length = read_toml(path / 'metadata.toml')['length']
     for i in range(length):
         yield (
             np.lib.format.open_memmap(
@@ -42,7 +42,7 @@ def iter_tasks(path, split):
         )
 
 
-def read_metadata(path):
+def read_toml(path):
     """Read metadata."""
     with open(path, 'rb') as file:
         return tomllib.load(file)

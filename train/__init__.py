@@ -1,7 +1,7 @@
 """Training package."""
 
 from .base import Finetuning
-from .replay import Joint, RandomConcatReplay, RandomChoiceReplay
+from .replay import Joint, GDumb
 # from .svi import (
 #     GaussianVCL, GaussianMixtureVCL,
 #     BalancedRandomCoresetGaussianSFSVI,
@@ -11,9 +11,9 @@ from .replay import Joint, RandomConcatReplay, RandomChoiceReplay
 __all__ = [
     'Finetuning',
     'Joint',
-    'BalancedRandomCoresetReplay',
-    'GaussianVCL',
-    'GaussianMixtureVCL',
-    'BalancedRandomCoresetGaussianSFSVI',
-    'BalancedRandomCoresetGaussianMixtureSFSVI'
+    'GDumb',
+    # 'GaussianVCL',
+    # 'GaussianMixtureVCL',
+    # 'BalancedRandomCoresetGaussianSFSVI',
+    # 'BalancedRandomCoresetGaussianMixtureSFSVI'
 ]

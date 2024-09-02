@@ -1,6 +1,5 @@
-[dataset_sequence]
+[task_sequence]
 name = "sinusoid"
-pass_batch_size = 128
 
 [dataset_sequence.spec]
 validation = false
@@ -17,15 +16,15 @@ dense2 = 1
 id = "joint"
 name = "Joint"
 
-[trainers.hyperparams]
+[trainers.immutables]
 basic_loss = "sigmoid"
 draw_batch_size = 32
 init_coreset = false
 init_state_seed = 1337
-input_shape = [ 1, 2 ]
+input_shape = [ 2 ]
 lr = 0.01
-
 n_epochs = 1000
+pass_batch_size = 128
 precision = 0.01
 shuffle_seed = 1337
 
@@ -36,12 +35,12 @@ name = "SigmoidMAPPredictor"
 id = "finetuning"
 name = "Finetuning"
 
-[trainers.hyperparams]
+[trainers.immutables]
 basic_loss = "sigmoid"
 draw_batch_size = 32
 init_coreset = false
 init_state_seed = 1337
-input_shape = [ 1, 2 ]
+input_shape = [ 2 ]
 lr = 0.01
 n_epochs = 1000
 precision = 0.01
@@ -51,22 +50,24 @@ shuffle_seed = 1337
 name = "SigmoidMAPPredictor"
 
 [[trainers]]
-id = "replay"
-name = "RandomChoiceReplay"
+id = "gdumb"
+name = "GDumb"
 
-[trainers.hyperparams]
+[trainers.immutables]
 basic_loss = "sigmoid"
+choice_seed = 1337
 coreset_selection_seed = 1337
 coreset_size = 40
 draw_batch_size = 32
 init_coreset = false
 init_state_seed = 1337
-input_shape = [ 1, 2 ]
+input_shape = [ 2 ]
 lr = 0.01
 n_epochs = 1000
 precision = 0.01
 sample_seed = 1337
 shuffle_seed = 1337
+update_coreset_seed = 1337
 
 [trainers.predictor]
 name = "SigmoidMAPPredictor"
@@ -75,13 +76,13 @@ name = "SigmoidMAPPredictor"
 # id = "gvcl"
 # name = "GaussianVCL"
 # 
-# [trainers.hyperparams]
+# [trainers.immutables]
 # basic_loss = "sigmoid"
 # beta = 1.0
 # draw_batch_size = 32
 # init_coreset = false
 # init_state_seed = 1337
-# input_shape = [ 1, 2 ]
+# input_shape = [ 2 ]
 # lr = 0.01
 # n_epochs = 1000
 # precision = 0.01
@@ -100,13 +101,13 @@ name = "SigmoidMAPPredictor"
 # id = "gmvcl"
 # name = "GaussianMixtureVCL"
 # 
-# [trainers.hyperparams]
+# [trainers.immutables]
 # basic_loss = "sigmoid"
 # beta = 1.0
 # draw_batch_size = 32
 # init_coreset = false
 # init_state_seed = 1337
-# input_shape = [ 1, 2 ]
+# input_shape = [ 2 ]
 # lr = 0.01
 # n_comp = 3
 # n_epochs = 1000
@@ -126,7 +127,7 @@ name = "SigmoidMAPPredictor"
 # id = "gsfsvi"
 # name = "BalancedRandomCoresetGaussianSFSVI"
 # 
-# [trainers.hyperparams]
+# [trainers.immutables]
 # basic_loss = "sigmoid"
 # beta = 1.0
 # coreset_selection_seed = 1337
@@ -137,7 +138,7 @@ name = "SigmoidMAPPredictor"
 # init_coreset_minval = -4
 # init_coreset_maxval = 4
 # init_state_seed = 1337
-# input_shape = [ 1, 2 ]
+# input_shape = [ 2 ]
 # lr = 0.01
 # n_epochs = 1000
 # precision = 0.01
@@ -156,7 +157,7 @@ name = "SigmoidMAPPredictor"
 # id = "gmsfsvi"
 # name = "BalancedRandomCoresetGaussianMixtureSFSVI"
 # 
-# [trainers.hyperparams]
+# [trainers.immutables]
 # basic_loss = "sigmoid"
 # beta = 1.0
 # coreset_selection_seed = 1337
@@ -167,7 +168,7 @@ name = "SigmoidMAPPredictor"
 # init_coreset_minval = -4
 # init_coreset_maxval = 4
 # init_state_seed = 1337
-# input_shape = [ 1, 2 ]
+# input_shape = [ 2 ]
 # lr = 0.01
 # n_comp = 3
 # n_epochs = 1000
@@ -182,10 +183,3 @@ name = "SigmoidMAPPredictor"
 # [trainers.predictor.spec]
 # sample_seed = 1337
 # sample_size = 100
-
-[plotter]
-n_classes = 2
-x1_min = -0.5
-x1_max = 3.0
-x2_min = -1.0
-x2_max = 1.5

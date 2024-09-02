@@ -4,72 +4,93 @@ from pathlib import Path
 
 import numpy as np
 from jax import random
-from torch.utils.data import ConcatDataset, Subset
+from orbax.checkpoint.test_utils import erase_and_create_empty
+import zarr
 
-from dataio.dataset_sequences.datasets import ArrayDataset, dataset_to_arrays
+from dataops.array import pass_batches
 
-from .base import ConcatTrainer
-from .loss import reg, reg_duo
+from .base import ParallelTrainer, SerialTrainer
+from .loss import reg, reg2
 
 
-class InitCoresetMixin:
-    """Mixin for initializing a coreset randomly."""
+class EmptyMixin:
+    """Mixin for initializing an empty coreset."""
 
     def init_coreset(self):
         """Initialize the coreset."""
-        xs = np.asarray(random.uniform(
+        path = Path('coreset.zarr').resolve()
+        erase_and_create_empty(path)
+        group = zarr.open(path, mode='a')
+        group['xs'] = np.empty(
+            (0, *self.immutables['input_shape']),
+            dtype=np.float32
+        )
+        group['ys'] = np.empty((0,), dtype=np.uint8)
+        return group
+
+
+class NoiseMixin:
+    """Mixin for initializing a random coreset."""
+
+    def init_coreset(self):
+        """Initialize the coreset."""
+        path = Path('coreset.zarr').resolve()
+        erase_and_create_empty(path)
+        group = zarr.open(path, mode='a')
+        group['xs'] = np.asarray(random.uniform(
             random.PRNGKey(self.immutables['init_coreset_seed']),
             shape=(
                 self.immutables['coreset_size'],
-                *self.immutables['input_shape'][1:]
-            ),
-            minval=self.immutables['init_coreset_minval'],
-            maxval=self.immutables['init_coreset_maxval']
+                *self.immutables['input_shape']
+            )
         ))
-        ys = np.asarray(
-            self.make_predictor(params=self.state.params).predict(xs)
-        )
-        return ArrayDataset(xs, ys)
+        group['ys'] = np.asarray(random.choice(
+            random.PRNGKey(self.immutables['init_coreset_seed']),
+            self.immutables['output_size'],
+            shape=(self.immutables['coreset_size'],)
+        ))
+        return group
 
 
-class RandomCoresetMixin:
-    """Mixin for making a random coreset of fixed size."""
+class JointMixin:
+    """Mixin for joint coreset update."""
 
-    def update_coreset(self, dataset):
-        """Update coreset."""
-        self.mutables['coreset'] = ConcatDataset(
-            [self.mutables['coreset'], dataset]
-        )
-        if (
-            len(self.mutables['coreset'])
-            > self.immutables['coreset_size']
+    def update_coreset(self, xs, ys):
+        """Update the coreset."""
+        for xs_batch, ys_batch in pass_batches(
+            self.immutables['pass_batch_size'], xs, ys
         ):
-            path = Path('data.npy')
-            _, ys = dataset_to_arrays(
-                self.mutables['coreset'], path
-            )
-            path.unlink()
-            classes, counts = np.unique(ys, return_counts=True)
-            y_indices = np.select(
-                [ys == c for c in classes],
-                np.arange(len(classes)),
-                default=ys
-            )
-            self.mutables['coreset'] = Subset(
-                self.mutables['coreset'],
-                np.asarray(random.choice(
-                    random.PRNGKey(
-                        self.immutables['coreset_selection_seed']
-                    ),
-                    len(self.mutables['coreset']),
-                    p=(1 / counts)[y_indices],
-                    shape=(self.immutables['coreset_size'],),
-                    replace=False
-                ))
-            )
+            self.mutables['coreset']['xs'].append(xs_batch)
+            self.mutables['coreset']['ys'].append(ys_batch)
 
 
-class Joint(ConcatTrainer):
+class GDumbMixin:
+    """Mixin for GDumb coreset selection."""
+
+    def update_coreset(self, xs, ys):
+        """Update the coreset."""
+        for x, y in zip(xs, ys):
+            if (
+                len(self.mutables['coreset']['ys'])
+                < self.immutables['coreset_size']
+            ):
+                self.mutables['coreset']['xs'].append(np.expand_dims(x, 0))
+                self.mutables['coreset']['ys'].append(np.expand_dims(y, 0))
+            else:
+                key1, key2 = random.split(
+                    random.PRNGKey(self.immutables['update_coreset_seed'])
+                )
+                ys = self.mutables['coreset']['ys'][:]
+                count = np.bincount(ys)
+                mode = random.choice(
+                    key1, (count == count.max()).nonzero()[0]
+                )
+                index = random.choice(key2, (ys == mode).nonzero()[0]).item()
+                self.mutables['coreset']['xs'][index] = x
+                self.mutables['coreset']['ys'][index] = y
+
+
+class Joint(EmptyMixin, JointMixin, SerialTrainer):
     """Joint training."""
 
     def init_mutables(self):
@@ -80,49 +101,28 @@ class Joint(ConcatTrainer):
                 self.immutables['basic_loss'],
                 self.model.apply
             ),
-            'coreset': []
+            'coreset': self.init_coreset()
         }
 
-    def update_mutables(self, dataset):
+    def update_mutables(self, xs, ys):
         """Update the coreset."""
-        self.mutables['coreset'] = ConcatDataset(
-            [self.mutables['coreset'], dataset]
-        )
+        self.update_coreset(xs, ys)
 
 
-class RandomConcatReplay(RandomCoresetMixin, ConcatTrainer):
-    """Exact replay with a random coreset by concatenating."""
+class GDumb(EmptyMixin, GDumbMixin, ParallelTrainer):
+    """GDumb."""
 
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""
         return {
-            'loss_fn': reg(
+            'loss_fn': reg2(
                 self.immutables['precision'],
                 self.immutables['basic_loss'],
                 self.model.apply
             ),
-            'coreset': []
+            'coreset': self.init_coreset()
         }
 
-    def update_mutables(self, dataset):
+    def update_mutables(self, xs, ys):
         """Update the hyperparameters."""
-        self.update_coreset(dataset)
-
-
-class RandomChoiceReplay(RandomCoresetMixin, ChoiceTrainer):
-    """Exact replay with a random coreset by choice."""
-
-    def init_mutables(self):
-        """Initialize the mutable hyperparameters."""
-        return {
-            'loss_fn': reg_duo(
-                self.immutables['precision'],
-                self.immutables['basic_loss'],
-                self.model.apply
-            ),
-            'coreset': []
-        }
-
-    def update_mutables(self, dataset):
-        """Update the hyperparameters."""
-        self.update_coreset(dataset)
+        self.update_coreset(xs, ys)

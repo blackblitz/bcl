@@ -1,16 +1,16 @@
 """Base classes."""
 
 from abc import ABC, abstractmethod
+from itertools import chain
 from pathlib import Path
 
 from flax.training.train_state import TrainState
 from jax import grad, jit, random
 import numpy as np
 from optax import adam
-from torch.utils.data import ConcatDataset
 
-from dataio import draw_batches
-from dataio.dataset_sequences.datasets import dataset_to_arrays
+from dataops.array import draw_batches
+from dataops.io import zarr_to_memmap
 
 from .loss import reg
 
@@ -27,10 +27,9 @@ def make_step(loss_fn):
 class ContinualTrainer(ABC):
     """Abstract base class for continual learning."""
 
-    def __init__(self, model, make_predictor, immutables):
+    def __init__(self, model, immutables):
         """Intialize self."""
         self.model = model
-        self.make_predictor = make_predictor
         self.immutables = immutables
         self.state = self.init_state()
         self.mutables = self.init_mutables()
@@ -41,7 +40,7 @@ class ContinualTrainer(ABC):
             apply_fn=self.model.apply,
             params=self.model.init(
                 random.PRNGKey(self.immutables['init_state_seed']),
-                np.zeros(self.immutables['input_shape'])
+                np.zeros((1, *self.immutables['input_shape']))
             )['params'],
             tx=adam(self.immutables['lr'])
         )
@@ -57,26 +56,24 @@ class ContinualTrainer(ABC):
         }
 
     @abstractmethod
-    def update_state(self, dataset):
+    def update_state(self, xs, ys):
         """Update the training state."""
 
     @abstractmethod
-    def update_mutables(self, dataset):
+    def update_mutables(self, xs, ys):
         """Update the dynamic hyperparameters."""
 
-    def train(self, dataset):
+    def train(self, xs, ys):
         """Train with a dataset."""
-        self.update_state(dataset)
-        self.update_mutables(dataset)
+        self.update_state(xs, ys)
+        self.update_mutables(xs, ys)
 
 
-class MinibatchTrainer(ContinualTrainer):
-    """Continual trainer that uses mini-batch gradient descent."""
+class StandardTrainer(ContinualTrainer):
+    """Standard continual trainer which uses mini-batch gradient descent."""
 
-    def update_state(self, dataset):
+    def update_state(self, xs, ys):
         """Update the training state."""
-        path = Path('data.npy')
-        xs, ys = dataset_to_arrays(dataset, path)
         step = make_step(self.mutables['loss_fn'])
         for key in random.split(
             random.PRNGKey(self.immutables['shuffle_seed']),
@@ -86,40 +83,49 @@ class MinibatchTrainer(ContinualTrainer):
                 key, self.immutables['draw_batch_size'], xs, ys
             ):
                 self.state = step(self.state, xs_batch, ys_batch)
-        path.unlink()
 
 
-class ConcatTrainer(ContinualTrainer):
-    """Continual trainer that uses a coreset by concatenation."""
+class SerialTrainer(ContinualTrainer):
+    """Continual trainer which uses a coreset in series."""
 
-    def update_state(self, dataset):
+    def update_state(self, xs, ys):
         """Update the training state."""
-        path = Path('data.npy')
-        xs, ys = dataset_to_arrays(
-            ConcatDataset([self.mutables['coreset'], dataset]), path
+        xs_path = Path('coreset_xs.npy')
+        ys_path = Path('coreset_ys.npy')
+        coreset_xs, coreset_ys = zarr_to_memmap(
+            self.mutables['coreset'], xs_path, ys_path
         )
         step = make_step(self.mutables['loss_fn'])
         for key in random.split(
             random.PRNGKey(self.immutables['shuffle_seed']),
             num=self.immutables['n_epochs']
         ):
-            for xs_batch, ys_batch in draw_batches(
-                key, self.immutables['draw_batch_size'], xs, ys
+            for xs_batch, ys_batch in chain(
+                draw_batches(
+                    key, self.immutables['draw_batch_size'], xs, ys
+                ),
+                draw_batches(
+                    key, self.immutables['draw_batch_size'],
+                    coreset_xs, coreset_ys
+                )
             ):
                 self.state = step(self.state, xs_batch, ys_batch)
-        path.unlink()
+        xs_path.unlink()
+        ys_path.unlink()
 
 
-class ChoiceTrainer(ContinualTrainer):
-    """Continual trainer that uses a coreset by choice."""
+class ParallelTrainer(ContinualTrainer):
+    """Continual trainer which uses a coreset in parallel."""
 
-    def update_state(self, dataset):
+    def update_state(self, xs, ys):
         """Update the training state."""
-        path = Path('data.npy')
-        xs, ys = dataset_to_arrays(dataset, path)
-        xs_coreset, ys_coreset = dataset_to_arrays(self.coreset, path)
+        xs_path = Path('coreset_xs.npy')
+        ys_path = Path('coreset_ys.npy')
+        coreset_xs, coreset_ys = zarr_to_memmap(
+            self.mutables['coreset'], xs_path, ys_path
+        )
         step = make_step(self.mutables['loss_fn'])
-        n_batches = -(len(dataset) // -self.immutables['draw_batch_size'])
+        n_batches = -(len(ys) // -self.immutables['draw_batch_size'])
         for key1, key2 in zip(
             random.split(
                 random.PRNGKey(self.immutables['shuffle_seed']),
@@ -136,17 +142,25 @@ class ChoiceTrainer(ContinualTrainer):
                 ),
                 random.split(key2, num=n_batches)
             ):
-                indices = random.choice(key, len(ys_coreset), replace=False)
+                indices = (
+                    random.choice(
+                        key, len(coreset_ys),
+                        shape=(self.immutables['draw_batch_size'],),
+                        replace=False
+                    ) if len(coreset_ys) > 0
+                    else []
+                )
                 self.state = step(
                     self.state,
                     xs_batch, ys_batch,
-                    xs_coreset[indices], ys_coreset[indices]
+                    coreset_xs[indices], coreset_ys[indices]
                 )
-        path.unlink()
+        xs_path.unlink()
+        ys_path.unlink()
 
 
-class Finetuning(MinibatchTrainer):
+class Finetuning(StandardTrainer):
     """Fine-tuning for continual learning."""
 
-    def update_mutables(self, dataset):
+    def update_mutables(self, xs, ys):
         """Update the mutable hyperparameters."""

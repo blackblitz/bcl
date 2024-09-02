@@ -1,55 +1,57 @@
 """Training script."""
 
 import argparse
-from functools import partial
 from pathlib import Path
-from importlib import import_module
-import tomllib
 
-from flax.training import orbax_utils
 from orbax.checkpoint import PyTreeCheckpointer
+from orbax.checkpoint.test_utils import erase_and_create_empty
 from tqdm import tqdm
 
-from dataio import dataset_sequences
-from dataio.path import clear
-from evaluate import predict
+from dataops.io import iter_tasks, read_toml
 import models
+import train
 
-parser = argparse.ArgumentParser()
-parser.add_argument('experiment_id')
-args = parser.parse_args()
-path = Path('experiments') / args.experiment_id
-with open(path / 'spec.toml', 'rb') as file:
-    spec = tomllib.load(file)
-dataset_sequence = getattr(
-    dataset_sequences, spec['dataset_sequence']['name']
-)(**spec['dataset_sequence']['spec'])['training']
-model = getattr(models, spec['model']['name'])(**spec['model']['spec'])
-trainers = [
-    (
-        trainer['id'],
-        trainer['hyperparams'],
-        getattr(import_module('train'), trainer['name']),
-        partial(
-            getattr(predict, predictor['name']),
-            apply=model.apply, **predictor.get('spec', {})
-        )
-    ) for trainer in spec['trainers']
-    for predictor in [trainer['predictor']]
-]
-clear(path / 'ckpt')
-ckpter = PyTreeCheckpointer()
-for trainer_id, trainer_hyperparams, make_trainer, make_predictor in tqdm(
-    trainers, leave=False, unit='trainer'
-):
-    trainer = make_trainer(model, make_predictor, trainer_hyperparams)
-    for task_id, task in enumerate(
-        tqdm(dataset_sequence, leave=False, unit='task'),
-        start=1
-    ):
-        trainer.train(task)
-        ckpter.save(
-            path.resolve() / f'ckpt/{trainer_id}_{task_id}',
-            trainer.state.params,
-            save_args=orbax_utils.save_args_from_target(trainer.state.params)
-        )
+
+def main():
+    """Run the main script."""
+    # parse arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('experiment_id', help='experiment ID')
+    args = parser.parse_args()
+
+    # read experiment specifications and metadata
+    exp_path = (Path('experiments') / args.experiment_id).resolve()
+    spec = read_toml(exp_path / 'spec.toml')
+    ts_path = (Path('data') / spec['task_sequence']['name']).resolve()
+    metadata = read_toml(ts_path / 'metadata.toml')
+
+    # create model and trainers
+    model = getattr(models, spec['model']['name'])(**spec['model']['spec'])
+    trainers = [
+        (
+            trainer['id'],
+            getattr(train, trainer['name'])(model, trainer['immutables'])
+        ) for trainer in spec['trainers']
+    ]
+
+    # create checkpointer
+    (exp_path / 'ckpt').mkdir(parents=True, exist_ok=True)
+    erase_and_create_empty(exp_path / 'ckpt')
+    ckpter = PyTreeCheckpointer()
+
+    # train and checkpoint
+    for trainer_id, trainer in tqdm(trainers, leave=False, unit='trainer'):
+        for j, (xs, ys) in enumerate(
+            tqdm(
+                iter_tasks(ts_path, 'training'),
+                total=metadata['length'], leave=False, unit='task'
+            )
+        ):
+            trainer.train(xs, ys)
+            ckpter.save(
+                exp_path / f'ckpt/{trainer_id}_{j + 1}', trainer.state.params
+            )
+
+
+if __name__ == '__main__':
+    main()
