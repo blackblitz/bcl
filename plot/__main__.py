@@ -11,7 +11,6 @@ import numpy as np
 import orbax.checkpoint as ocp
 
 from dataops.io import iter_tasks, read_toml
-from evaluate import predict
 import models
 import train
 
@@ -33,10 +32,10 @@ class Plotter:
         )
         self.gridxs = np.vstack([self.gridx1.ravel(), self.gridx2.ravel()]).T
 
-    def plot_pred(self, ax, predictor):
+    def plot_pred(self, ax, predict):
         """Plot prediction probabilities as pseudo-color plot."""
         gridy = np.reshape(
-            predictor.predict_proba(self.gridxs),
+            predict(self.gridxs, decide=False),
             self.gridx1.shape if self.n_classes == 2
             else (*self.gridx1.shape, 3)
         )
@@ -92,13 +91,10 @@ def main():
     trainers = [
         (
             trainer['id'],
-            getattr(train, trainer['name'])(model, trainer['immutables']),
-            partial(
-                getattr(predict, predictor['name']),
-                **predictor.get('spec', {})
+            getattr(train, trainer['name'])(
+                model, trainer['immutables'], metadata
             )
         ) for trainer in exp['trainers']
-        for predictor in [trainer['predictor']]
     ]
 
     # restore checkpoint, predict and plot
@@ -107,13 +103,13 @@ def main():
         figsize=(12, 6.75), sharex=True, sharey=True
     )
     with ocp.StandardCheckpointer() as ckpter:
-        for i, (trainer_id, trainer, make_predictor) in enumerate(trainers):
+        for i, (trainer_id, trainer) in enumerate(trainers):
             for j, (xs, ys) in enumerate(iter_tasks(ts_path, 'training')):
-                params = ckpter.restore(
+                trainer.state = trainer.state.replace(params=ckpter.restore(
                     ckpt_path / f'{trainer_id}_{j + 1}',
                     target=trainer.init_state().params
-                )
-                plotter.plot_pred(axes[j, i], make_predictor(model.apply, params))
+                ))
+                plotter.plot_pred(axes[j, i], trainer.make_predict())
                 plotter.plot_dataset(axes[j, i], xs, ys)
                 if i == 0:
                     axes[j, 0].set_ylabel(f'Task {j + 1}')

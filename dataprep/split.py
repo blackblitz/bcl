@@ -49,10 +49,19 @@ def split_iris(validation=False):
     """Make Split Iris."""
     iris = load_iris()
     train = ArrayDataset(iris['data'], iris['target'])
-    return split_datasets_by_class(
-        np.arange(3),
-        *split_random(random.PRNGKey(seed), 0.2, train),
-        validation=validation
+    css = np.arange(3)
+    return (
+        split_datasets_by_class(
+            css,
+            *split_random(random.PRNGKey(seed), 0.2, train),
+            validation=validation
+        ),
+        {
+            'classes': iris.target_names.tolist(),
+            'features': iris.feature_names,
+            'input_shape': [len(iris.feature_names)],
+            'length': len(css)
+        }
     )
 
 
@@ -60,10 +69,19 @@ def split_wine(validation=False):
     """Make Split Wine."""
     wine = load_wine()
     train = ArrayDataset(wine['data'], wine['target'])
-    return split_datasets_by_class(
-        np.arange(3),
-        *split_random(random.PRNGKey(seed), 0.2, train),
-        validation=validation
+    css = np.arange(3)
+    return (
+        split_datasets_by_class(
+            css,
+            *split_random(random.PRNGKey(seed), 0.2, train),
+            validation=validation
+        ),
+        {
+            'classes': wine.target_names.tolist(),
+            'features': wine.feature_names,
+            'input_shape': [len(wine.feature_names)],
+            'length': len(css)
+        }
     )
 
 
@@ -73,12 +91,20 @@ def split_mnist(validation=False):
     def transform(x):
         return np.asarray(x)[:, :, None] / 255.0
 
-    return split_datasets_by_class(
-        np.arange(10).reshape((5, 2)),
-        MNIST(root, download=True, transform=transform, train=True),
-        MNIST(root, download=True, transform=transform, train=False),
-        validation=validation
+    css = np.arange(10).reshape((5, 2))
+    training = MNIST(root, download=True, transform=transform, train=True)
+    testing = MNIST(root, download=True, transform=transform, train=False)
+    return (
+        split_datasets_by_class(
+            css, training, testing, validation=validation
+        ),
+        {
+            'classes': training.classes,
+            'input_shape': training.data.shape[1:],
+            'length': len(css)
+        }
     )
+
 
 
 def split_cifar10(validation=False):
@@ -87,9 +113,16 @@ def split_cifar10(validation=False):
     def transform(x):
         return np.asarray(x) / 255.0
 
-    return split_datasets_by_class(
-        np.arange(10).reshape((5, 2)),
-        CIFAR10(root, download=True, transform=transform, train=True),
-        CIFAR10(root, download=True, transform=transform, train=False),
-        validation=validation
+    css = np.arange(10).reshape((5, 2))
+    training = CIFAR10(root, download=True, transform=transform, train=True)
+    testing = CIFAR10(root, download=True, transform=transform, train=False)
+    return (
+        split_datasets_by_class(
+            css, training, testing, validation=validation
+        ),
+        {
+            'classes': training.classes,
+            'input_shape': training.data.shape[1:],
+            'length': len(css)
+        }
     )

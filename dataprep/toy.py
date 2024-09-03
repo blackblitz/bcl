@@ -63,5 +63,10 @@ def sinusoid(validation=False):
     return (
         dataset_sequences
         if validation
-        else {k: dataset_sequences[k] for k in ['training', 'testing']}
+        else {k: dataset_sequences[k] for k in ['training', 'testing']},
+        {
+            'classes': [0, 1],
+            'input_shape': [2],
+            'length': 5
+        }
     )

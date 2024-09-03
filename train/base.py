@@ -6,20 +6,21 @@ from pathlib import Path
 
 from flax.training.train_state import TrainState
 from jax import grad, jit, random
-import numpy as np
 from optax import adam
 
 from dataops.array import draw_batches
 from dataops.io import zarr_to_memmap
 
-from .loss import reg
+from .loss import sigmoid_ce, softmax_ce
+from .predict import sigmoid_map, softmax_map
+from .init import standard_init
 
 
-def make_step(loss_fn):
+def make_step(loss):
     """Make a gradient-descent step function for a loss function."""
     return jit(
         lambda state, *args: state.apply_gradients(
-            grads=grad(loss_fn)(state.params, *args)
+            grads=grad(loss)(state.params, *args)
         )
     )
 
@@ -27,31 +28,39 @@ def make_step(loss_fn):
 class ContinualTrainer(ABC):
     """Abstract base class for continual learning."""
 
-    def __init__(self, model, immutables):
+    def __init__(self, model, immutables, metadata):
         """Intialize self."""
         self.model = model
         self.immutables = immutables
+        self.metadata = metadata
         self.state = self.init_state()
         self.mutables = self.init_mutables()
+
+    def _choose(self, option1, option2):
+        """Choose an option based on binary or multi-class classification."""
+        if len(self.metadata['classes']) == 2:
+            return option1
+        elif len(self.metadata['classes']) > 2:
+            return option2
+        else:
+            raise ValueError('number of classes must be at least 2')
 
     def init_state(self):
         """Initialize the state."""
         return TrainState.create(
             apply_fn=self.model.apply,
-            params=self.model.init(
+            params=standard_init(
                 random.PRNGKey(self.immutables['init_state_seed']),
-                np.zeros((1, *self.immutables['input_shape']))
-            )['params'],
+                self.model, self.immutables['input_shape']
+            ),
             tx=adam(self.immutables['lr'])
         )
 
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""
         return {
-            'loss_fn': reg(
-                self.immutables['precision'],
-                self.immutables['basic_loss'],
-                self.model.apply
+            'loss': self._choose(sigmoid_ce, softmax_ce)(
+                self.immutables['precision'], self.model.apply
             )
         }
 
@@ -68,13 +77,19 @@ class ContinualTrainer(ABC):
         self.update_state(xs, ys)
         self.update_mutables(xs, ys)
 
+    def make_predict(self):
+        """Make a predicting function."""
+        return self._choose(sigmoid_map, softmax_map)(
+            self.model.apply, self.state.params
+        )
+
 
 class StandardTrainer(ContinualTrainer):
     """Standard continual trainer which uses mini-batch gradient descent."""
 
     def update_state(self, xs, ys):
         """Update the training state."""
-        step = make_step(self.mutables['loss_fn'])
+        step = make_step(self.mutables['loss'])
         for key in random.split(
             random.PRNGKey(self.immutables['shuffle_seed']),
             num=self.immutables['n_epochs']
@@ -95,7 +110,7 @@ class SerialTrainer(ContinualTrainer):
         coreset_xs, coreset_ys = zarr_to_memmap(
             self.mutables['coreset'], xs_path, ys_path
         )
-        step = make_step(self.mutables['loss_fn'])
+        step = make_step(self.mutables['loss'])
         for key in random.split(
             random.PRNGKey(self.immutables['shuffle_seed']),
             num=self.immutables['n_epochs']
@@ -124,7 +139,7 @@ class ParallelTrainer(ContinualTrainer):
         coreset_xs, coreset_ys = zarr_to_memmap(
             self.mutables['coreset'], xs_path, ys_path
         )
-        step = make_step(self.mutables['loss_fn'])
+        step = make_step(self.mutables['loss'])
         n_batches = -(len(ys) // -self.immutables['draw_batch_size'])
         for key1, key2 in zip(
             random.split(

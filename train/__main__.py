@@ -36,7 +36,9 @@ def main():
     trainers = [
         (
             trainer['id'],
-            getattr(train, trainer['name'])(model, trainer['immutables'])
+            getattr(train, trainer['name'])(
+                model, trainer['immutables'], metadata
+            )
         ) for trainer in exp['trainers']
     ]
 

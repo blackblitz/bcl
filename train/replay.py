@@ -10,7 +10,7 @@ import zarr
 from dataops.array import pass_batches
 
 from .base import ParallelTrainer, SerialTrainer
-from .loss import reg, reg2
+from .loss import concat_loss, sigmoid_ce, softmax_ce
 
 
 class EmptyMixin:
@@ -96,10 +96,8 @@ class Joint(EmptyMixin, JointMixin, SerialTrainer):
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""
         return {
-            'loss_fn': reg(
-                self.immutables['precision'],
-                self.immutables['basic_loss'],
-                self.model.apply
+            'loss': self._choose(sigmoid_ce, softmax_ce)(
+                self.immutables['precision'], self.model.apply
             ),
             'coreset': self.init_coreset()
         }
@@ -115,10 +113,10 @@ class GDumb(EmptyMixin, GDumbMixin, ParallelTrainer):
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""
         return {
-            'loss_fn': reg2(
-                self.immutables['precision'],
-                self.immutables['basic_loss'],
-                self.model.apply
+            'loss': concat_loss(
+                self._choose(sigmoid_ce, softmax_ce)(
+                    self.immutables['precision'], self.model.apply
+                )
             ),
             'coreset': self.init_coreset()
         }

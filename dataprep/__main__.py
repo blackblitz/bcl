@@ -3,7 +3,7 @@
 import argparse
 from pathlib import Path
 
-from orbax.checkpoint.test_utils import erase_and_create_empty
+import orbax.checkpoint as ocp
 
 from .toy import sinusoid  # noqa: F401
 from .split import (  # noqa: F401
@@ -25,8 +25,8 @@ def main():
 
     path = Path('data') / args.name
     path.mkdir(parents=True, exist_ok=True)
-    erase_and_create_empty(path)
-    task_sequence = globals()[args.name](validation=args.validation)
+    ocp.test_utils.erase_and_create_empty(path)
+    task_sequence, metadata = globals()[args.name](validation=args.validation)
     for split, dataset_sequence in task_sequence.items():
         for i, dataset in enumerate(dataset_sequence):
             write_npy(
@@ -35,7 +35,8 @@ def main():
                 path / f'{split}_ys_{i + 1}.npy'
             )
     with open(path / 'metadata.toml', 'w') as file:
-        file.write(f'length = {i + 1}')
+        for key, value in metadata.items():
+            file.write(f'{key} = {value}\n')
 
 
 if __name__ == '__main__':
