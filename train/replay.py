@@ -9,7 +9,7 @@ import zarr
 
 from dataops.array import pass_batches
 
-from .base import get_pass_size, ParallelTrainer, SerialTrainer
+from .base import ParallelTrainer, SerialTrainer
 from .loss import concat_loss, sigmoid_ce, softmax_ce
 
 
@@ -22,7 +22,7 @@ class EmptyMixin:
         erase_and_create_empty(path)
         group = zarr.open(path, mode='a')
         group['xs'] = np.empty(
-            (0, *self.immutables['input_shape']),
+            (0, *self.metadata['input_shape']),
             dtype=np.float32
         )
         group['ys'] = np.empty((0,), dtype=np.uint8)
@@ -37,16 +37,15 @@ class NoiseMixin:
         path = Path('coreset.zarr').resolve()
         erase_and_create_empty(path)
         group = zarr.open(path, mode='a')
+        key1, key2 = random.split(self.precomputed['keys']['init_coreset'])
         group['xs'] = np.asarray(random.uniform(
-            random.PRNGKey(self.immutables['init_coreset_seed']),
-            shape=(
+            key1, shape=(
                 self.immutables['coreset_size'],
-                *self.immutables['input_shape']
+                *self.metadata['input_shape']
             )
         ))
         group['ys'] = np.asarray(random.choice(
-            random.PRNGKey(self.immutables['init_coreset_seed']),
-            self.immutables['output_size'],
+            key2, len(self.metadata['classes']),
             shape=(self.immutables['coreset_size'],)
         ))
         return group
@@ -58,7 +57,7 @@ class JointMixin:
     def update_coreset(self, xs, ys):
         """Update the coreset."""
         for xs_batch, ys_batch in pass_batches(
-            self.mutables['pass_size'], xs, ys
+            self.precomputed['pass_size'], xs, ys
         ):
             self.mutables['coreset']['xs'].append(xs_batch)
             self.mutables['coreset']['ys'].append(ys_batch)
@@ -78,7 +77,7 @@ class GDumbMixin:
                 self.mutables['coreset']['ys'].append(np.expand_dims(y, 0))
             else:
                 key1, key2 = random.split(
-                    random.PRNGKey(self.immutables['update_coreset_seed'])
+                    self.precomputed['keys']['update_coreset']
                 )
                 ys = self.mutables['coreset']['ys'][:]
                 count = np.bincount(ys)
@@ -92,6 +91,11 @@ class GDumbMixin:
 
 class Joint(EmptyMixin, JointMixin, SerialTrainer):
     """Joint training."""
+    def precompute(self):
+        """Precompute."""
+        return super().precompute() | self._make_keys(
+            ['init_state', 'update_state']
+        )
 
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""
@@ -99,7 +103,6 @@ class Joint(EmptyMixin, JointMixin, SerialTrainer):
             'loss': self._choose(sigmoid_ce, softmax_ce)(
                 self.immutables['precision'], self.model.apply
             ),
-            'pass_size': get_pass_size(self.metadata['input_shape']),
             'coreset': self.init_coreset()
         }
 
@@ -110,6 +113,11 @@ class Joint(EmptyMixin, JointMixin, SerialTrainer):
 
 class GDumb(EmptyMixin, GDumbMixin, ParallelTrainer):
     """GDumb."""
+    def precompute(self):
+        """Precompute."""
+        return super().precompute() | self._make_keys(
+            ['init_state', 'update_state', 'update_coreset']
+        )
 
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""
@@ -117,7 +125,6 @@ class GDumb(EmptyMixin, GDumbMixin, ParallelTrainer):
             'loss': concat_loss(self._choose(sigmoid_ce, softmax_ce)(
                 self.immutables['precision'], self.model.apply
             )),
-            'pass_size': get_pass_size(self.metadata['input_shape']),
             'coreset': self.init_coreset()
         }
 

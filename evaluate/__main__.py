@@ -1,6 +1,7 @@
 """Evaluation script."""
 
 import argparse
+from itertools import islice
 from pathlib import Path
 
 import orbax.checkpoint as ocp
@@ -8,7 +9,6 @@ import orbax.checkpoint as ocp
 from dataops.io import iter_tasks, read_toml
 import models
 import train
-from train.base import get_pass_size
 
 from .metrics import accuracy
 
@@ -43,7 +43,6 @@ def main():
     ]
 
     # restore checkpoint and evaluate
-    pass_size = get_pass_size(metadata['input_shape'])
     result = {}
     with ocp.StandardCheckpointer() as ckpter:
         for i, (trainer_id, trainer) in enumerate(trainers):
@@ -55,8 +54,8 @@ def main():
                 ))
                 predict = trainer.make_predict()
                 result[trainer_id].append([
-                    accuracy(pass_size, predict, xs, ys)
-                    for xs, ys in iter_tasks(ts_path, 'testing')
+                    accuracy(trainer.precomputed['pass_size'], predict, xs, ys)
+                    for xs, ys in islice(iter_tasks(ts_path, 'testing'), j + 1)
                 ])
     print(result)
 

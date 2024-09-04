@@ -17,13 +17,6 @@ from .predict import sigmoid_map, softmax_map
 from .init import standard_init
 
 
-def get_pass_size(input_shape):
-    """Calculate the batch size for passing through a dataset."""
-    return 2 ** math.floor(
-        20 * math.log2(2) - 2 - sum(map(math.log2, input_shape))
-    )
-
-
 def make_step(loss):
     """Make a gradient-descent step function for a loss function."""
     return jit(
@@ -41,6 +34,7 @@ class ContinualTrainer(ABC):
         self.model = model
         self.immutables = immutables
         self.metadata = metadata
+        self.precomputed = self.precompute()
         self.state = self.init_state()
         self.mutables = self.init_mutables()
 
@@ -53,12 +47,33 @@ class ContinualTrainer(ABC):
         else:
             raise ValueError('number of classes must be at least 2')
 
+    def _make_keys(self, names):
+        """Make keys for pseudo-random number generation."""
+        return {
+            'keys': dict(zip(
+                names,
+                random.split(random.PRNGKey(
+                    self.immutables['seed']), num=len(names)
+                )
+            ))
+        }
+
+
+    def precompute(self):
+        """Precompute."""
+        return {
+            'pass_size': 2 ** math.floor(
+                20 * math.log2(2)
+                - 2 - sum(map(math.log2, self.metadata['input_shape']))
+            )
+        }
+
     def init_state(self):
         """Initialize the state."""
         return TrainState.create(
             apply_fn=self.model.apply,
             params=standard_init(
-                random.PRNGKey(self.immutables['init_state_seed']),
+                self.precomputed['keys']['init_state'],
                 self.model, self.metadata['input_shape']
             ),
             tx=adam(self.immutables['lr'])
@@ -69,8 +84,7 @@ class ContinualTrainer(ABC):
         return {
             'loss': self._choose(sigmoid_ce, softmax_ce)(
                 self.immutables['precision'], self.model.apply
-            ),
-            'pass_size': get_pass_size(self.metadata['input_shape'])
+            )
         }
 
     @abstractmethod
@@ -100,7 +114,7 @@ class StandardTrainer(ContinualTrainer):
         """Update the training state."""
         step = make_step(self.mutables['loss'])
         for key in random.split(
-            random.PRNGKey(self.immutables['shuffle_seed']),
+            self.precomputed['keys']['update_state'],
             num=self.immutables['n_epochs']
         ):
             for xs_batch, ys_batch in draw_batches(
@@ -121,7 +135,7 @@ class SerialTrainer(ContinualTrainer):
         )
         step = make_step(self.mutables['loss'])
         for key in random.split(
-            random.PRNGKey(self.immutables['shuffle_seed']),
+            self.precomputed['keys']['update_state'],
             num=self.immutables['n_epochs']
         ):
             for xs_batch, ys_batch in chain(
@@ -147,40 +161,46 @@ class ParallelTrainer(ContinualTrainer):
             self.mutables['coreset'], xs_path, ys_path
         )
         step = make_step(self.mutables['loss'])
-        n_batches = -(len(ys) // -self.immutables['batch_size'])
-        for key1, key2 in zip(
-            random.split(
-                random.PRNGKey(self.immutables['shuffle_seed']),
-                num=self.immutables['n_epochs']
-            ),
-            random.split(
-                random.PRNGKey(self.immutables['choice_seed']),
-                num=self.immutables['n_epochs']
-            )
+        for key in random.split(
+            self.precomputed['keys']['update_state'],
+            num=self.immutables['n_epochs']
         ):
-            for (xs_batch, ys_batch), key in zip(
-                draw_batches(key1, self.immutables['batch_size'], xs, ys),
-                random.split(key2, num=n_batches)
-            ):
-                indices = (
-                    random.choice(
-                        key, len(coreset_ys),
+            if len(coreset_ys) == 0:
+                for xs_batch, ys_batch in draw_batches(
+                    key, self.immutables['batch_size'], xs, ys
+                ):
+                    self.state = step(
+                        self.state,
+                        xs_batch, ys_batch,
+                        coreset_xs[[]], coreset_ys[[]]
+                    )
+            else:
+                n_batches = -(len(ys) // -self.immutables['batch_size'])
+                keys = random.split(key, num=n_batches + 1)
+                for i, (xs_batch, ys_batch) in enumerate(draw_batches(
+                    keys[0], self.immutables['batch_size'], xs, ys
+                ), start=1):
+                    indices = random.choice(
+                        keys[i], len(coreset_ys),
                         shape=(self.immutables['batch_size'],),
                         replace=False
-                    ) if len(coreset_ys) > 0
-                    else []
-                )
-                self.state = step(
-                    self.state,
-                    xs_batch, ys_batch,
-                    coreset_xs[indices], coreset_ys[indices]
-                )
+                    )
+                    self.state = step(
+                        self.state,
+                        xs_batch, ys_batch,
+                        coreset_xs[indices], coreset_ys[indices]
+                    )
         xs_path.unlink()
         ys_path.unlink()
 
 
 class Finetuning(StandardTrainer):
     """Fine-tuning for continual learning."""
+    def precompute(self):
+        """Precompute."""
+        return super().precompute() | self._make_keys(
+            ['init_state', 'update_state']
+        )
 
     def update_mutables(self, xs, ys):
         """Update the mutable hyperparameters."""

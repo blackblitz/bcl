@@ -1,9 +1,6 @@
 [task_sequence]
 name = "sinusoid"
 
-[dataset_sequence.spec]
-validation = false
-
 [model]
 name = "FCNN3"
 
@@ -17,59 +14,34 @@ id = "joint"
 name = "Joint"
 
 [trainers.immutables]
-basic_loss = "sigmoid"
 batch_size = 32
-init_coreset = false
-init_state_seed = 1337
-input_shape = [ 2 ]
 lr = 0.01
 n_epochs = 1000
 precision = 0.01
-shuffle_seed = 1337
-
-[trainers.predictor]
-name = "SigmoidMAPPredictor"
+seed = 1337
 
 [[trainers]]
 id = "finetuning"
 name = "Finetuning"
 
 [trainers.immutables]
-basic_loss = "sigmoid"
 batch_size = 32
-init_coreset = false
-init_state_seed = 1337
-input_shape = [ 2 ]
 lr = 0.01
 n_epochs = 1000
 precision = 0.01
-shuffle_seed = 1337
-
-[trainers.predictor]
-name = "SigmoidMAPPredictor"
+seed = 1337
 
 [[trainers]]
 id = "gdumb"
 name = "GDumb"
 
 [trainers.immutables]
-basic_loss = "sigmoid"
-choice_seed = 1337
-coreset_selection_seed = 1337
 coreset_size = 40
 batch_size = 32
-init_coreset = false
-init_state_seed = 1337
-input_shape = [ 2 ]
 lr = 0.01
 n_epochs = 1000
 precision = 0.01
-sample_seed = 1337
-shuffle_seed = 1337
-update_coreset_seed = 1337
-
-[trainers.predictor]
-name = "SigmoidMAPPredictor"
+seed = 1337
 
 # [[trainers]]
 # id = "gvcl"
