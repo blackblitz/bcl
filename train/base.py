@@ -2,6 +2,7 @@
 
 from abc import ABC, abstractmethod
 from itertools import chain
+import math
 from pathlib import Path
 
 from flax.training.train_state import TrainState
@@ -14,6 +15,13 @@ from dataops.io import zarr_to_memmap
 from .loss import sigmoid_ce, softmax_ce
 from .predict import sigmoid_map, softmax_map
 from .init import standard_init
+
+
+def get_pass_size(input_shape):
+    """Calculate the batch size for passing through a dataset."""
+    return 2 ** math.floor(
+        20 * math.log2(2) - 2 - sum(map(math.log2, input_shape))
+    )
 
 
 def make_step(loss):
@@ -51,7 +59,7 @@ class ContinualTrainer(ABC):
             apply_fn=self.model.apply,
             params=standard_init(
                 random.PRNGKey(self.immutables['init_state_seed']),
-                self.model, self.immutables['input_shape']
+                self.model, self.metadata['input_shape']
             ),
             tx=adam(self.immutables['lr'])
         )
@@ -61,7 +69,8 @@ class ContinualTrainer(ABC):
         return {
             'loss': self._choose(sigmoid_ce, softmax_ce)(
                 self.immutables['precision'], self.model.apply
-            )
+            ),
+            'pass_size': get_pass_size(self.metadata['input_shape'])
         }
 
     @abstractmethod
@@ -95,7 +104,7 @@ class StandardTrainer(ContinualTrainer):
             num=self.immutables['n_epochs']
         ):
             for xs_batch, ys_batch in draw_batches(
-                key, self.immutables['draw_batch_size'], xs, ys
+                key, self.immutables['batch_size'], xs, ys
             ):
                 self.state = step(self.state, xs_batch, ys_batch)
 
@@ -116,11 +125,9 @@ class SerialTrainer(ContinualTrainer):
             num=self.immutables['n_epochs']
         ):
             for xs_batch, ys_batch in chain(
+                draw_batches(key, self.immutables['batch_size'], xs, ys),
                 draw_batches(
-                    key, self.immutables['draw_batch_size'], xs, ys
-                ),
-                draw_batches(
-                    key, self.immutables['draw_batch_size'],
+                    key, self.immutables['batch_size'],
                     coreset_xs, coreset_ys
                 )
             ):
@@ -140,7 +147,7 @@ class ParallelTrainer(ContinualTrainer):
             self.mutables['coreset'], xs_path, ys_path
         )
         step = make_step(self.mutables['loss'])
-        n_batches = -(len(ys) // -self.immutables['draw_batch_size'])
+        n_batches = -(len(ys) // -self.immutables['batch_size'])
         for key1, key2 in zip(
             random.split(
                 random.PRNGKey(self.immutables['shuffle_seed']),
@@ -152,15 +159,13 @@ class ParallelTrainer(ContinualTrainer):
             )
         ):
             for (xs_batch, ys_batch), key in zip(
-                draw_batches(
-                    key1, self.immutables['draw_batch_size'], xs, ys
-                ),
+                draw_batches(key1, self.immutables['batch_size'], xs, ys),
                 random.split(key2, num=n_batches)
             ):
                 indices = (
                     random.choice(
                         key, len(coreset_ys),
-                        shape=(self.immutables['draw_batch_size'],),
+                        shape=(self.immutables['batch_size'],),
                         replace=False
                     ) if len(coreset_ys) > 0
                     else []

@@ -9,7 +9,7 @@ import zarr
 
 from dataops.array import pass_batches
 
-from .base import ParallelTrainer, SerialTrainer
+from .base import get_pass_size, ParallelTrainer, SerialTrainer
 from .loss import concat_loss, sigmoid_ce, softmax_ce
 
 
@@ -58,7 +58,7 @@ class JointMixin:
     def update_coreset(self, xs, ys):
         """Update the coreset."""
         for xs_batch, ys_batch in pass_batches(
-            self.immutables['pass_batch_size'], xs, ys
+            self.mutables['pass_size'], xs, ys
         ):
             self.mutables['coreset']['xs'].append(xs_batch)
             self.mutables['coreset']['ys'].append(ys_batch)
@@ -99,6 +99,7 @@ class Joint(EmptyMixin, JointMixin, SerialTrainer):
             'loss': self._choose(sigmoid_ce, softmax_ce)(
                 self.immutables['precision'], self.model.apply
             ),
+            'pass_size': get_pass_size(self.metadata['input_shape']),
             'coreset': self.init_coreset()
         }
 
@@ -113,11 +114,10 @@ class GDumb(EmptyMixin, GDumbMixin, ParallelTrainer):
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""
         return {
-            'loss': concat_loss(
-                self._choose(sigmoid_ce, softmax_ce)(
-                    self.immutables['precision'], self.model.apply
-                )
-            ),
+            'loss': concat_loss(self._choose(sigmoid_ce, softmax_ce)(
+                self.immutables['precision'], self.model.apply
+            )),
+            'pass_size': get_pass_size(self.metadata['input_shape']),
             'coreset': self.init_coreset()
         }
 

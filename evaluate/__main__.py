@@ -1,56 +1,65 @@
 """Evaluation script."""
 
 import argparse
-from functools import partial
 from pathlib import Path
-from importlib import import_module
-import tomllib
 
-import numpy as np
-from orbax.checkpoint import PyTreeCheckpointer
+import orbax.checkpoint as ocp
 
-from dataio.datasets import to_arrays
-from evaluate.metrics import accuracy
+from dataops.io import iter_tasks, read_toml
+import models
+import train
+from train.base import get_pass_size
 
-parser = argparse.ArgumentParser()
-parser.add_argument('experiment_id')
-args = parser.parse_args()
+from .metrics import accuracy
 
-path = Path('experiments') / args.experiment_id
-with open(path / 'spec.toml', 'rb') as file:
-    spec = tomllib.load(file)
 
-dataset_sequence = getattr(
-    import_module('dataio.dataset_sequences'),
-    spec['dataset_sequence']['name']
-)(**spec['dataset_sequence']['spec'])['testing']
-pass_batch_size = spec['dataset_sequence']['pass_batch_size']
-model = getattr(
-    import_module(spec['model']['module']),
-    spec['model']['name']
-)(**spec['model']['spec'])
-make_predictors = [
-    (
-        trainer['id'],
-        partial(
-            getattr(import_module(predictor['module']), predictor['name']),
-            apply=model.apply, **predictor.get('spec', {})
-        )
-    ) for trainer in spec['trainers']
-    for predictor in [trainer['predictor']]
-]
-ckpter = PyTreeCheckpointer()
-result = {}
-for i, (trainer_id, make_predictor) in enumerate(make_predictors):
-    result[trainer_id] = []
-    for j, (task_id, task) in enumerate(enumerate(dataset_sequence, start=1)):
-        params = ckpter.restore(
-            path.resolve() / f'ckpt/{trainer_id}_{task_id}'
-        )
-        predictor = make_predictor(params=params)
-        acc = []
-        for k in range(j + 1):
-            xs, ys = to_arrays(dataset_sequence[k])
-            acc.append(accuracy(pass_batch_size, predictor, xs, ys))
-        result[trainer_id].append(acc)
-print(result)
+def main():
+    """Run the main script."""
+    # parse arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('experiment_id', help='experiment ID')
+    args = parser.parse_args()
+
+    # read experiment specifications
+    exp_path = Path('experiments').resolve()
+    exp = read_toml(exp_path / f'{args.experiment_id}.toml')
+
+    # read metadata
+    ts_path = Path('data').resolve() / exp['task_sequence']['name']
+    metadata = read_toml(ts_path / 'metadata.toml')
+
+    # set checkpoint path
+    ckpt_path = Path('results').resolve() / args.experiment_id / 'ckpt'
+
+    # create model and trainers
+    model = getattr(models, exp['model']['name'])(**exp['model']['spec'])
+    trainers = [
+        (
+            trainer['id'],
+            getattr(train, trainer['name'])(
+                model, trainer['immutables'], metadata
+            )
+        ) for trainer in exp['trainers']
+    ]
+
+    # restore checkpoint and evaluate
+    pass_size = get_pass_size(metadata['input_shape'])
+    result = {}
+    with ocp.StandardCheckpointer() as ckpter:
+        for i, (trainer_id, trainer) in enumerate(trainers):
+            result[trainer_id] = []
+            for j in range(metadata['length']):
+                trainer.state = trainer.state.replace(params=ckpter.restore(
+                    ckpt_path / f'{trainer_id}_{j + 1}',
+                    target=trainer.init_state().params
+                ))
+                predict = trainer.make_predict()
+                result[trainer_id].append([
+                    accuracy(pass_size, predict, xs, ys)
+                    for xs, ys in iter_tasks(ts_path, 'testing')
+                ])
+    print(result)
+
+
+if __name__ == '__main__':
+    main()

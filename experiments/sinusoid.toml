@@ -18,13 +18,12 @@ name = "Joint"
 
 [trainers.immutables]
 basic_loss = "sigmoid"
-draw_batch_size = 32
+batch_size = 32
 init_coreset = false
 init_state_seed = 1337
 input_shape = [ 2 ]
 lr = 0.01
 n_epochs = 1000
-pass_batch_size = 128
 precision = 0.01
 shuffle_seed = 1337
 
@@ -37,7 +36,7 @@ name = "Finetuning"
 
 [trainers.immutables]
 basic_loss = "sigmoid"
-draw_batch_size = 32
+batch_size = 32
 init_coreset = false
 init_state_seed = 1337
 input_shape = [ 2 ]
@@ -58,7 +57,7 @@ basic_loss = "sigmoid"
 choice_seed = 1337
 coreset_selection_seed = 1337
 coreset_size = 40
-draw_batch_size = 32
+batch_size = 32
 init_coreset = false
 init_state_seed = 1337
 input_shape = [ 2 ]

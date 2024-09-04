@@ -1,11 +1,11 @@
 """Metrics."""
 
-from dataio import pass_batches
+from dataops.array import pass_batches
 
 
-def accuracy(batch_size, predictor, xs, ys):
+def accuracy(pass_size, predict, xs, ys):
     """Accuracy."""
     correct = 0
-    for xs_batch, ys_batch in pass_batches(batch_size, xs, ys):
-        correct += (predictor.predict(xs_batch) == ys_batch).sum()
+    for xs_batch, ys_batch in pass_batches(pass_size, xs, ys):
+        correct += (predict(xs_batch) == ys_batch).sum()
     return correct.item() / len(ys)
