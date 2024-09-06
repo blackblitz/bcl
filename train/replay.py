@@ -3,13 +3,13 @@
 from pathlib import Path
 
 import numpy as np
-from jax import random
+from jax import jit, random
 from orbax.checkpoint.test_utils import erase_and_create_empty
 import zarr
 
 from dataops.array import pass_batches
 
-from .base import ParallelTrainer, SerialTrainer
+from .base import MAPMixin, ParallelTrainer, SerialTrainer
 from .loss import concat_loss, sigmoid_ce, softmax_ce
 
 
@@ -89,7 +89,7 @@ class GDumbMixin:
                 self.mutables['coreset']['ys'][index] = y
 
 
-class Joint(EmptyMixin, JointMixin, SerialTrainer):
+class Joint(MAPMixin, EmptyMixin, JointMixin, SerialTrainer):
     """Joint training."""
     def precompute(self):
         """Precompute."""
@@ -99,19 +99,22 @@ class Joint(EmptyMixin, JointMixin, SerialTrainer):
 
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""
-        return {
-            'loss': self._choose(sigmoid_ce, softmax_ce)(
+        return {'coreset': self.init_coreset()}
+
+    def update_loss(self, xs, ys):
+        """Update the loss function."""
+        self.loss = jit(
+            self._choose(sigmoid_ce, softmax_ce)(
                 self.immutables['precision'], self.model.apply
-            ),
-            'coreset': self.init_coreset()
-        }
+            )
+        )
 
     def update_mutables(self, xs, ys):
         """Update the coreset."""
         self.update_coreset(xs, ys)
 
 
-class GDumb(EmptyMixin, GDumbMixin, ParallelTrainer):
+class GDumb(MAPMixin, EmptyMixin, GDumbMixin, ParallelTrainer):
     """GDumb."""
     def precompute(self):
         """Precompute."""
@@ -121,12 +124,15 @@ class GDumb(EmptyMixin, GDumbMixin, ParallelTrainer):
 
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""
-        return {
-            'loss': concat_loss(self._choose(sigmoid_ce, softmax_ce)(
+        return {'coreset': self.init_coreset()}
+
+    def update_loss(self, xs, ys):
+        """Update the loss function."""
+        self.loss = jit(
+            concat_loss(self._choose(sigmoid_ce, softmax_ce)(
                 self.immutables['precision'], self.model.apply
-            )),
-            'coreset': self.init_coreset()
-        }
+            ))
+        )
 
     def update_mutables(self, xs, ys):
         """Update the hyperparameters."""

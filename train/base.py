@@ -26,6 +26,27 @@ def make_step(loss):
     )
 
 
+class MAPMixin:
+    """Mixin for MAP inference."""
+
+    def init_state(self):
+        """Initialize the state."""
+        return TrainState.create(
+            apply_fn=self.model.apply,
+            params=standard_init(
+                self.precomputed['keys']['init_state'],
+                self.model, self.metadata['input_shape']
+            ),
+            tx=adam(self.immutables['lr'])
+        )
+
+    def make_predict(self):
+        """Make a predicting function."""
+        return self._choose(sigmoid_map, softmax_map)(
+            self.model.apply, self.state.params
+        )
+
+
 class ContinualTrainer(ABC):
     """Abstract base class for continual learning."""
 
@@ -37,6 +58,7 @@ class ContinualTrainer(ABC):
         self.precomputed = self.precompute()
         self.state = self.init_state()
         self.mutables = self.init_mutables()
+        self.loss = None
 
     def _choose(self, option1, option2):
         """Choose an option based on binary or multi-class classification."""
@@ -68,24 +90,17 @@ class ContinualTrainer(ABC):
             )
         }
 
+    @abstractmethod
     def init_state(self):
         """Initialize the state."""
-        return TrainState.create(
-            apply_fn=self.model.apply,
-            params=standard_init(
-                self.precomputed['keys']['init_state'],
-                self.model, self.metadata['input_shape']
-            ),
-            tx=adam(self.immutables['lr'])
-        )
 
+    @abstractmethod
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""
-        return {
-            'loss': self._choose(sigmoid_ce, softmax_ce)(
-                self.immutables['precision'], self.model.apply
-            )
-        }
+
+    @abstractmethod
+    def update_loss(self, xs, ys):
+        """Update the loss function."""
 
     @abstractmethod
     def update_state(self, xs, ys):
@@ -97,14 +112,13 @@ class ContinualTrainer(ABC):
 
     def train(self, xs, ys):
         """Train with a dataset."""
+        self.update_loss(xs, ys)
         self.update_state(xs, ys)
         self.update_mutables(xs, ys)
 
+    @abstractmethod
     def make_predict(self):
         """Make a predicting function."""
-        return self._choose(sigmoid_map, softmax_map)(
-            self.model.apply, self.state.params
-        )
 
 
 class StandardTrainer(ContinualTrainer):
@@ -112,7 +126,7 @@ class StandardTrainer(ContinualTrainer):
 
     def update_state(self, xs, ys):
         """Update the training state."""
-        step = make_step(self.mutables['loss'])
+        step = make_step(self.loss)
         for key in random.split(
             self.precomputed['keys']['update_state'],
             num=self.immutables['n_epochs']
@@ -133,7 +147,7 @@ class SerialTrainer(ContinualTrainer):
         coreset_xs, coreset_ys = zarr_to_memmap(
             self.mutables['coreset'], xs_path, ys_path
         )
-        step = make_step(self.mutables['loss'])
+        step = make_step(self.loss)
         for key in random.split(
             self.precomputed['keys']['update_state'],
             num=self.immutables['n_epochs']
@@ -160,7 +174,7 @@ class ParallelTrainer(ContinualTrainer):
         coreset_xs, coreset_ys = zarr_to_memmap(
             self.mutables['coreset'], xs_path, ys_path
         )
-        step = make_step(self.mutables['loss'])
+        step = make_step(self.loss)
         for key in random.split(
             self.precomputed['keys']['update_state'],
             num=self.immutables['n_epochs']
@@ -194,12 +208,24 @@ class ParallelTrainer(ContinualTrainer):
         ys_path.unlink()
 
 
-class Finetuning(StandardTrainer):
+class Finetuning(MAPMixin, StandardTrainer):
     """Fine-tuning for continual learning."""
     def precompute(self):
         """Precompute."""
         return super().precompute() | self._make_keys(
             ['init_state', 'update_state']
+        )
+
+    def init_mutables(self):
+        """Initialize the mutable hyperparameters."""
+        return {}
+
+    def update_loss(self, xs, ys):
+        """Update the loss function."""
+        self.loss = jit(
+            self._choose(sigmoid_ce, softmax_ce)(
+                self.immutables['precision'], self.model.apply
+            )
         )
 
     def update_mutables(self, xs, ys):

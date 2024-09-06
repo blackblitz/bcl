@@ -2,18 +2,12 @@
 
 from .base import Finetuning
 from .replay import Joint, GDumb
-# from .svi import (
-#     GaussianVCL, GaussianMixtureVCL,
-#     BalancedRandomCoresetGaussianSFSVI,
-#     BalancedRandomCoresetGaussianMixtureSFSVI
-# )
+from .svi import GVCL, GMVCL
 
 __all__ = [
     'Finetuning',
     'Joint',
     'GDumb',
-    # 'GaussianVCL',
-    # 'GaussianMixtureVCL',
-    # 'BalancedRandomCoresetGaussianSFSVI',
-    # 'BalancedRandomCoresetGaussianMixtureSFSVI'
+    'GVCL',
+    'GMVCL'
 ]

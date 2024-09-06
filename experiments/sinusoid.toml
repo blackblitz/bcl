@@ -43,57 +43,32 @@ n_epochs = 1000
 precision = 0.01
 seed = 1337
 
-# [[trainers]]
-# id = "gvcl"
-# name = "GaussianVCL"
-# 
-# [trainers.immutables]
-# basic_loss = "sigmoid"
-# beta = 1.0
-# draw_batch_size = 32
-# init_coreset = false
-# init_state_seed = 1337
-# input_shape = [ 2 ]
-# lr = 0.01
-# n_epochs = 1000
-# precision = 0.01
-# sample_size = 100
-# sample_seed = 1337
-# shuffle_seed = 1337
-# 
-# [trainers.predictor]
-# name = "SigmoidGVIBMAPredictor"
-# 
-# [trainers.predictor.spec]
-# sample_seed = 1337
-# sample_size = 100
-# 
-# [[trainers]]
-# id = "gmvcl"
-# name = "GaussianMixtureVCL"
-# 
-# [trainers.immutables]
-# basic_loss = "sigmoid"
-# beta = 1.0
-# draw_batch_size = 32
-# init_coreset = false
-# init_state_seed = 1337
-# input_shape = [ 2 ]
-# lr = 0.01
-# n_comp = 3
-# n_epochs = 1000
-# precision = 0.01
-# sample_size = 100
-# sample_seed = 1337
-# shuffle_seed = 1337
-# 
-# [trainers.predictor]
-# name = "SigmoidGMVIBMAPredictor"
-# 
-# [trainers.predictor.spec]
-# sample_seed = 1337
-# sample_size = 100
-# 
+
+[[trainers]]
+id = "gvcl"
+name = "GVCL"
+
+[trainers.immutables]
+batch_size = 32
+lr = 0.01
+n_epochs = 1000
+precision = 0.01
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "gmvcl"
+name = "GMVCL"
+
+[trainers.immutables]
+batch_size = 32
+lr = 0.01
+n_comp = 3
+n_epochs = 1000
+precision = 0.01
+sample_size = 100
+seed = 1337
+
 # [[trainers]]
 # id = "gsfsvi"
 # name = "BalancedRandomCoresetGaussianSFSVI"
