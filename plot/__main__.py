@@ -117,7 +117,6 @@ def main():
 
     img_path = Path('results').resolve() / args.experiment_id
     img_path.mkdir(parents=True, exist_ok=True)
-    ocp.test_utils.erase_and_create_empty(img_path)
     fig.savefig(img_path / 'plot.png')
 
 

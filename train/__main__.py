@@ -36,15 +36,17 @@ def main():
     trainers = [
         (
             trainer['id'],
-            getattr(train, trainer['name'])(
-                model, trainer['immutables'], metadata
-            )
+            trainer['name'],
+            trainer['immutables']
         ) for trainer in exp['trainers']
     ]
 
     # train and checkpoint
     with ocp.StandardCheckpointer() as ckpter:
-        for trainer_id, trainer in tqdm(trainers, leave=False, unit='trainer'):
+        for trainer_id, name, immutables in tqdm(
+            trainers, leave=False, unit='trainer'
+        ):
+            trainer = getattr(train, name)(model, immutables, metadata)
             for j, (xs, ys) in enumerate(
                 tqdm(
                     iter_tasks(ts_path, 'training'),

@@ -38,7 +38,7 @@ def sinusoid(validation=False):
         [0.24, 0.05],
         [0.05, 0.22]
     ])
-    size = 20
+    size = 2000
     keys = random.split(random.PRNGKey(seed), num=6)
     samples = [
         np.asarray(random.normal(key, shape=(size, 2)))

@@ -15,8 +15,8 @@ name = "Joint"
 
 [trainers.immutables]
 batch_size = 32
-lr = 0.01
-n_epochs = 1000
+lr = 0.001
+n_epochs = 100
 precision = 0.01
 seed = 1337
 
@@ -26,106 +26,58 @@ name = "Finetuning"
 
 [trainers.immutables]
 batch_size = 32
-lr = 0.01
-n_epochs = 1000
+lr = 0.001
+n_epochs = 100
 precision = 0.01
-seed = 1337
-
-[[trainers]]
-id = "gdumb"
-name = "GDumb"
-
-[trainers.immutables]
-coreset_size = 40
-batch_size = 32
-lr = 0.01
-n_epochs = 1000
-precision = 0.01
-seed = 1337
-
-
-[[trainers]]
-id = "gvcl"
-name = "GVCL"
-
-[trainers.immutables]
-batch_size = 32
-lr = 0.01
-n_epochs = 1000
-precision = 0.01
-sample_size = 100
-seed = 1337
-
-[[trainers]]
-id = "gmvcl"
-name = "GMVCL"
-
-[trainers.immutables]
-batch_size = 32
-lr = 0.01
-n_comp = 3
-n_epochs = 1000
-precision = 0.01
-sample_size = 100
 seed = 1337
 
 # [[trainers]]
-# id = "gsfsvi"
-# name = "BalancedRandomCoresetGaussianSFSVI"
+# id = "gdumb"
+# name = "GDumb"
 # 
 # [trainers.immutables]
-# basic_loss = "sigmoid"
-# beta = 1.0
-# coreset_selection_seed = 1337
-# coreset_size = 40
-# draw_batch_size = 32
-# init_coreset = true
-# init_coreset_seed = 1337
-# init_coreset_minval = -4
-# init_coreset_maxval = 4
-# init_state_seed = 1337
-# input_shape = [ 2 ]
+# coreset_size = 64
+# batch_size = 32
+# lr = 0.01
+# n_epochs = 1000
+# precision = 0.01
+# seed = 1337
+# 
+# [[trainers]]
+# id = "gvcl"
+# name = "GVCL"
+# 
+# [trainers.immutables]
+# batch_size = 32
 # lr = 0.01
 # n_epochs = 1000
 # precision = 0.01
 # sample_size = 100
-# sample_seed = 1337
-# shuffle_seed = 1337
-# 
-# [trainers.predictor]
-# name = "SigmoidGVIBMAPredictor"
-# 
-# [trainers.predictor.spec]
-# sample_seed = 1337
-# sample_size = 100
+# seed = 1337
 # 
 # [[trainers]]
-# id = "gmsfsvi"
-# name = "BalancedRandomCoresetGaussianMixtureSFSVI"
+# id = "gmvcl"
+# name = "GMVCL"
 # 
 # [trainers.immutables]
-# basic_loss = "sigmoid"
-# beta = 1.0
-# coreset_selection_seed = 1337
-# coreset_size = 40
-# draw_batch_size = 32
-# init_coreset = true
-# init_coreset_seed = 1337
-# init_coreset_minval = -4
-# init_coreset_maxval = 4
-# init_state_seed = 1337
-# input_shape = [ 2 ]
+# batch_size = 32
 # lr = 0.01
 # n_comp = 3
 # n_epochs = 1000
 # precision = 0.01
 # sample_size = 100
-# sample_seed = 1337
-# shuffle_seed = 1337
-# 
-# [trainers.predictor]
-# name = "SigmoidGMVIBMAPredictor"
-# 
-# [trainers.predictor.spec]
-# sample_seed = 1337
-# sample_size = 100
+# seed = 1337
+
+[[trainers]]
+id = "gsfsvi"
+name = "GSFSVI"
+
+[trainers.immutables]
+batch_size = 32
+beta = 1.0
+coreset_size = 256
+lr = 0.01
+n_epochs = 100
+precision = 0.001
+sample_size = 100
+seed = 1337

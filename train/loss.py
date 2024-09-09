@@ -118,8 +118,12 @@ def gfsvi_kldiv(params, prior, apply, xs):
     func_mean = apply({'params': mean}, xs)
     prior_func_mean = apply({'params': prior_mean}, xs)
     get_func_var = empirical_ntk(apply, (), (0, 1), 0)
-    func_var = get_func_var(xs, None, {'params': mean}, var)
-    prior_func_var = get_func_var(xs, None, {'params': prior_mean}, prior_var)
+    func_var = get_func_var(
+        xs, None, {'params': mean}, {'params': var}
+    )
+    prior_func_var = get_func_var(
+        xs, None, {'params': prior_mean}, {'params': prior_var}
+    )
     return gauss_kldiv(func_mean, func_var, prior_func_mean, prior_func_var)
 
 
@@ -127,7 +131,7 @@ def gfsvi_vfe(base, sample, prior, beta, apply):
     """Return the variational free energy function for Gaussian FSVI."""
     def loss(params, xs1, ys1, xs2, ys2):
         return (
-            expected_loss(base, gauss_param(sample))(params, xs1, ys1)
+            expected_loss(base, gauss_param, sample)(params, xs1, ys1)
             + beta * gfsvi_kldiv(params, prior, apply, xs2)
         )
     

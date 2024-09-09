@@ -2,6 +2,7 @@
 
 import math
 
+import distrax
 from jax import random, tree_util, vmap
 from jax.nn import softmax, softplus
 import jax.numpy as jnp
@@ -31,10 +32,8 @@ def get_gauss_prior(precision, params):
 
 def gauss_kldiv(mean, var, prior_mean, prior_var):
     """Compute the KL divergence of diagonal Gaussian PDFs."""
-    return 0.5 * (
-        (mean - prior_mean) ** 2 / prior_var - 1
-        - jnp.log(var) + jnp.log(prior_var)
-        + jnp.logaddexp(var, -prior_var)
+    return distrax.Normal(mean, jnp.sqrt(var)).kl_divergence(
+        distrax.Normal(prior_mean, jnp.sqrt(prior_var))
     ).sum()
 
 

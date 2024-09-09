@@ -4,7 +4,6 @@ from pathlib import Path
 
 import numpy as np
 from jax import jit, random
-from orbax.checkpoint.test_utils import erase_and_create_empty
 import zarr
 
 from dataops.array import pass_batches
@@ -18,9 +17,7 @@ class EmptyMixin:
 
     def init_coreset(self):
         """Initialize the coreset."""
-        path = Path('coreset.zarr').resolve()
-        erase_and_create_empty(path)
-        group = zarr.open(path, mode='a')
+        group = zarr.open('coreset.zarr', mode='w')
         group['xs'] = np.empty(
             (0, *self.metadata['input_shape']),
             dtype=np.float32
@@ -34,15 +31,13 @@ class NoiseMixin:
 
     def init_coreset(self):
         """Initialize the coreset."""
-        path = Path('coreset.zarr').resolve()
-        erase_and_create_empty(path)
-        group = zarr.open(path, mode='a')
+        group = zarr.open('coreset.zarr', mode='w')
         key1, key2 = random.split(self.precomputed['keys']['init_coreset'])
         group['xs'] = np.asarray(random.uniform(
             key1, shape=(
                 self.immutables['coreset_size'],
                 *self.metadata['input_shape']
-            )
+            ), minval=-4, maxval=4
         ))
         group['ys'] = np.asarray(random.choice(
             key2, len(self.metadata['classes']),

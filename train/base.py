@@ -7,7 +7,7 @@ from pathlib import Path
 
 from flax.training.train_state import TrainState
 from jax import grad, jit, random
-from optax import adam
+from optax import adam, sgd
 
 from dataops.array import draw_batches
 from dataops.io import zarr_to_memmap
@@ -37,7 +37,7 @@ class MAPMixin:
                 self.precomputed['keys']['init_state'],
                 self.model, self.metadata['input_shape']
             ),
-            tx=adam(self.immutables['lr'])
+            tx=sgd(self.immutables['lr'])
         )
 
     def make_predict(self):
