@@ -48,7 +48,7 @@ def gauss_sample(key, n, target):
     }
 
 
-def gauss_gumbel_sample(key, n, m, target):
+def gsgauss_sample(key, n, m, target):
     """Generate Gaussian and Gumbel samples."""
     key1, key2 = random.split(key)
     return gauss_sample(
@@ -59,7 +59,7 @@ def gauss_gumbel_sample(key, n, m, target):
 
 
 def gauss_param(params, sample):
-    """Return a Gaussian parameterization function."""
+    """Parameterize a Gaussian sample."""
     return tree_util.tree_map(
         lambda m, r, zs: m + softplus(r) * zs,
         params['mean'], params['msd'], sample['gauss']
@@ -67,7 +67,7 @@ def gauss_param(params, sample):
 
 
 def gsgauss_param(params, sample):
-    """Return a Gumbel-softmax-Gaussian-mixture parameterization function."""
+    """Parameterize a Gumbel-softmax-Gaussian-mixture sample."""
     weight = softmax(1000 * (params['logit'] + sample['gumbel']))
     gauss = gauss_param(params, sample)
     return vmap(

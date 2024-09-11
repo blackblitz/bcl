@@ -15,52 +15,6 @@ from .probability import (
 from .replay import GDumbMixin, JointMixin, NoiseMixin
 
 
-class GaussianMixin:
-    """Mixin for Gaussian variation inference."""
-
-    def init_state(self):
-        """Initialize the state."""
-        return TrainState.create(
-            apply_fn=self.model.apply,
-            params=gvi_init(
-                self.precomputed['keys']['init_state'],
-                self.model, self.metadata['input_shape']
-            ),
-            tx=adam(self.immutables['lr'])
-        )
-
-    def make_predict(self):
-        """Make a predicting function."""
-        return self._choose(sigmoid_bma, softmax_bma)(
-            self.model.apply,
-            gauss_param(self.state.params, self.precomputed['sample'])
-        )
-
-
-class GaussianMixtureMixin:
-    """Mixin for Gaussian-mixture variation inference."""
-
-    def init_state(self):
-        """Initialize the state."""
-        return TrainState.create(
-            apply_fn=self.model.apply,
-            params=gmvi_init(
-                self.precomputed['keys']['init_state'],
-                self.immutables['n_comp'],
-                self.model,
-                self.metadata['input_shape']
-            ),
-            tx=adam(self.immutables['lr'])
-        )
-
-    def make_predict(self):
-        """Make a predicting function."""
-        return self._choose(sigmoid_bma, softmax_bma)(
-            self.model.apply,
-            gsgauss_param(self.state.params, self.precomputed['sample'])
-        )
-
-
 class GVCL(GaussianMixin, StandardTrainer):
     """Gaussian variational continual learning."""
 

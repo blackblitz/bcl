@@ -32,10 +32,10 @@ class Plotter:
         )
         self.gridxs = np.vstack([self.gridx1.ravel(), self.gridx2.ravel()]).T
 
-    def plot_pred(self, ax, predict):
+    def plot_pred(self, ax, predictor):
         """Plot prediction probabilities as pseudo-color plot."""
         gridy = np.reshape(
-            predict(self.gridxs, decide=False),
+            predictor(self.gridxs, decide=False),
             self.gridx1.shape if self.n_classes == 2
             else (*self.gridx1.shape, 3)
         )
@@ -91,9 +91,8 @@ def main():
     trainers = [
         (
             trainer['id'],
-            getattr(train, trainer['name'])(
-                model, trainer['immutables'], metadata
-            )
+            getattr(train, trainer['name']),
+            trainer['immutables']
         ) for trainer in exp['trainers']
     ]
 
@@ -102,18 +101,18 @@ def main():
         metadata['length'], len(trainers),
         figsize=(12, 6.75), sharex=True, sharey=True
     )
-    with ocp.StandardCheckpointer() as ckpter:
-        for i, (trainer_id, trainer) in enumerate(trainers):
-            for j, (xs, ys) in enumerate(iter_tasks(ts_path, 'training')):
-                trainer.state = trainer.state.replace(params=ckpter.restore(
-                    ckpt_path / f'{trainer_id}_{j + 1}',
-                    target=trainer.init_state().params
-                ))
-                plotter.plot_pred(axes[j, i], trainer.make_predict())
-                plotter.plot_dataset(axes[j, i], xs, ys)
-                if i == 0:
-                    axes[j, 0].set_ylabel(f'Task {j + 1}')
-            axes[-1, i].set_xlabel(trainer_id)
+    # with ocp.StandardCheckpointer() as ckpter:
+    for i, (trainer_id, trainer, immutables) in enumerate(trainers):
+        for j, (xs, ys) in enumerate(iter_tasks(ts_path, 'training')):
+            predictor = trainer.predictor.from_checkpoint(
+                model, ckpt_path / f'{trainer_id}_{j + 1}',
+                immutables, metadata
+            )
+            plotter.plot_pred(axes[j, i], predictor)
+            plotter.plot_dataset(axes[j, i], xs, ys)
+            if i == 0:
+                axes[j, 0].set_ylabel(f'Task {j + 1}')
+        axes[-1, i].set_xlabel(trainer_id)
 
     img_path = Path('results').resolve() / args.experiment_id
     img_path.mkdir(parents=True, exist_ok=True)

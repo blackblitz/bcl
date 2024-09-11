@@ -1,16 +1,22 @@
 """Base classes."""
 
 from abc import ABC, abstractmethod
+from enum import Enum, unique
 
 from flax.training.train_state import TrainState
 from jax import jit, random
+import jax.numpy as jnp
 from optax import sgd
 
 from dataops.io import get_pass_size
 
-from .loss import sigmoid_ce, softmax_ce
-from .predict import sigmoid_map, softmax_map
-from .state import map_init, regular_sgd
+
+@unique
+class NNType(Enum):
+    """Neural-network type."""
+
+    SIGMOID = 1
+    SOFTMAX = 2
 
 
 class ContinualTrainer(ABC):
@@ -25,15 +31,6 @@ class ContinualTrainer(ABC):
         self.state = self.init_state()
         self.mutables = self.init_mutables()
         self.loss = None
-
-    def _choose(self, option1, option2):
-        """Choose an option based on binary or multi-class classification."""
-        if len(self.metadata['classes']) == 2:
-            return option1
-        elif len(self.metadata['classes']) > 2:
-            return option2
-        else:
-            raise ValueError('number of classes must be at least 2')
 
     def _make_keys(self, names):
         """Make keys for pseudo-random number generation."""
@@ -78,63 +75,4 @@ class ContinualTrainer(ABC):
         self.update_state(xs, ys)
         self.update_mutables(xs, ys)
 
-    @abstractmethod
-    def make_predict(self):
-        """Make a predicting function."""
 
-
-class MAPMixin:
-    """Mixin for MAP inference."""
-
-    def init_state(self):
-        """Initialize the state."""
-        return TrainState.create(
-            apply_fn=self.model.apply,
-            params=map_init(
-                self.precomputed['keys']['init_state'],
-                self.model, self.metadata['input_shape']
-            ),
-            tx=sgd(self.immutables['lr'])
-        )
-
-    def make_predict(self):
-        """Make a predicting function."""
-        return self._choose(sigmoid_map, softmax_map)(
-            self.model.apply, self.state.params
-        )
-
-
-class Finetuning(MAPMixin, ContinualTrainer):
-    """Fine-tuning for continual learning."""
-
-    def precompute(self):
-        """Precompute."""
-        return super().precompute() | self._make_keys(
-            ['init_state', 'update_state']
-        )
-
-    def init_mutables(self):
-        """Initialize the mutable hyperparameters."""
-        return {}
-
-    def update_loss(self, xs, ys):
-        """Update the loss function."""
-        self.loss = jit(
-            self._choose(sigmoid_ce, softmax_ce)(
-                self.immutables['precision'], self.model.apply
-            )
-        )
-
-    def update_state(self, xs, ys):
-        """Update the training state."""
-        self.state = regular_sgd(
-            self.precomputed['keys']['update_state'],
-            self.immutables['n_epochs'],
-            self.immutables['batch_size'],
-            self.loss,
-            self.state,
-            xs, ys
-        )
-
-    def update_mutables(self, xs, ys):
-        """Update the mutable hyperparameters."""

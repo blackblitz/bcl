@@ -2,15 +2,44 @@
 
 from operator import add
 
-from jax import jit, tree_util, vmap
+from jax import tree_util, vmap
 from jax.nn import softmax
 import jax.numpy as jnp
 from jax.scipy.special import rel_entr
 import optax
 
 from . import tree
+from .base import NNType
 from .neural_tangents.extended import empirical_ntk
 from .probability import gauss_kldiv, gauss_param, get_mean_var, gsgauss_param
+
+
+def basic_loss(nntype, precision, apply):
+    """Return a basic loss function."""
+    nntype = NNType[nntype]
+    match nntype:
+        case NNType.SIGMOID:
+
+            def loss(params, xs, ys):
+                return (
+                    0.5 * precision * tree.dot(params, params)
+                    + optax.sigmoid_binary_cross_entropy(
+                        apply({'params': params}, xs)[:, 0], ys
+                    ).sum()
+                )
+
+            return loss
+        case NNType.SOFTMAX:
+
+            def loss(params, xs, ys):
+                return (
+                    0.5 * precision * tree.dot(params, params)
+                    + optax.softmax_cross_entropy_with_integer_labels(
+                        apply({'params': params}, xs), ys
+                    ).sum()
+                )
+
+            return loss
 
 
 def sigmoid_ce(precision, apply):
@@ -134,5 +163,5 @@ def gfsvi_vfe(base, sample, prior, beta, apply):
             expected_loss(base, gauss_param, sample)(params, xs1, ys1)
             + beta * gfsvi_kldiv(params, prior, apply, xs2)
         )
-    
+
     return loss

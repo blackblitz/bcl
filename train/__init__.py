@@ -1,7 +1,6 @@
 """Training package."""
 
-from .base import Finetuning
-from .replay import Joint, GDumb, TICReplay
+from .smi import Finetuning, Joint, GDumb, TICReplay
 # from .svi import GVCL, GMVCL, GSFSVI
 
 __all__ = [
