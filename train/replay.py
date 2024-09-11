@@ -1,100 +1,32 @@
 """Replay."""
 
-from pathlib import Path
+from jax import jit
 
-import numpy as np
-from jax import jit, random
-import zarr
-
-from dataops.array import pass_batches
-
-from .base import MAPMixin, ParallelTrainer, SerialTrainer
+from .base import ContinualTrainer, MAPMixin
+from .coreset import GDumbCoreset, JointCoreset, TaskIncrementalCoreset
 from .loss import concat_loss, sigmoid_ce, softmax_ce
+from .state import (
+    regular_sgd, serial_sgd, parallel_sgd_choice, parallel_sgd_shuffle_batch
+)
 
 
-class EmptyMixin:
-    """Mixin for initializing an empty coreset."""
-
-    def init_coreset(self):
-        """Initialize the coreset."""
-        group = zarr.open('coreset.zarr', mode='w')
-        group['xs'] = np.empty(
-            (0, *self.metadata['input_shape']),
-            dtype=np.float32
-        )
-        group['ys'] = np.empty((0,), dtype=np.uint8)
-        return group
-
-
-class NoiseMixin:
-    """Mixin for initializing a random coreset."""
-
-    def init_coreset(self):
-        """Initialize the coreset."""
-        group = zarr.open('coreset.zarr', mode='w')
-        key1, key2 = random.split(self.precomputed['keys']['init_coreset'])
-        group['xs'] = np.asarray(random.uniform(
-            key1, shape=(
-                self.immutables['coreset_size'],
-                *self.metadata['input_shape']
-            ), minval=-4, maxval=4
-        ))
-        group['ys'] = np.asarray(random.choice(
-            key2, len(self.metadata['classes']),
-            shape=(self.immutables['coreset_size'],)
-        ))
-        return group
-
-
-class JointMixin:
-    """Mixin for joint coreset update."""
-
-    def update_coreset(self, xs, ys):
-        """Update the coreset."""
-        for xs_batch, ys_batch in pass_batches(
-            self.precomputed['pass_size'], xs, ys
-        ):
-            self.mutables['coreset']['xs'].append(xs_batch)
-            self.mutables['coreset']['ys'].append(ys_batch)
-
-
-class GDumbMixin:
-    """Mixin for GDumb coreset selection."""
-
-    def update_coreset(self, xs, ys):
-        """Update the coreset."""
-        for x, y in zip(xs, ys):
-            if (
-                len(self.mutables['coreset']['ys'])
-                < self.immutables['coreset_size']
-            ):
-                self.mutables['coreset']['xs'].append(np.expand_dims(x, 0))
-                self.mutables['coreset']['ys'].append(np.expand_dims(y, 0))
-            else:
-                key1, key2 = random.split(
-                    self.precomputed['keys']['update_coreset']
-                )
-                ys = self.mutables['coreset']['ys'][:]
-                count = np.bincount(ys)
-                mode = random.choice(
-                    key1, (count == count.max()).nonzero()[0]
-                )
-                index = random.choice(key2, (ys == mode).nonzero()[0]).item()
-                self.mutables['coreset']['xs'][index] = x
-                self.mutables['coreset']['ys'][index] = y
-
-
-class Joint(MAPMixin, EmptyMixin, JointMixin, SerialTrainer):
+class Joint(MAPMixin, ContinualTrainer):
     """Joint training."""
+
     def precompute(self):
         """Precompute."""
         return super().precompute() | self._make_keys(
-            ['init_state', 'update_state']
+            ['init_state', 'update_state', 'update_coreset']
         )
 
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""
-        return {'coreset': self.init_coreset()}
+        return {
+            'coreset': JointCoreset(
+                'coreset.zarr', 'coreset.memmap',
+                self.immutables, self.metadata
+            )
+        }
 
     def update_loss(self, xs, ys):
         """Update the loss function."""
@@ -104,31 +36,79 @@ class Joint(MAPMixin, EmptyMixin, JointMixin, SerialTrainer):
             )
         )
 
+    def update_state(self, xs, ys):
+        """Update the training state."""
+        self.state = serial_sgd(
+            self.precomputed['keys']['update_state'],
+            self.immutables['n_epochs'],
+            self.immutables['batch_size'],
+            self.loss,
+            self.state,
+            xs, ys, self.mutables['coreset']
+        )
+
     def update_mutables(self, xs, ys):
         """Update the coreset."""
-        self.update_coreset(xs, ys)
+        self.mutables['coreset'].update(
+            self.precomputed['keys']['update_coreset'], xs, ys
+        )
 
 
-class GDumb(MAPMixin, EmptyMixin, GDumbMixin, ParallelTrainer):
-    """GDumb."""
+class ExactReplay(MAPMixin, ContinualTrainer):
+    """Exact replay."""
     def precompute(self):
         """Precompute."""
         return super().precompute() | self._make_keys(
             ['init_state', 'update_state', 'update_coreset']
         )
 
-    def init_mutables(self):
-        """Initialize the mutable hyperparameters."""
-        return {'coreset': self.init_coreset()}
-
     def update_loss(self, xs, ys):
         """Update the loss function."""
-        self.loss = jit(
-            concat_loss(self._choose(sigmoid_ce, softmax_ce)(
+        self.loss = jit(concat_loss(
+            self._choose(sigmoid_ce, softmax_ce)(
                 self.immutables['precision'], self.model.apply
-            ))
+            )
+        ))
+
+    def update_state(self, xs, ys):
+        """Update the training state."""
+        self.state = parallel_sgd_shuffle_batch(
+            self.precomputed['keys']['update_state'],
+            self.immutables['n_epochs'],
+            self.immutables['batch_size'],
+            self.loss,
+            self.state,
+            xs, ys, self.mutables['coreset']
         )
 
     def update_mutables(self, xs, ys):
-        """Update the hyperparameters."""
-        self.update_coreset(xs, ys)
+        """Update the coreset."""
+        self.mutables['coreset'].update(
+            self.precomputed['keys']['update_coreset'], xs, ys
+        )
+
+
+class GDumb(ExactReplay):
+    """GDumb."""
+
+    def init_mutables(self):
+        """Initialize the mutable hyperparameters."""
+        return {
+            'coreset': GDumbCoreset(
+                'coreset.zarr', 'coreset.memmap',
+                self.immutables, self.metadata
+            )
+        }
+
+
+class TICReplay(ExactReplay):
+    """GDumb."""
+
+    def init_mutables(self):
+        """Initialize the mutable hyperparameters."""
+        return {
+            'coreset': TaskIncrementalCoreset(
+                'coreset.zarr', 'coreset.memmap',
+                self.immutables, self.metadata
+            )
+        }

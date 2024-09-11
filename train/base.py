@@ -1,50 +1,16 @@
 """Base classes."""
 
 from abc import ABC, abstractmethod
-from itertools import chain
-import math
-from pathlib import Path
 
 from flax.training.train_state import TrainState
-from jax import grad, jit, random
-from optax import adam, sgd
+from jax import jit, random
+from optax import sgd
 
-from dataops.array import draw_batches
-from dataops.io import zarr_to_memmap
+from dataops.io import get_pass_size
 
 from .loss import sigmoid_ce, softmax_ce
 from .predict import sigmoid_map, softmax_map
-from .init import standard_init
-
-
-def make_step(loss):
-    """Make a gradient-descent step function for a loss function."""
-    return jit(
-        lambda state, *args: state.apply_gradients(
-            grads=grad(loss)(state.params, *args)
-        )
-    )
-
-
-class MAPMixin:
-    """Mixin for MAP inference."""
-
-    def init_state(self):
-        """Initialize the state."""
-        return TrainState.create(
-            apply_fn=self.model.apply,
-            params=standard_init(
-                self.precomputed['keys']['init_state'],
-                self.model, self.metadata['input_shape']
-            ),
-            tx=sgd(self.immutables['lr'])
-        )
-
-    def make_predict(self):
-        """Make a predicting function."""
-        return self._choose(sigmoid_map, softmax_map)(
-            self.model.apply, self.state.params
-        )
+from .state import map_init, regular_sgd
 
 
 class ContinualTrainer(ABC):
@@ -80,14 +46,10 @@ class ContinualTrainer(ABC):
             ))
         }
 
-
     def precompute(self):
         """Precompute."""
         return {
-            'pass_size': 2 ** math.floor(
-                20 * math.log2(2)
-                - 2 - sum(map(math.log2, self.metadata['input_shape']))
-            )
+            'pass_size': get_pass_size(self.metadata['input_shape'])
         }
 
     @abstractmethod
@@ -121,95 +83,30 @@ class ContinualTrainer(ABC):
         """Make a predicting function."""
 
 
-class StandardTrainer(ContinualTrainer):
-    """Standard continual trainer which uses mini-batch gradient descent."""
+class MAPMixin:
+    """Mixin for MAP inference."""
 
-    def update_state(self, xs, ys):
-        """Update the training state."""
-        step = make_step(self.loss)
-        for key in random.split(
-            self.precomputed['keys']['update_state'],
-            num=self.immutables['n_epochs']
-        ):
-            for xs_batch, ys_batch in draw_batches(
-                key, self.immutables['batch_size'], xs, ys
-            ):
-                self.state = step(self.state, xs_batch, ys_batch)
-
-
-class SerialTrainer(ContinualTrainer):
-    """Continual trainer which uses a coreset in series."""
-
-    def update_state(self, xs, ys):
-        """Update the training state."""
-        xs_path = Path('coreset_xs.npy')
-        ys_path = Path('coreset_ys.npy')
-        coreset_xs, coreset_ys = zarr_to_memmap(
-            self.mutables['coreset'], xs_path, ys_path
+    def init_state(self):
+        """Initialize the state."""
+        return TrainState.create(
+            apply_fn=self.model.apply,
+            params=map_init(
+                self.precomputed['keys']['init_state'],
+                self.model, self.metadata['input_shape']
+            ),
+            tx=sgd(self.immutables['lr'])
         )
-        step = make_step(self.loss)
-        for key in random.split(
-            self.precomputed['keys']['update_state'],
-            num=self.immutables['n_epochs']
-        ):
-            for xs_batch, ys_batch in chain(
-                draw_batches(key, self.immutables['batch_size'], xs, ys),
-                draw_batches(
-                    key, self.immutables['batch_size'],
-                    coreset_xs, coreset_ys
-                )
-            ):
-                self.state = step(self.state, xs_batch, ys_batch)
-        xs_path.unlink()
-        ys_path.unlink()
 
-
-class ParallelTrainer(ContinualTrainer):
-    """Continual trainer which uses a coreset in parallel."""
-
-    def update_state(self, xs, ys):
-        """Update the training state."""
-        xs_path = Path('coreset_xs.npy')
-        ys_path = Path('coreset_ys.npy')
-        coreset_xs, coreset_ys = zarr_to_memmap(
-            self.mutables['coreset'], xs_path, ys_path
+    def make_predict(self):
+        """Make a predicting function."""
+        return self._choose(sigmoid_map, softmax_map)(
+            self.model.apply, self.state.params
         )
-        step = make_step(self.loss)
-        for key in random.split(
-            self.precomputed['keys']['update_state'],
-            num=self.immutables['n_epochs']
-        ):
-            if len(coreset_ys) == 0:
-                for xs_batch, ys_batch in draw_batches(
-                    key, self.immutables['batch_size'], xs, ys
-                ):
-                    self.state = step(
-                        self.state,
-                        xs_batch, ys_batch,
-                        coreset_xs[[]], coreset_ys[[]]
-                    )
-            else:
-                n_batches = -(len(ys) // -self.immutables['batch_size'])
-                keys = random.split(key, num=n_batches + 1)
-                for i, (xs_batch, ys_batch) in enumerate(draw_batches(
-                    keys[0], self.immutables['batch_size'], xs, ys
-                ), start=1):
-                    indices = random.choice(
-                        keys[i], len(coreset_ys),
-                        shape=(self.immutables['batch_size'],),
-                        replace=False
-                    )
-                    self.state = step(
-                        self.state,
-                        xs_batch, ys_batch,
-                        coreset_xs[indices], coreset_ys[indices]
-                    )
-        xs_path.unlink()
-        ys_path.unlink()
 
 
-class Finetuning(MAPMixin, StandardTrainer):
+class Finetuning(MAPMixin, ContinualTrainer):
     """Fine-tuning for continual learning."""
+
     def precompute(self):
         """Precompute."""
         return super().precompute() | self._make_keys(
@@ -226,6 +123,17 @@ class Finetuning(MAPMixin, StandardTrainer):
             self._choose(sigmoid_ce, softmax_ce)(
                 self.immutables['precision'], self.model.apply
             )
+        )
+
+    def update_state(self, xs, ys):
+        """Update the training state."""
+        self.state = regular_sgd(
+            self.precomputed['keys']['update_state'],
+            self.immutables['n_epochs'],
+            self.immutables['batch_size'],
+            self.loss,
+            self.state,
+            xs, ys
         )
 
     def update_mutables(self, xs, ys):

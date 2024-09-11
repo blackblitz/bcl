@@ -9,16 +9,16 @@ dense0 = 20
 dense1 = 20
 dense2 = 1
 
-[[trainers]]
-id = "joint"
-name = "Joint"
-
-[trainers.immutables]
-batch_size = 32
-lr = 0.001
-n_epochs = 100
-precision = 0.01
-seed = 1337
+# [[trainers]]
+# id = "joint"
+# name = "Joint"
+# 
+# [trainers.immutables]
+# batch_size = 32
+# lr = 0.001
+# n_epochs = 100
+# precision = 0.01
+# seed = 1337
 
 [[trainers]]
 id = "finetuning"
@@ -36,13 +36,28 @@ seed = 1337
 # name = "GDumb"
 # 
 # [trainers.immutables]
-# coreset_size = 64
 # batch_size = 32
+# coreset_size = 256
 # lr = 0.01
-# n_epochs = 1000
+# n_epochs = 100
+# noise_init=false
 # precision = 0.01
 # seed = 1337
-# 
+
+[[trainers]]
+id = "ticreplay"
+name = "TICReplay"
+
+[trainers.immutables]
+batch_size = 32
+coreset_batch_size_per_task = 8
+coreset_size_per_task = 128
+lr = 0.01
+n_epochs = 100
+noise_init=false
+precision = 0.01
+seed = 1337
+
 # [[trainers]]
 # id = "gvcl"
 # name = "GVCL"
@@ -68,16 +83,16 @@ seed = 1337
 # sample_size = 100
 # seed = 1337
 
-[[trainers]]
-id = "gsfsvi"
-name = "GSFSVI"
-
-[trainers.immutables]
-batch_size = 32
-beta = 1.0
-coreset_size = 256
-lr = 0.01
-n_epochs = 100
-precision = 0.001
-sample_size = 100
-seed = 1337
+# [[trainers]]
+# id = "gsfsvi"
+# name = "GSFSVI"
+# 
+# [trainers.immutables]
+# batch_size = 32
+# beta = 1.0
+# coreset_size = 256
+# lr = 0.01
+# n_epochs = 100
+# precision = 0.001
+# sample_size = 100
+# seed = 1337

@@ -1,9 +1,20 @@
 """I/O operations."""
 
+import math
 from pathlib import Path
 import tomllib
 
 import numpy as np
+
+
+def clear(path):
+    """Remove all files and sub-directories under a directory."""
+    for p in Path(path).iterdir():
+        if p.is_file():
+            p.unlink()
+        else:
+            clear(p)
+            p.rmdir()
 
 
 def zarr_to_memmap(group, xs_path, ys_path):
@@ -46,3 +57,10 @@ def read_toml(path):
     """Read metadata."""
     with open(path, 'rb') as file:
         return tomllib.load(file)
+
+
+def get_pass_size(input_shape):
+    """Calculate the batch size for passing through a dataset."""
+    return 2 ** math.floor(
+        20 * math.log2(2) - 2 - sum(map(math.log2, input_shape))
+    )
