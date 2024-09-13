@@ -1,14 +1,15 @@
 """Training package."""
 
-from .smi import Finetuning, Joint, GDumb, TICReplay
-# from .svi import GVCL, GMVCL, GSFSVI
+from .smi import Finetuning, GDumb, Joint, TICReplay
+from .svi import GMSFSVI, GMVCL, GSFSVI, GVCL
 
 __all__ = [
     'Finetuning',
-    'Joint',
     'GDumb',
+    'Joint',
     'TICReplay',
-    #'GVCL',
-    #'GMVCL',
-    #'GSFSVI'
+    'GMSFSVI',
+    'GMVCL',
+    'GSFSVI',
+    'GVCL'
 ]

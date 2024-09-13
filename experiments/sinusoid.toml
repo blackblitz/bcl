@@ -18,7 +18,7 @@ dense2 = 1
 # lr = 0.001
 # nntype = "SIGMOID"
 # n_epochs = 100
-# precision = 0.01
+# precision = 0.1
 # seed = 1337
 
 [[trainers]]
@@ -30,7 +30,7 @@ batch_size = 32
 lr = 0.001
 nntype = "SIGMOID"
 n_epochs = 100
-precision = 0.01
+precision = 0.1
 seed = 1337
 
 # [[trainers]]
@@ -40,27 +40,27 @@ seed = 1337
 # [trainers.immutables]
 # batch_size = 32
 # coreset_size = 256
-# lr = 0.01
+# lr = 0.001
+# nntype = "SIGMOID"
+# n_epochs = 100
+# noise = false
+# precision = 0.1
+# seed = 1337
+
+# [[trainers]]
+# id = "ticreplay"
+# name = "TICReplay"
+# 
+# [trainers.immutables]
+# batch_size = 32
+# coreset_batch_size_per_task = 8
+# coreset_size_per_task = 128
+# lr = 0.001
 # nntype = "SIGMOID"
 # n_epochs = 100
 # noise_init=false
-# precision = 0.01
+# precision = 0.1
 # seed = 1337
-
-[[trainers]]
-id = "ticreplay"
-name = "TICReplay"
-
-[trainers.immutables]
-batch_size = 32
-coreset_batch_size_per_task = 8
-coreset_size_per_task = 128
-lr = 0.01
-nntype = "SIGMOID"
-n_epochs = 100
-noise_init=false
-precision = 0.01
-seed = 1337
 
 # [[trainers]]
 # id = "gvcl"
@@ -68,10 +68,10 @@ seed = 1337
 # 
 # [trainers.immutables]
 # batch_size = 32
-# lr = 0.01
+# lr = 0.001
 # nntype = "SIGMOID"
 # n_epochs = 1000
-# precision = 0.01
+# precision = 0.1
 # sample_size = 100
 # seed = 1337
 # 
@@ -81,25 +81,49 @@ seed = 1337
 # 
 # [trainers.immutables]
 # batch_size = 32
-# lr = 0.01
+# lr = 0.001
 # nntype = "SIGMOID"
 # n_comp = 3
 # n_epochs = 1000
-# precision = 0.01
+# precision = 0.1
 # sample_size = 100
 # seed = 1337
 
-# [[trainers]]
-# id = "gsfsvi"
-# name = "GSFSVI"
-# 
-# [trainers.immutables]
-# batch_size = 32
-# beta = 1.0
-# coreset_size = 256
-# lr = 0.01
-# nntype = "SIGMOID"
-# n_epochs = 100
-# precision = 0.001
-# sample_size = 100
-# seed = 1337
+[[trainers]]
+id = "gsfsvi"
+name = "GSFSVI"
+
+[trainers.immutables]
+batch_size = 32
+beta = 1.0
+coreset_batch_size_per_task = 16
+coreset_size_per_task = 32
+lr = 0.001
+noise_minval = -4.0
+noise_maxval = 4.0
+nntype = "SIGMOID"
+noise = true
+n_epochs = 100
+precision = 0.001
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "gmsfsvi"
+name = "GMSFSVI"
+
+[trainers.immutables]
+batch_size = 32
+beta = 1.0
+coreset_batch_size_per_task = 16
+coreset_size_per_task = 32
+lr = 0.001
+noise_minval = -4.0
+noise_maxval = 4.0
+nntype = "SIGMOID"
+noise = true
+n_comp = 3
+n_epochs = 100
+precision = 0.001
+sample_size = 100
+seed = 1337

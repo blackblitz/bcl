@@ -79,29 +79,6 @@ class Coreset(ABC):
         """Draw batches by random shuffling."""
 
 
-class NoiseMixin:
-    """Mixin for generating random data."""
-
-    def noise(self, key):
-        """Return random data."""
-        key1, key2 = random.split(key)
-        yield (
-            np.asarray(random.uniform(
-                key1,
-                shape=(
-                    self.immutables['coreset_size'],
-                    *self.metadata['input_shape']
-                ),
-                minval=self.immutables['minval'],
-                maxval=self.immutables['maxval']
-            )),
-            np.asarray(random.choice(
-                key2, len(self.metadata['classes']),
-                shape=(self.immutables['coreset_size'],)
-            ))
-        )
-
-
 class JointCoreset(Coreset):
     """Joint coreset."""
 
@@ -134,7 +111,7 @@ class JointCoreset(Coreset):
             yield self.memmap['xs'][indices], self.memmap['ys'][indices]
 
 
-class GDumbCoreset(NoiseMixin, Coreset):
+class GDumbCoreset(Coreset):
     """GDumb coreset."""
 
     def __init__(self, zarr_path, memmap_path, immutables, metadata):
@@ -162,8 +139,6 @@ class GDumbCoreset(NoiseMixin, Coreset):
     def choice(self, key):
         """Draw a batch by random choice."""
         if len(self.memmap['ys']) == 0:
-            if self.immutables['noise_init']:
-                return self.noise(key)
             return self.empty()
         indices = random.choice(
             key, len(self.memmap['ys']),
@@ -174,11 +149,7 @@ class GDumbCoreset(NoiseMixin, Coreset):
     def shuffle_batch(self, key):
         """Draw batches by random shuffling."""
         if len(self.memmap['ys']) == 0:
-            yield (
-                self.noise(key)
-                if self.immutables['noise_init']
-                else self.empty()
-            )
+            yield self.empty()
         else:
             for indices in batch(
                 self.immutables['coreset_batch_size'],
@@ -209,10 +180,29 @@ class TaskIncrementalCoreset(Coreset):
         self.zarr[name]['xs'] = xs[indices]
         self.zarr[name]['ys'] = ys[indices]
 
+    def noise(self, key):
+        """Return random data."""
+        key1, key2 = random.split(key)
+        return (
+            np.asarray(random.uniform(
+                key1,
+                shape=(
+                    self.immutables['coreset_batch_size_per_task'],
+                    *self.metadata['input_shape']
+                ),
+                minval=self.immutables['noise_minval'],
+                maxval=self.immutables['noise_maxval']
+            )),
+            np.asarray(random.choice(
+                key2, len(self.metadata['classes']),
+                shape=(self.immutables['coreset_batch_size_per_task'],)
+            ))
+        )
+
     def choice(self, key):
         """Draw a batch by random choice."""
         if self.task_count == 0:
-            if self.immutables['noise_init']:
+            if self.immutables['noise']:
                 return self.noise(key)
             return self.empty()
         indices = random.choice(
@@ -231,7 +221,7 @@ class TaskIncrementalCoreset(Coreset):
     def shuffle_batch(self, key):
         """Draw batches by random shuffling."""
         if self.task_count == 0:
-            if self.immutables['noise_init']:
+            if self.immutables['noise']:
                 yield self.noise(key)
             else:
                 yield self.empty()

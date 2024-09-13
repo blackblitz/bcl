@@ -2,39 +2,10 @@
 
 from jax import jit
 
-from .base import ContinualTrainer
-from .coreset import GDumbCoreset, JointCoreset, TaskIncrementalCoreset
-from .loss import basic_loss, concat_loss
-from .state.mixins import (
-    MAPMixin, ParallelShuffleMixin, RegularMixin, SerialMixin
-)
-
-
-class Finetuning(MAPMixin, RegularMixin, ContinualTrainer):
-    """Fine-tuning for continual learning."""
-
-    def precompute(self):
-        """Precompute."""
-        return super().precompute() | self._make_keys(
-            ['init_state', 'update_state']
-        )
-
-    def init_mutables(self):
-        """Initialize the mutable hyperparameters."""
-        return {}
-
-    def update_loss(self, xs, ys):
-        """Update the loss function."""
-        self.loss = jit(
-            basic_loss(
-                self.immutables['nntype'],
-                self.immutables['precision'],
-                self.model.apply
-            )
-        )
-
-    def update_mutables(self, xs, ys):
-        """Update the mutable hyperparameters."""
+from ..coreset import GDumbCoreset, JointCoreset, TaskIncrementalCoreset
+from ..loss import basic_loss, concat_loss
+from ..state.mixins import MAPMixin, ParallelChoiceMixin, SerialMixin
+from ..trainer import ContinualTrainer
 
 
 class Joint(MAPMixin, SerialMixin, ContinualTrainer):
@@ -72,8 +43,9 @@ class Joint(MAPMixin, SerialMixin, ContinualTrainer):
         )
 
 
-class ExactReplay(MAPMixin, ParallelShuffleMixin, ContinualTrainer):
-    """Exact replay."""
+class ExactReplay(MAPMixin, ParallelChoiceMixin, ContinualTrainer):
+    """Abstract class for exact replay."""
+
     def precompute(self):
         """Precompute."""
         return super().precompute() | self._make_keys(

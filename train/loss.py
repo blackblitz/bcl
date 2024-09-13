@@ -1,17 +1,18 @@
 """Loss functions."""
 
-from operator import add
+from operator import add, sub
 
-from jax import tree_util, vmap
+from jax import jvp, tree_util, vmap
 from jax.nn import softmax
 import jax.numpy as jnp
 from jax.scipy.special import rel_entr
 import optax
 
-from . import tree
-from .base import NNType
+from dataops import tree
+
 from .neural_tangents.extended import empirical_ntk
 from .probability import gauss_kldiv, gauss_param, get_mean_var, gsgauss_param
+from .trainer import NNType
 
 
 def basic_loss(nntype, precision, apply):
@@ -111,7 +112,7 @@ def gvi_kldiv(params, prior):
 
 
 def gvi_vfe(base, sample, prior, beta):
-    """Return the variational free energy function for Gaussian VI."""
+    """Return the VFE function for Gaussian VI."""
     def loss(params, xs, ys):
         return (
             expected_loss(base, gauss_param, sample)(params, xs, ys)
@@ -125,13 +126,13 @@ def gmvi_kldiv(params, prior):
     """Compute a KL upper bound for Gaussian-mixture VI."""
     weight = softmax(params['logit'])
     prior_weight = softmax(prior['logit'])
-    cat_kldiv = rel_entr(weight, prior_weight).sum()
-    gauss_kldiv = vmap(gvi_kldiv)(params, prior)
-    return cat_kldiv + weight @ gauss_kldiv
+    cat_kldiv_val = rel_entr(weight, prior_weight).sum()
+    gauss_kldiv_val = vmap(gvi_kldiv)(params, prior)
+    return cat_kldiv_val + weight @ gauss_kldiv_val
 
 
 def gmvi_vfe(base, sample, prior, beta):
-    """Return the variational free energy function for Gaussian-mixture VI."""
+    """Return the VFE function for Gaussian-mixture VI."""
     def loss(params, xs, ys):
         return (
             expected_loss(base, gsgauss_param, sample)(params, xs, ys)
@@ -157,11 +158,58 @@ def gfsvi_kldiv(params, prior, apply, xs):
 
 
 def gfsvi_vfe(base, sample, prior, beta, apply):
-    """Return the variational free energy function for Gaussian FSVI."""
+    """Return the VFE function for Gaussian FSVI."""
     def loss(params, xs1, ys1, xs2, ys2):
         return (
             expected_loss(base, gauss_param, sample)(params, xs1, ys1)
             + beta * gfsvi_kldiv(params, prior, apply, xs2)
+        )
+
+    return loss
+
+
+def gmfsvi_kldiv(params, prior, apply, xs):
+    """Compute the KL divergence for Gaussian-mixture FSVI."""
+    mean, var, prior_mean, prior_var = get_mean_var(params, prior)
+    center = tree_util.tree_map(lambda x: x.mean(axis=0), mean)
+    prior_center = tree_util.tree_map(lambda x: x.mean(axis=0), prior_mean)
+
+    def get_func_mean(center, mean):
+        """Compute the function-space mean."""
+        return vmap(
+            lambda m:
+            apply({'params': center}, xs)
+            + jvp(
+                lambda params: apply(params, xs),
+                ({'params': center},),
+                ({'params': tree_util.tree_map(sub, m, center)},)
+            )[1]
+        )(mean)
+
+    func_mean = get_func_mean(center, mean)
+    prior_func_mean = get_func_mean(prior_center, prior_mean)
+    get_func_var = empirical_ntk(apply, (), (0, 1), 0)
+    func_var = vmap(get_func_var, in_axes=(None, None, None, 0))(
+        xs, None, {'params': center}, {'params': var}
+    )
+    prior_func_var = vmap(get_func_var, in_axes=(None, None, None, 0))(
+        xs, None, {'params': prior_center}, {'params': prior_var}
+    )
+    weight = softmax(params['logit'])
+    prior_weight = softmax(prior['logit'])
+    cat_kldiv_val = rel_entr(weight, prior_weight).sum()
+    gauss_kldiv_val = vmap(gauss_kldiv)(
+        func_mean, func_var, prior_func_mean, prior_func_var
+    )
+    return cat_kldiv_val + weight @ gauss_kldiv_val
+
+
+def gmfsvi_vfe(base, sample, prior, beta, apply):
+    """Return the VFE function for Gaussian-mixture FSVI."""
+    def loss(params, xs1, ys1, xs2, ys2):
+        return (
+            expected_loss(base, gsgauss_param, sample)(params, xs1, ys1)
+            + beta * gmfsvi_kldiv(params, prior, apply, xs2)
         )
 
     return loss

@@ -5,11 +5,11 @@ from jax.nn import sigmoid, softmax
 import jax.numpy as jnp
 import orbax.checkpoint as ocp
 
-from .base import NNType
 from .probability import (
     gauss_param, gsgauss_param, gauss_sample, gsgauss_sample
 )
 from .state.functions import init, gauss_init, gsgauss_init
+from .trainer import NNType
 
 
 class MAPPredictor:
@@ -85,13 +85,13 @@ class BMAPredictor:
             case NNType.SIGMOID:
                 proba = vmap(
                     lambda params: sigmoid(
-                        self.apply({'params': params}, xs)[:, 0]
+                        self.model.apply({'params': params}, xs)[:, 0]
                     )
                 )(self.param_sample).mean(axis=0)
                 return proba >= 0.5 if decide else proba
             case NNType.SOFTMAX:
                 proba = vmap(
-                    lambda params: softmax(self.apply({'params': params}, xs))
+                    lambda params: softmax(self.model.apply({'params': params}, xs))
                 )(self.param_sample).mean(axis=0)
                 return proba.argmax(axis=-1) if decide else proba
 

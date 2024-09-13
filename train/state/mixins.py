@@ -9,7 +9,7 @@ from optax import sgd
 from dataops.array import batch, shuffle
 
 from .functions import init, gauss_init, gsgauss_init, make_step
-from ..predict import MAPPredictor
+from ..predict import MAPPredictor, GaussPredictor, GSGaussPredictor
 
 
 class MAPMixin:
@@ -32,13 +32,16 @@ class MAPMixin:
 class GaussMixin:
     """Mixin for Gaussian variation inference."""
 
+    predictor = GaussPredictor
+
     def init_state(self):
         """Initialize the state."""
         return TrainState.create(
             apply_fn=self.model.apply,
             params=gauss_init(
                 self.precomputed['keys']['init_state'],
-                self.model, self.metadata['input_shape']
+                self.model,
+                self.metadata['input_shape']
             ),
             tx=sgd(self.immutables['lr'])
         )
@@ -47,13 +50,17 @@ class GaussMixin:
 class GSGaussMixin:
     """Mixin for Gaussian-mixture variation inference."""
 
+    predictor = GSGaussPredictor
+
     def init_state(self):
         """Initialize the state."""
         return TrainState.create(
             apply_fn=self.model.apply,
             params=gsgauss_init(
                 self.precomputed['keys']['init_state'],
-                self.model, self.metadata['input_shape']
+                self.model,
+                self.immutables['n_comp'],
+                self.metadata['input_shape']
             ),
             tx=sgd(self.immutables['lr'])
         )
