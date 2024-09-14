@@ -45,10 +45,10 @@ def iter_tasks(path, split):
     for i in range(length):
         yield (
             np.lib.format.open_memmap(
-                path / f'{split}_xs_{i + 1}.npy', mode='r'
+                path / f'{split}_{i + 1}_xs.npy', mode='r'
             ),
             np.lib.format.open_memmap(
-                path / f'{split}_ys_{i + 1}.npy', mode='r'
+                path / f'{split}_{i + 1}_ys.npy', mode='r'
             )
         )
 

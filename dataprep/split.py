@@ -12,13 +12,13 @@ root = 'pytorch'
 seed = 1337
 
 
-def split_dataset_by_class(css, dataset):
+def class_split(css, dataset):
     """Split dataset by class."""
     targets = np.array([y for x, y in dataset])
     return [Subset(dataset, np.isin(targets, cs).nonzero()[0]) for cs in css]
 
 
-def split_random(key, p, dataset):
+def random_split(key, p, dataset):
     """Split dataset randomly into two subsets."""
     whole = np.arange(len(dataset))
     selected = np.asarray(random.choice(
@@ -30,99 +30,72 @@ def split_random(key, p, dataset):
     )
 
 
-def split_datasets_by_class(css, train, test, validation=False):
-    """Split datasets by class."""
-    if validation:
-        train, val = split_random(random.PRNGKey(seed), 0.2, train)
-        return {
-            'training': split_dataset_by_class(css, train),
-            'validation': split_dataset_by_class(css, val),
-            'testing': split_dataset_by_class(css, test)
+def task_sequence_1(load):
+    """Generate a task sequence of pattern 1."""
+    dataset = load()
+    training_dataset = ArrayDataset(dataset['data'], dataset['target'])
+    training_dataset, testing_dataset = random_split(
+        random.PRNGKey(seed), 0.2, training_dataset
+    )
+    training_dataset, validation_dataset = random_split(
+        random.PRNGKey(seed), 0.2, training_dataset
+    )
+    css = np.arange(3)
+    return (
+        {
+            'training': class_split(css, training_dataset),
+            'validation': class_split(css, validation_dataset),
+            'testing': class_split(css, testing_dataset)
+        },
+        {
+            'classes': dataset.target_names.tolist(),
+            'features': dataset.feature_names,
+            'input_shape': [len(dataset.feature_names)],
+            'length': len(css)
         }
-    return {
-        'training': split_dataset_by_class(css, train),
-        'testing': split_dataset_by_class(css, test)
-    }
+    )
 
-
-def split_iris(validation=False):
+def split_iris():
     """Make Split Iris."""
-    iris = load_iris()
-    train = ArrayDataset(iris['data'], iris['target'])
-    css = np.arange(3)
-    return (
-        split_datasets_by_class(
-            css,
-            *split_random(random.PRNGKey(seed), 0.2, train),
-            validation=validation
-        ),
-        {
-            'classes': iris.target_names.tolist(),
-            'features': iris.feature_names,
-            'input_shape': [len(iris.feature_names)],
-            'length': len(css)
-        }
-    )
+    return task_sequence_1(load_iris)
 
 
-def split_wine(validation=False):
+def split_wine():
     """Make Split Wine."""
-    wine = load_wine()
-    train = ArrayDataset(wine['data'], wine['target'])
-    css = np.arange(3)
+    return task_sequence_1(load_wine)
+
+
+def task_sequence_2(dataset_constructor, transform, **kwargs):
+    """Generate a task sequence of pattern 2."""
+    css = np.arange(10).reshape((5, 2))
+    training_dataset = dataset_constructor(
+        root, download=True, transform=transform, train=True, **kwargs
+    )
+    training_dataset, validation_dataset = random_split(
+        random.PRNGKey(seed), 0.2, training_dataset
+    )
+    testing_dataset = dataset_constructor(
+        root, download=True, transform=transform, train=False, **kwargs
+    )
     return (
-        split_datasets_by_class(
-            css,
-            *split_random(random.PRNGKey(seed), 0.2, train),
-            validation=validation
-        ),
         {
-            'classes': wine.target_names.tolist(),
-            'features': wine.feature_names,
-            'input_shape': [len(wine.feature_names)],
+            'training': class_split(css, training_dataset),
+            'validation': class_split(css, validation_dataset),
+            'testing': class_split(css, testing_dataset)
+        },
+        {
+            'classes': testing_dataset.classes,
+            'input_shape': testing_dataset.data.shape[1:],
             'length': len(css)
         }
     )
 
 
-def split_mnist(validation=False):
+def split_mnist():
     """Make Split MNIST."""
-
-    def transform(x):
-        return np.asarray(x)[:, :, None] / 255.0
-
-    css = np.arange(10).reshape((5, 2))
-    training = MNIST(root, download=True, transform=transform, train=True)
-    testing = MNIST(root, download=True, transform=transform, train=False)
-    return (
-        split_datasets_by_class(
-            css, training, testing, validation=validation
-        ),
-        {
-            'classes': training.classes,
-            'input_shape': training.data.shape[1:],
-            'length': len(css)
-        }
-    )
+    return task_sequence_2(MNIST, lambda x: np.asarray(x)[:, :, None] / 255.0)
 
 
-
-def split_cifar10(validation=False):
-    """Make Split CIFAR-10."""
-
-    def transform(x):
-        return np.asarray(x) / 255.0
-
-    css = np.arange(10).reshape((5, 2))
-    training = CIFAR10(root, download=True, transform=transform, train=True)
-    testing = CIFAR10(root, download=True, transform=transform, train=False)
-    return (
-        split_datasets_by_class(
-            css, training, testing, validation=validation
-        ),
-        {
-            'classes': training.classes,
-            'input_shape': training.data.shape[1:],
-            'length': len(css)
-        }
-    )
+def split_cifar10():
+    """Make Split MNIST."""
+    return task_sequence_2(CIFAR10, lambda x: np.asarray(x) / 255.0)

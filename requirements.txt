@@ -6,6 +6,7 @@ matplotlib==3.9.0
 numpy==2.0.0
 orbax==0.1.9
 scikit-learn==1.5.0
+tomli-w==1.0.0
 torch==2.3.1
 torchvision==0.18.1
 tqdm==4.66.4
