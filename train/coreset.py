@@ -98,14 +98,14 @@ class JointCoreset(Coreset):
         """Draw a batch by random choice."""
         indices = random.choice(
             key, len(self.zarr['ys']),
-            shape=(self.immutables['coreset_batch_size'],), replace=False
+            shape=(self.immutables['batch_size'],), replace=False
         ) if len(self.memmap['ys']) > 0 else []
         return self.memmap['xs'][indices], self.memmap['ys'][indices]
 
     def shuffle_batch(self, key):
         """Draw batches by random shuffling."""
         for indices in batch(
-            self.immutables['coreset_batch_size'],
+            self.immutables['batch_size'],
             shuffle(key, len(self.memmap['ys']))
         ):
             yield self.memmap['xs'][indices], self.memmap['ys'][indices]
@@ -202,7 +202,7 @@ class TaskIncrementalCoreset(Coreset):
     def choice(self, key):
         """Draw a batch by random choice."""
         if self.task_count == 0:
-            if self.immutables['noise']:
+            if self.immutables['noise_init']:
                 return self.noise(key)
             return self.empty()
         indices = random.choice(
@@ -221,7 +221,7 @@ class TaskIncrementalCoreset(Coreset):
     def shuffle_batch(self, key):
         """Draw batches by random shuffling."""
         if self.task_count == 0:
-            if self.immutables['noise']:
+            if self.immutables['noise_init']:
                 yield self.noise(key)
             else:
                 yield self.empty()
