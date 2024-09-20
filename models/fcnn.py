@@ -45,6 +45,7 @@ class FCNN3(nn.Module):
     @nn.compact
     def __call__(self, xs):
         """Apply model."""
+        init = nn.initializers.he_uniform()
         return toolz.pipe(
             xs,
             toolz.curry(jnp.reshape, shape=(xs.shape[0], -1)),

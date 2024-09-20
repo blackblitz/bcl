@@ -11,14 +11,13 @@ from .probability import (
     gaussmix_params_kldiv_mc, gaussmix_params_kldiv_ub,
     gauss_output_kldiv, gauss_param, gauss_params_kldiv, gsgauss_param
 )
-from .trainer import NNType
+from models import FinAct
 
 
-def basic_loss(nntype, precision, apply):
+def basic_loss(fin_act, precision, apply):
     """Return a basic loss function."""
-    nntype = NNType[nntype]
-    match nntype:
-        case NNType.SIGMOID:
+    match fin_act:
+        case FinAct.SIGMOID:
 
             def loss(params, xs, ys):
                 return (
@@ -29,7 +28,7 @@ def basic_loss(nntype, precision, apply):
                 )
 
             return loss
-        case NNType.SOFTMAX:
+        case FinAct.SOFTMAX:
 
             def loss(params, xs, ys):
                 return (
@@ -65,9 +64,9 @@ def concat_loss(base):
     return loss
 
 
-def gvi_vfe(base, sample, prior, beta):
+def gvi_vfe(base, prior, beta):
     """Return the VFE function for Gaussian VI."""
-    def loss(params, xs, ys):
+    def loss(params, sample, xs, ys):
         param_sample = gauss_param(params, sample)
         return (
             vmap(base, in_axes=(0, None, None))(param_sample, xs, ys).mean()
@@ -77,9 +76,9 @@ def gvi_vfe(base, sample, prior, beta):
     return loss
 
 
-def gmvi_vfe_mc(base, sample, prior, beta):
+def gmvi_vfe_mc(base, prior, beta):
     """Return the VFE function for Gaussian-mixture VI by MC integration."""
-    def loss(params, xs, ys):
+    def loss(params, sample, xs, ys):
         param_sample = gsgauss_param(params, sample)
         return (
             vmap(base, in_axes=(0, None, None))(param_sample, xs, ys).mean()
@@ -89,9 +88,9 @@ def gmvi_vfe_mc(base, sample, prior, beta):
     return loss
 
 
-def gmvi_vfe_ub(base, sample, prior, beta):
+def gmvi_vfe_ub(base, prior, beta):
     """Return the VFE function for Gaussian-mixture VI by KL upper bound."""
-    def loss(params, xs, ys):
+    def loss(params, sample, xs, ys):
         param_sample = gsgauss_param(params, sample)
         return (
             vmap(base, in_axes=(0, None, None))(param_sample, xs, ys).mean()
@@ -101,9 +100,9 @@ def gmvi_vfe_ub(base, sample, prior, beta):
     return loss
 
 
-def gfsvi_vfe(base, sample, prior, beta, apply):
+def gfsvi_vfe(base, prior, beta, apply):
     """Return the VFE function for Gaussian FSVI."""
-    def loss(params, xs1, ys1, xs2, ys2):
+    def loss(params, sample, xs1, ys1, xs2, ys2):
         param_sample = gauss_param(params, sample)
         return (
             vmap(base, in_axes=(0, None, None))(param_sample, xs1, ys1).mean()
@@ -113,11 +112,11 @@ def gfsvi_vfe(base, sample, prior, beta, apply):
     return loss
 
 
-def gmfsvi_vfe_mc(key, base, sample, prior, beta, apply):
+def gmfsvi_vfe_mc(key, base, prior, beta, apply):
     """Return the VFE function for Gaussian-mixture FSVI by MC integration."""
-    sample_size = len(tree_util.tree_leaves(sample)[0])
 
-    def loss(params, xs1, ys1, xs2, ys2):
+    def loss(params, sample, xs1, ys1, xs2, ys2):
+        sample_size = len(tree_util.tree_leaves(sample)[0])
         param_sample = gsgauss_param(params, sample)
         return (
             vmap(base, in_axes=(0, None, None))(param_sample, xs1, ys1).mean()
@@ -129,9 +128,9 @@ def gmfsvi_vfe_mc(key, base, sample, prior, beta, apply):
     return loss
 
 
-def gmfsvi_vfe_ub(base, sample, prior, beta, apply):
+def gmfsvi_vfe_ub(base, prior, beta, apply):
     """Return the VFE function for Gaussian-mixture FSVI by KL upper bound."""
-    def loss(params, xs1, ys1, xs2, ys2):
+    def loss(params, sample, xs1, ys1, xs2, ys2):
         param_sample = gsgauss_param(params, sample)
         return (
             vmap(base, in_axes=(0, None, None))(param_sample, xs1, ys1).mean()

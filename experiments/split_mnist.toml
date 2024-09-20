@@ -1,0 +1,131 @@
+[task_sequence]
+name = "split_mnist"
+
+[model]
+name = "FCNN3"
+
+[model.spec]
+dense0 = 256
+dense1 = 256
+dense2 = 10
+
+# [[trainers]]
+# id = "joint"
+# name = "Joint"
+# 
+# [trainers.immutables]
+# batch_size = 32
+# lr = 0.001
+# nntype = "SOFTMAX"
+# n_epochs = 10
+# precision = 0.01
+# seed = 1337
+
+# [[trainers]]
+# id = "finetuning"
+# name = "Finetuning"
+# 
+# [trainers.immutables]
+# batch_size = 32
+# lr = 0.001
+# nntype = "SOFTMAX"
+# n_epochs = 10
+# precision = 0.01
+# seed = 1337
+# 
+# [[trainers]]
+# id = "gdumb"
+# name = "GDumb"
+# 
+# [trainers.immutables]
+# batch_size = 32
+# coreset_batch_size = 16
+# coreset_size = 32
+# lr = 0.001
+# nntype = "SOFTMAX"
+# n_epochs = 10
+# precision = 0.01
+# seed = 1337
+# 
+# [[trainers]]
+# id = "ticreplay"
+# name = "TICReplay"
+# 
+# [trainers.immutables]
+# batch_size = 32
+# coreset_batch_size_per_task = 16
+# coreset_size_per_task = 32
+# lr = 0.001
+# nntype = "SOFTMAX"
+# noise_init = false
+# n_epochs = 10
+# precision = 0.01
+# seed = 1337
+# 
+[[trainers]]
+id = "gvcl"
+name = "GVCL"
+
+[trainers.immutables]
+batch_size = 32
+lr = 0.001
+nntype = "SOFTMAX"
+n_epochs = 10
+precision = 0.01
+sample_size = 100
+seed = 1337
+# 
+# [[trainers]]
+# id = "gmvcl"
+# name = "GMVCL"
+# 
+# [trainers.immutables]
+# batch_size = 32
+# lr = 0.001
+# mc_kldiv = false
+# nntype = "SOFTMAX"
+# n_comp = 3
+# n_epochs = 100
+# precision = 0.01
+# sample_size = 100
+# seed = 1337
+# 
+# [[trainers]]
+# id = "gsfsvi"
+# name = "GSFSVI"
+# 
+# [trainers.immutables]
+# batch_size = 64
+# beta = 1.0
+# coreset_batch_size_per_task = 16
+# coreset_size_per_task = 32
+# lr = 0.001
+# nntype = "SOFTMAX"
+# noise_init = true
+# noise_maxval = 1.0
+# noise_minval = -1.0
+# n_epochs = 10
+# precision = 0.01
+# sample_size = 100
+# seed = 1337
+# 
+# [[trainers]]
+# id = "gmsfsvi"
+# name = "GMSFSVI"
+# 
+# [trainers.immutables]
+# batch_size = 32
+# beta = 1.0
+# coreset_batch_size_per_task = 16
+# coreset_size_per_task = 256
+# lr = 0.001
+# mc_kldiv = false
+# nntype = "SOFTMAX"
+# noise_init = true
+# noise_maxval = 4.0
+# noise_minval = -4.0
+# n_comp = 3
+# n_epochs = 10
+# precision = 0.01
+# sample_size = 100
+# seed = 1337

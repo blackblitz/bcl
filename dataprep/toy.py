@@ -8,7 +8,7 @@ from .datasets import ArrayDataset
 seed = 1337
 
 
-def sinusoid(validation=False):
+def sinusoid():
     """Make sinusoid from https://github.com/timrudner/S-FSVI."""
     mean0 = np.array([
         [0, 0.2],
@@ -55,15 +55,12 @@ def sinusoid(validation=False):
             ) for m0, m1, s0, s1 in zip(mean0, mean1, stddev0, stddev1)
         ]
 
-    dataset_sequences = {
-        'training': make_dataset_sequence(samples[0], samples[1]),
-        'validation': make_dataset_sequence(samples[2], samples[3]),
-        'testing': make_dataset_sequence(samples[4], samples[5])
-    }
     return (
-        dataset_sequences
-        if validation
-        else {k: dataset_sequences[k] for k in ['training', 'testing']},
+        {
+            'training': make_dataset_sequence(samples[0], samples[1]),
+            'validation': make_dataset_sequence(samples[2], samples[3]),
+            'testing': make_dataset_sequence(samples[4], samples[5])
+        },
         {
             'classes': [0, 1],
             'input_shape': [2],

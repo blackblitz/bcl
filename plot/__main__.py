@@ -80,14 +80,19 @@ def main():
     ts_path = Path('data').resolve() / exp['task_sequence']['name']
     metadata = read_toml(ts_path / 'metadata.toml')
 
-    # set checkpoint path
-    ckpt_path = Path('results').resolve() / args.experiment_id / 'ckpt'
+    # set results path
+    results_path = Path('results').resolve() / args.experiment_id
 
     # create plotter, model and trainers
     plotter = Plotter(
         args.num_classes, args.left, args.right, args.bottom, args.top
     )
-    model = getattr(models, exp['model']['name'])(**exp['model']['spec'])
+    model = getattr(models, exp['model']['name'])(**exp['model']['args'])
+    model_spec = models.ModelSpec(
+        fin_act=models.FinAct[exp['model']['spec']['fin_act']],
+        in_shape=exp['model']['spec']['in_shape'],
+        out_shape=exp['model']['spec']['out_shape']
+    )
     trainers = [
         (
             trainer['id'],
@@ -104,9 +109,14 @@ def main():
     # with ocp.StandardCheckpointer() as ckpter:
     for i, (trainer_id, trainer, immutables) in enumerate(trainers):
         for j, (xs, ys) in enumerate(iter_tasks(ts_path, 'training')):
-            predictor = trainer.predictor.from_checkpoint(
-                model, ckpt_path / f'{trainer_id}_{j + 1}',
-                immutables, metadata
+            path = results_path / f'ckpt/{trainer_id}_{j + 1}'
+            predictor = (
+                trainer.predictor.from_checkpoint(
+                    model, model_spec, immutables['n_comp'], path
+                ) if issubclass(trainer, train.state.mixins.GSGaussMixin)
+                else trainer.predictor.from_checkpoint(
+                    model, model_spec, path
+                )
             )
             plotter.plot_pred(axes[j, i], predictor)
             plotter.plot_dataset(axes[j, i], xs, ys)
@@ -114,9 +124,8 @@ def main():
                 axes[j, 0].set_ylabel(f'Task {j + 1}')
         axes[-1, i].set_xlabel(trainer_id)
 
-    img_path = Path('results').resolve() / args.experiment_id
-    img_path.mkdir(parents=True, exist_ok=True)
-    fig.savefig(img_path / 'plot.png')
+    (results_path / 'plots').mkdir(parents=True, exist_ok=True)
+    fig.savefig(results_path / 'plots/plot.png')
 
 
 if __name__ == '__main__':

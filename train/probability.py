@@ -7,7 +7,7 @@ import distrax
 from jax import jvp, random, tree_util, vmap
 from jax.nn import softmax, softplus
 import jax.numpy as jnp
-from jax.scipy.special import logsumexp, rel_entr
+from jax.scipy.special import entr, logsumexp, rel_entr
 from toolz import compose
 
 from dataops import tree
@@ -190,12 +190,10 @@ def gaussmix_output_kldiv_ub(params, prior, apply, xs):
 
 def gauss_sample(key, n, target):
     """Generate a Gaussian sample."""
-    keys = random.split(key, len(tree_util.tree_leaves(target)))
-    keys = tree_util.tree_unflatten(tree_util.tree_structure(target), keys)
     return {
-        'gauss': tree_util.tree_map(
-            lambda x, key: random.normal(key, (n, *x.shape)), target, keys
-        )
+        'gauss': vmap(
+            lambda x: tree.gauss(x, target)
+        )(random.split(key, num=n))
     }
 
 
@@ -203,18 +201,18 @@ def gsgauss_sample(key, n, m, target):
     """Generate Gaussian and Gumbel samples."""
     key1, key2 = random.split(key)
     return gauss_sample(
-        key1, n, tree_util.tree_map(
-            lambda x: jnp.repeat(jnp.expand_dims(x, 0), m, axis=0), target
-        )
+        key1, n, vmap(lambda x: target)(jnp.zeros(m))
     ) | {'gumbel': random.gumbel(key2, (n, m))}
 
 
 def gauss_param(params, sample):
     """Parameterize a Gaussian sample."""
-    return tree_util.tree_map(
-        lambda m, r, zs: m + softplus(r) * zs,
-        params['mean'], params['msd'], sample['gauss']
-    )
+    return vmap(
+        lambda zs: tree_util.tree_map(
+            lambda m, r, z: m + softplus(r) * z,
+            params['mean'], params['msd'], zs
+        )
+    )(sample['gauss'])
 
 
 def gsgauss_param(params, sample):
@@ -226,3 +224,15 @@ def gsgauss_param(params, sample):
             lambda x: jnp.tensordot(x, w, axes=(0, 0)), g
         )
     )(weight, gauss)
+
+
+def bern_entr(p):
+    """Calculate the entropy of Bernoulli random variables."""
+    return entr(p) + entr(1 - p)
+
+
+def cat_entr(p):
+    """Calculate the entropy of categorical random variables."""
+    return entr(p).sum(axis=-1)
+
+

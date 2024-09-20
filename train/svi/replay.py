@@ -3,38 +3,69 @@
 from jax import jit, random
 import jax.numpy as jnp
 
+from dataops.array import batch, get_n_batches, shuffle
+
 from ..coreset import TaskIncrementalCoreset
 from ..loss import basic_loss, gmfsvi_vfe_mc, gmfsvi_vfe_ub, gfsvi_vfe
-from ..probability import gsgauss_sample, gauss_sample, get_gauss_prior
-from ..state.functions import init
-from ..state.mixins import GSGaussMixin, GaussMixin, ParallelChoiceMixin
+from ..probability import get_gauss_prior
+from ..state.functions import make_step
+from ..state.mixins import GSGaussMixin, GaussMixin
 from ..trainer import ContinualTrainer
 
 
-class GSFSVI(GaussMixin, ParallelChoiceMixin, ContinualTrainer):
+class SFSVI(ContinualTrainer):
+    """Sequential function-space variational inference."""
+
+    def update_state(self, xs, ys):
+        """Update the training state."""
+        self.mutables['coreset'].create_memmap()
+        step = make_step(self.loss)
+        for key in random.split(
+            self.precomputed['keys']['update_state'],
+            num=self.immutables['n_epochs']
+        ):
+            key1, key2, key3 = random.split(key, num=3)
+            n_batches = get_n_batches(len(ys), self.immutables['batch_size'])
+            for key3, key4, indices in zip(
+                random.split(key1, num=n_batches),
+                random.split(key2, num=n_batches),
+                batch(
+                    self.immutables['batch_size'],
+                    shuffle(key1, len(ys))
+                )
+            ):
+                self.state = step(
+                    self.state, self.sample(key3), xs[indices], ys[indices],
+                    *(
+                        self.mutables['coreset'].choice(
+                            key4, self.immutables['coreset_batch_size_per_task']
+                        ) if self.mutables['coreset'].task_count > 0
+                        else self.mutables['coreset'].noise(
+                            key4, self.immutables['coreset_batch_size_per_task'],
+                            minval=self.immutables['noise_minval'],
+                            maxval=self.immutables['noise_maxval']
+                        )
+                    )
+                )
+            yield self.state
+        self.mutables['coreset'].delete_memmap()
+
+
+class GSFSVI(GaussMixin, SFSVI):
     """Gaussian sequential function-space variational inference."""
 
     def precompute(self):
         """Precompute."""
-        keys = self._make_keys([
-            'precompute', 'init_state', 'init_coreset',
-            'update_state', 'update_coreset'
+        return super().precompute() | self._make_keys([
+            'init_state', 'init_coreset', 'update_state', 'update_coreset'
         ])
-        key1, key2 = random.split(keys['keys']['precompute'])
-        params = init(key1, self.model, self.metadata['input_shape'])
-        sample = {
-            'sample': gauss_sample(
-                key2, self.immutables['sample_size'], params
-            )
-        }
-        return super().precompute() | keys | sample
 
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""
         return {
             'coreset': TaskIncrementalCoreset(
                 'coreset.zarr', 'coreset.memmap',
-                self.immutables, self.metadata
+                self.model_spec, self.immutables['coreset_size_per_task']
             ),
             'prior': get_gauss_prior(
                 self.immutables['precision'], self.state.params
@@ -47,11 +78,10 @@ class GSFSVI(GaussMixin, ParallelChoiceMixin, ContinualTrainer):
         self.loss = jit(
             gfsvi_vfe(
                 basic_loss(
-                    self.immutables['nntype'],
+                    self.model_spec.fin_act,
                     0.0,
                     self.model.apply
                 ),
-                self.precomputed['sample'],
                 self.mutables['prior'],
                 self.immutables.get('beta', 1 / n_batches),
                 self.model.apply
@@ -66,37 +96,26 @@ class GSFSVI(GaussMixin, ParallelChoiceMixin, ContinualTrainer):
         )
 
 
-class GMSFSVI(GSGaussMixin, ParallelChoiceMixin, ContinualTrainer):
+class GMSFSVI(GSGaussMixin, SFSVI):
     """Gaussian sequential function-space variational inference."""
 
     def precompute(self):
         """Precompute."""
         if self.immutables['mc_kldiv']:
-            keys = self._make_keys([
-                'precompute', 'init_state', 'init_coreset',
-                'update_loss', 'update_state', 'update_coreset'
-            ])
-        else:
-            keys = self._make_keys([
-                'precompute', 'init_state', 'init_coreset',
+            return super().precompute() | self._make_keys([
+                'init_state', 'init_coreset', 'update_loss',
                 'update_state', 'update_coreset'
             ])
-        key1, key2 = random.split(keys['keys']['precompute'])
-        params = init(key1, self.model, self.metadata['input_shape'])
-        sample = {
-            'sample': gsgauss_sample(
-                key2, self.immutables['sample_size'],
-                self.immutables['n_comp'], params
-            )
-        }
-        return super().precompute() | keys | sample
+        return super().precompute() | self._make_keys([
+            'init_state', 'init_coreset', 'update_state', 'update_coreset'
+        ])
 
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""
         return {
             'coreset': TaskIncrementalCoreset(
                 'coreset.zarr', 'coreset.memmap',
-                self.immutables, self.metadata
+                self.model_spec, self.immutables['coreset_size_per_task']
             ),
             'prior': get_gauss_prior(
                 self.immutables['precision'], self.state.params
@@ -113,11 +132,10 @@ class GMSFSVI(GSGaussMixin, ParallelChoiceMixin, ContinualTrainer):
                     if self.immutables['mc_kldiv'] else []
                 ) + [
                     basic_loss(
-                        self.immutables['nntype'],
+                        self.model_spec.fin_act,
                         0.0,
                         self.model.apply
                     ),
-                    self.precomputed['sample'],
                     self.mutables['prior'],
                     self.immutables.get('beta', 1 / n_batches),
                     self.model.apply

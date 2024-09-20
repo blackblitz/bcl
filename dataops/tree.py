@@ -24,3 +24,12 @@ def dot(tree1, tree2):
     return tree_util.tree_reduce(
         add, tree_util.tree_map(lambda x, y: (x * y).sum(), tree1, tree2)
     )
+
+
+def gauss(key, target, loc=0.0, scale=1.0):
+    """Initialize a Gaussian tree."""
+    keys = random.split(key, len(tree_util.tree_leaves(target)))
+    keys = tree_util.tree_unflatten(tree_util.tree_structure(target), keys)
+    return tree_util.tree_map(
+        lambda x, key: loc + scale * random.normal(key, x.shape), target, keys
+    )

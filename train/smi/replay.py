@@ -1,49 +1,17 @@
 """Sequential MAP inference."""
 
-from jax import jit
+from jax import jit, random
 
-from ..coreset import GDumbCoreset, JointCoreset, TaskIncrementalCoreset
+from dataops.array import batch, shuffle
+
+from ..coreset import GDumbCoreset, TaskIncrementalCoreset
 from ..loss import basic_loss, concat_loss
-from ..state.mixins import MAPMixin, ParallelChoiceMixin, SerialMixin
+from ..state.functions import make_step
+from ..state.mixins import MAPMixin
 from ..trainer import ContinualTrainer
 
 
-class Joint(MAPMixin, SerialMixin, ContinualTrainer):
-    """Joint training."""
-
-    def precompute(self):
-        """Precompute."""
-        return super().precompute() | self._make_keys(
-            ['init_state', 'update_state', 'update_coreset']
-        )
-
-    def init_mutables(self):
-        """Initialize the mutable hyperparameters."""
-        return {
-            'coreset': JointCoreset(
-                'coreset.zarr', 'coreset.memmap',
-                self.immutables, self.metadata
-            )
-        }
-
-    def update_loss(self, xs, ys):
-        """Update the loss function."""
-        self.loss = jit(
-            basic_loss(
-                self.immutables['nntype'],
-                self.immutables['precision'],
-                self.model.apply
-            )
-        )
-
-    def update_mutables(self, xs, ys):
-        """Update the coreset."""
-        self.mutables['coreset'].update(
-            self.precomputed['keys']['update_coreset'], xs, ys
-        )
-
-
-class ExactReplay(MAPMixin, ParallelChoiceMixin, ContinualTrainer):
+class ExactReplay(MAPMixin, ContinualTrainer):
     """Abstract class for exact replay."""
 
     def precompute(self):
@@ -56,7 +24,7 @@ class ExactReplay(MAPMixin, ParallelChoiceMixin, ContinualTrainer):
         """Update the loss function."""
         self.loss = jit(concat_loss(
             basic_loss(
-                self.immutables['nntype'],
+                self.model_spec.fin_act,
                 self.immutables['precision'],
                 self.model.apply
             )
@@ -77,9 +45,37 @@ class GDumb(ExactReplay):
         return {
             'coreset': GDumbCoreset(
                 'coreset.zarr', 'coreset.memmap',
-                self.immutables, self.metadata
+                self.model_spec, self.immutables['coreset_size']
             )
         }
+
+    def update_state(self, xs, ys):
+        """Update the training state."""
+        self.mutables['coreset'].create_memmap()
+        step = make_step(self.loss)
+        for key in random.split(
+            self.precomputed['keys']['update_state'],
+            num=self.immutables['n_epochs']
+        ):
+            keys = random.split(
+                key, num=-(len(ys) // -self.immutables['batch_size']) + 1
+            )
+            for i, indices in enumerate(
+                batch(
+                    self.immutables['batch_size'],
+                    shuffle(keys[0], len(ys))
+                ),
+                start=1
+            ):
+                self.state = step(
+                    self.state, xs[indices], ys[indices],
+                    *self.mutables['coreset'].choice(
+                        keys[i],
+                        self.immutables['coreset_batch_size']
+                    )
+                )
+            yield self.state
+        self.mutables['coreset'].delete_memmap()
 
 
 class TICReplay(ExactReplay):
@@ -90,6 +86,34 @@ class TICReplay(ExactReplay):
         return {
             'coreset': TaskIncrementalCoreset(
                 'coreset.zarr', 'coreset.memmap',
-                self.immutables, self.metadata
+                self.model_spec, self.immutables['coreset_size_per_task']
             )
         }
+
+    def update_state(self, xs, ys):
+        """Update the training state."""
+        self.mutables['coreset'].create_memmap()
+        step = make_step(self.loss)
+        for key in random.split(
+            self.precomputed['keys']['update_state'],
+            num=self.immutables['n_epochs']
+        ):
+            keys = random.split(
+                key, num=-(len(ys) // -self.immutables['batch_size']) + 1
+            )
+            for i, indices in enumerate(
+                batch(
+                    self.immutables['batch_size'],
+                    shuffle(keys[0], len(ys))
+                ),
+                start=1
+            ):
+                self.state = step(
+                    self.state, xs[indices], ys[indices],
+                    *self.mutables['coreset'].choice(
+                        keys[i],
+                        self.immutables['coreset_batch_size_per_task']
+                    )
+                )
+            yield self.state
+        self.mutables['coreset'].delete_memmap()

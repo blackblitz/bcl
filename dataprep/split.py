@@ -85,7 +85,7 @@ def task_sequence_2(dataset_constructor, transform, **kwargs):
         },
         {
             'classes': testing_dataset.classes,
-            'input_shape': testing_dataset.data.shape[1:],
+            'input_shape': testing_dataset[0][0].shape,
             'length': len(css)
         }
     )

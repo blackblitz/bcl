@@ -8,7 +8,9 @@ from jax import jit, random
 import jax.numpy as jnp
 from optax import sgd
 
-from dataops.io import get_pass_size
+from dataops.array import get_pass_size
+
+from .state.functions import init
 
 
 @unique
@@ -22,11 +24,11 @@ class NNType(Enum):
 class ContinualTrainer(ABC):
     """Abstract base class for continual learning."""
 
-    def __init__(self, model, immutables, metadata):
+    def __init__(self, model, model_spec, immutables):
         """Intialize self."""
         self.model = model
+        self.model_spec = model_spec
         self.immutables = immutables
-        self.metadata = metadata
         self.precomputed = self.precompute()
         self.state = self.init_state()
         self.mutables = self.init_mutables()
@@ -46,7 +48,10 @@ class ContinualTrainer(ABC):
     def precompute(self):
         """Precompute."""
         return {
-            'pass_size': get_pass_size(self.metadata['input_shape'])
+            'pass_size': get_pass_size(self.model_spec.in_shape),
+            'param_example': init(
+                random.PRNGKey(1337), self.model, self.model_spec.in_shape
+            )
         }
 
     @abstractmethod
@@ -72,7 +77,5 @@ class ContinualTrainer(ABC):
     def train(self, xs, ys):
         """Train with a dataset."""
         self.update_loss(xs, ys)
-        self.update_state(xs, ys)
+        yield from self.update_state(xs, ys)
         self.update_mutables(xs, ys)
-
-

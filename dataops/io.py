@@ -1,6 +1,5 @@
 """I/O operations."""
 
-import math
 from pathlib import Path
 import tomllib
 
@@ -57,10 +56,3 @@ def read_toml(path):
     """Read metadata."""
     with open(path, 'rb') as file:
         return tomllib.load(file)
-
-
-def get_pass_size(input_shape):
-    """Calculate the batch size for passing through a dataset."""
-    return 2 ** math.floor(
-        20 * math.log2(2) - 2 - sum(map(math.log2, input_shape))
-    )

@@ -1,15 +1,11 @@
 """Mixins for the training state."""
 
-from itertools import cycle
-
 from flax.training.train_state import TrainState
-from jax import random
-from optax import sgd
+from optax import adam
 
-from dataops.array import batch, shuffle
-
-from .functions import init, gauss_init, gsgauss_init, make_step
+from .functions import init, gauss_init, gsgauss_init
 from ..predict import MAPPredictor, GaussPredictor, GSGaussPredictor
+from ..probability import gauss_sample, gsgauss_sample
 
 
 class MAPMixin:
@@ -23,9 +19,9 @@ class MAPMixin:
             apply_fn=self.model.apply,
             params=init(
                 self.precomputed['keys']['init_state'],
-                self.model, self.metadata['input_shape']
+                self.model, self.model_spec.in_shape
             ),
-            tx=sgd(self.immutables['lr'])
+            tx=adam(self.immutables['lr'])
         )
 
 
@@ -41,9 +37,16 @@ class GaussMixin:
             params=gauss_init(
                 self.precomputed['keys']['init_state'],
                 self.model,
-                self.metadata['input_shape']
+                self.model_spec.in_shape
             ),
-            tx=sgd(self.immutables['lr'])
+            tx=adam(self.immutables['lr'])
+        )
+
+    def sample(self, key):
+        """Draw a standard sample for the reparameterization trick."""
+        return gauss_sample(
+            key, self.immutables['sample_size'],
+            self.precomputed['param_example']
         )
 
 
@@ -60,98 +63,14 @@ class GSGaussMixin:
                 self.precomputed['keys']['init_state'],
                 self.model,
                 self.immutables['n_comp'],
-                self.metadata['input_shape']
+                self.model_spec.in_shape
             ),
-            tx=sgd(self.immutables['lr'])
+            tx=adam(self.immutables['lr'])
         )
 
-
-class RegularMixin:
-    """Mixin for regular SGD."""
-
-    def update_state(self, xs, ys):
-        """Update the training state."""
-        step = make_step(self.loss)
-        for key in random.split(
-            self.precomputed['keys']['update_state'],
-            num=self.immutables['n_epochs']
-        ):
-            for indices in batch(
-                self.immutables['batch_size'], shuffle(key, len(ys))
-            ):
-                self.state = step(self.state, xs[indices], ys[indices])
-
-
-class SerialMixin:
-    """Mixin for SGD with coreset in series."""
-
-    def update_state(self, xs, ys):
-        """Update the training state."""
-        self.mutables['coreset'].create_memmap()
-        step = make_step(self.loss)
-        for key in random.split(
-            self.precomputed['keys']['update_state'],
-            num=self.immutables['n_epochs']
-        ):
-            key1, key2 = random.split(key)
-            for indices in batch(
-                self.immutables['batch_size'], shuffle(key1, len(ys))
-            ):
-                self.state = step(self.state, xs[indices], ys[indices])
-            for xs_batch, ys_batch in (
-                self.mutables['coreset'].shuffle_batch(key2)
-            ):
-                self.state = step(self.state, xs_batch, ys_batch)
-        self.mutables['coreset'].delete_memmap()
-
-
-class ParallelShuffleMixin:
-    """Mixin for SGD with coreset in parallel by shuffle-batching."""
-
-    def update_state(self, xs, ys):
-        """Update the training state."""
-        self.mutables['coreset'].create_memmap()
-        step = make_step(self.loss)
-        for key in random.split(
-            self.precomputed['keys']['update_state'],
-            num=self.immutables['n_epochs']
-        ):
-            key1, key2 = random.split(key)
-            for (indices, (xs_batch, ys_batch)) in zip(
-                batch(
-                    self.immutables['batch_size'], shuffle(key1, len(ys))
-                ),
-                cycle(self.mutables['coreset'].shuffle_batch(key2))
-            ):
-                self.state = step(
-                    self.state, xs[indices], ys[indices], xs_batch, ys_batch
-                )
-        self.mutables['coreset'].delete_memmap()
-
-
-class ParallelChoiceMixin:
-    """Mixin for SGD with coreset in parallel by choice."""
-
-    def update_state(self, xs, ys):
-        """Update the training state."""
-        self.mutables['coreset'].create_memmap()
-        step = make_step(self.loss)
-        for key in random.split(
-            self.precomputed['keys']['update_state'],
-            num=self.immutables['n_epochs']
-        ):
-            keys = random.split(
-                key, num=-(len(ys) // -self.immutables['batch_size']) + 1
-            )
-            for i, indices in enumerate(
-                batch(
-                    self.immutables['batch_size'],
-                    shuffle(keys[0], len(ys))
-                ),
-                start=1
-            ):
-                self.state = step(
-                    self.state, xs[indices], ys[indices],
-                    *self.mutables['coreset'].choice(keys[i])
-                )
-        self.mutables['coreset'].delete_memmap()
+    def sample(self, key):
+        """Draw a standard sample for the reparameterization trick."""
+        return gsgauss_sample(
+            key, self.immutables['sample_size'],
+            self.immutables['n_comp'], self.precomputed['param_example']
+        )

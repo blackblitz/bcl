@@ -3,29 +3,47 @@
 from jax import jit, random
 import jax.numpy as jnp
 
+from dataops.array import batch, get_n_batches, shuffle
+
 from ..loss import basic_loss, gmvi_vfe_mc, gmvi_vfe_ub, gvi_vfe
-from ..probability import gsgauss_sample, gauss_sample, get_gauss_prior
-from ..state.functions import init
-from ..state.mixins import GaussMixin, GSGaussMixin, RegularMixin
+from ..probability import get_gauss_prior
+from ..state.functions import make_step
+from ..state.mixins import GaussMixin, GSGaussMixin
 from ..trainer import ContinualTrainer
 
 
-class GVCL(GaussMixin, RegularMixin, ContinualTrainer):
+class VCL(ContinualTrainer):
+    """Variational continual learning."""
+
+    def update_state(self, xs, ys):
+        """Update the training state."""
+        step = make_step(self.loss)
+        for key in random.split(
+            self.precomputed['keys']['update_state'],
+            num=self.immutables['n_epochs']
+        ):
+            key1, key2 = random.split(key)
+            n_batches = get_n_batches(len(ys), self.immutables['batch_size'])
+            for key3, indices in zip(
+                random.split(key1, num=n_batches),
+                batch(
+                    self.immutables['batch_size'], shuffle(key2, len(ys))
+                )
+            ):
+                self.state = step(
+                    self.state, self.sample(key3), xs[indices], ys[indices]
+                )
+            yield self.state
+
+
+class GVCL(GaussMixin, VCL):
     """Gaussian variational continual learning."""
 
     def precompute(self):
         """Precompute."""
-        keys = self._make_keys(
-            ['precompute', 'init_state', 'update_state']
+        return super().precompute() | self._make_keys(
+            ['init_state', 'update_state']
         )
-        key1, key2 = random.split(keys['keys']['precompute'])
-        params = init(key1, self.model, self.metadata['input_shape'])
-        sample = {
-            'sample': gauss_sample(
-                key2, self.immutables['sample_size'], params
-            )
-        }
-        return super().precompute() | keys | sample
 
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""
@@ -41,11 +59,10 @@ class GVCL(GaussMixin, RegularMixin, ContinualTrainer):
         self.loss = jit(
             gvi_vfe(
                 basic_loss(
-                    self.immutables['nntype'],
+                    self.model_spec.fin_act,
                     0.0,
                     self.model.apply
                 ),
-                self.precomputed['sample'],
                 self.mutables['prior'],
                 self.immutables.get('beta', 1 / n_batches)
             )
@@ -56,28 +73,18 @@ class GVCL(GaussMixin, RegularMixin, ContinualTrainer):
         self.mutables['prior'] = self.state.params
 
 
-class GMVCL(GSGaussMixin, RegularMixin, ContinualTrainer):
+class GMVCL(GSGaussMixin, VCL):
     """Gaussian-mixture variational continual learning."""
 
     def precompute(self):
         """Precompute."""
         if self.immutables['mc_kldiv']:
-            keys = self._make_keys(
-                ['precompute', 'init_state', 'update_loss', 'update_state']
+            return super().precompute() | self._make_keys(
+                ['init_state', 'update_loss', 'update_state']
             )
-        else:
-            keys = self._make_keys(
-                ['precompute', 'init_state', 'update_state']
-            )
-        key1, key2 = random.split(keys['keys']['precompute'])
-        params = init(key1, self.model, self.metadata['input_shape'])
-        sample = {
-            'sample': gsgauss_sample(
-                key2, self.immutables['sample_size'],
-                self.immutables['n_comp'], params
-            )
-        }
-        return super().precompute() | keys | sample
+        return super().precompute() | self._make_keys(
+            ['precompute', 'init_state', 'update_state']
+        )
 
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""
@@ -93,11 +100,10 @@ class GMVCL(GSGaussMixin, RegularMixin, ContinualTrainer):
         self.loss = jit(
             (gmvi_vfe_mc if self.immutables['mc_kldiv'] else gmvi_vfe_ub)(
                 basic_loss(
-                    self.immutables['nntype'],
+                    self.model_spec.fin_act,
                     0.0,
                     self.model.apply
                 ),
-                self.precomputed['sample'],
                 self.mutables['prior'],
                 self.immutables.get('beta', 1 / n_batches),
             )

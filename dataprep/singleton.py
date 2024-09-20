@@ -2,14 +2,50 @@
 
 from jax import random
 import numpy as np
+from sklearn.datasets import load_iris, load_wine
 from torchvision.datasets import (
     CIFAR10, CIFAR100, EMNIST, FashionMNIST, MNIST, SVHN
 )
 
+from .datasets import ArrayDataset
 from .split import random_split
 
 root = 'pytorch'
 seed = 1337
+
+
+def task_sequence_0(load):
+    """Generate a task sequence of pattern 0."""
+    dataset = load()
+    training_dataset = ArrayDataset(dataset['data'], dataset['target'])
+    training_dataset, testing_dataset = random_split(
+        random.PRNGKey(seed), 0.2, training_dataset
+    )
+    training_dataset, validation_dataset = random_split(
+        random.PRNGKey(seed), 0.2, training_dataset
+    )
+    return (
+        {
+            'training': [training_dataset],
+            'validation': [validation_dataset],
+            'testing': [testing_dataset]
+        }, 
+        {
+            'classes': dataset.target_names.tolist(),
+            'features': dataset.feature_names,
+            'input_shape': [len(dataset.feature_names)],
+            'length': 1
+        }
+    )
+
+def iris():
+    """Make Iris."""
+    return task_sequence_0(load_iris)
+
+
+def wine():
+    """Make Wine."""
+    return task_sequence_0(load_wine)
 
 
 def task_sequence_1(dataset_constructor, transform, **kwargs):
@@ -32,7 +68,7 @@ def task_sequence_1(dataset_constructor, transform, **kwargs):
         }, 
         {
             'classes': testing_dataset.classes,
-            'input_shape': testing_dataset.data.shape[1:],
+            'input_shape': testing_dataset[0][0].shape,
             'length': 1
         }
     )

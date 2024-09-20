@@ -1,13 +1,21 @@
 [task_sequence]
 name = "sinusoid"
 
+[evaluation]
+metrics = ["accuracy"]
+
 [model]
 name = "FCNN3"
 
-[model.spec]
+[model.args]
 dense0 = 20
 dense1 = 20
 dense2 = 1
+
+[model.spec]
+fin_act = "SIGMOID"
+in_shape = [ 2 ]
+out_shape = [ 1 ]
 
 [[trainers]]
 id = "joint"
@@ -16,7 +24,6 @@ name = "Joint"
 [trainers.immutables]
 batch_size = 32
 lr = 0.001
-nntype = "SIGMOID"
 n_epochs = 100
 precision = 0.1
 seed = 1337
@@ -28,7 +35,6 @@ name = "Finetuning"
 [trainers.immutables]
 batch_size = 32
 lr = 0.001
-nntype = "SIGMOID"
 n_epochs = 100
 precision = 0.1
 seed = 1337
@@ -42,7 +48,6 @@ batch_size = 32
 coreset_batch_size = 16
 coreset_size = 32
 lr = 0.001
-nntype = "SIGMOID"
 n_epochs = 100
 precision = 0.1
 seed = 1337
@@ -56,7 +61,6 @@ batch_size = 32
 coreset_batch_size_per_task = 16
 coreset_size_per_task = 32
 lr = 0.001
-nntype = "SIGMOID"
 noise_init = false
 n_epochs = 100
 precision = 0.1
@@ -69,8 +73,7 @@ name = "GVCL"
 [trainers.immutables]
 batch_size = 32
 lr = 0.001
-nntype = "SIGMOID"
-n_epochs = 1000
+n_epochs = 100
 precision = 0.1
 sample_size = 100
 seed = 1337
@@ -83,9 +86,8 @@ name = "GMVCL"
 batch_size = 32
 lr = 0.001
 mc_kldiv = false
-nntype = "SIGMOID"
 n_comp = 3
-n_epochs = 1000
+n_epochs = 100
 precision = 0.1
 sample_size = 100
 seed = 1337
@@ -100,12 +102,11 @@ beta = 1.0
 coreset_batch_size_per_task = 16
 coreset_size_per_task = 32
 lr = 0.001
-nntype = "SIGMOID"
 noise_init = true
 noise_maxval = 4.0
 noise_minval = -4.0
 n_epochs = 100
-precision = 0.001
+precision = 0.1
 sample_size = 100
 seed = 1337
 
@@ -120,12 +121,11 @@ coreset_batch_size_per_task = 16
 coreset_size_per_task = 32
 lr = 0.001
 mc_kldiv = false
-nntype = "SIGMOID"
 noise_init = true
 noise_maxval = 4.0
 noise_minval = -4.0
 n_comp = 3
 n_epochs = 100
-precision = 0.001
+precision = 0.1
 sample_size = 100
 seed = 1337
