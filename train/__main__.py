@@ -7,7 +7,6 @@ import json
 from pathlib import Path
 
 import orbax.checkpoint as ocp
-import tomli_w
 from tqdm import tqdm
 
 from dataops.io import iter_tasks, read_toml
@@ -32,7 +31,6 @@ def main():
     metadata = read_toml(ts_path / 'metadata.toml')
     if 'ood_name' in exp['task_sequence']:
         ood_ts_path = Path('data').resolve() / exp['task_sequence']['ood_name']
-        ood_metadata = read_toml(ood_ts_path / 'metadata.toml')
 
     # prepare directory for checkpoints
     result_path = Path('results').resolve() / args.experiment_id
@@ -80,23 +78,39 @@ def main():
                 ):
                     predictor = (
                         trainer.predictor(
-                            model, model_spec, immutables['n_comp'], state.params
-                        ) if isinstance(trainer, train.state.mixins.GSGaussMixin)
-                        else trainer.predictor(model, model_spec, state.params)
+                            model, model_spec,
+                            immutables['n_comp'], state.params
+                        ) if isinstance(
+                            trainer, train.state.mixins.GSGaussMixin
+                        ) else trainer.predictor(
+                            model, model_spec, state.params
+                        )
                     )
-                    result = {'trainer_id': trainer_id, 'task_id': i + 1, 'epoch_num': j + 1}
+                    result = {
+                        'trainer_id': trainer_id,
+                        'task_id': i + 1,
+                        'epoch_num': j + 1
+                    }
                     for metric in exp['evaluation']['metrics']:
                         result[metric] = [
                             getattr(metrics, metric)(predictor, xs, ys)
-                            for xs, ys in islice(iter_tasks(ts_path, 'validation'), i + 1)
+                            for xs, ys in islice(
+                                iter_tasks(ts_path, 'validation'), i + 1
+                            )
                         ]
                     if 'ood_metrics' in exp['evaluation']:
                         for metric in exp['evaluation']['ood_metrics']:
                             result[metric] = [
                                 getattr(metrics, metric)(predictor, xs0, xs1)
                                 for (xs0, ys0), (xs1, ys1) in zip(
-                                    islice(iter_tasks(ts_path, 'validation'), i + 1),
-                                    islice(iter_tasks(ood_ts_path, 'validation'), i + 1)
+                                    islice(
+                                        iter_tasks(ts_path, 'validation'),
+                                        i + 1
+                                    ),
+                                    islice(
+                                        iter_tasks(ood_ts_path, 'validation'),
+                                        i + 1
+                                    )
                                 )
                             ]
                     with open(log_path, mode='a') as file:

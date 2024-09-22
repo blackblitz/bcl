@@ -1,24 +1,12 @@
 """Base classes."""
 
 from abc import ABC, abstractmethod
-from enum import Enum, unique
 
-from flax.training.train_state import TrainState
-from jax import jit, random
-import jax.numpy as jnp
-from optax import sgd
+from jax import random
 
 from dataops.array import get_pass_size
 
 from .state.functions import init
-
-
-@unique
-class NNType(Enum):
-    """Neural-network type."""
-
-    SIGMOID = 1
-    SOFTMAX = 2
 
 
 class ContinualTrainer(ABC):

@@ -38,10 +38,12 @@ class SFSVI(ContinualTrainer):
                     self.state, self.sample(key3), xs[indices], ys[indices],
                     *(
                         self.mutables['coreset'].choice(
-                            key4, self.immutables['coreset_batch_size_per_task']
+                            key4,
+                            self.immutables['coreset_batch_size_per_task']
                         ) if self.mutables['coreset'].task_count > 0
                         else self.mutables['coreset'].noise(
-                            key4, self.immutables['coreset_batch_size_per_task'],
+                            key4,
+                            self.immutables['coreset_batch_size_per_task'],
                             minval=self.immutables['noise_minval'],
                             maxval=self.immutables['noise_maxval']
                         )

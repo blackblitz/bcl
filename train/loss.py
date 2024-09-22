@@ -1,6 +1,6 @@
 """Loss functions."""
 
-from jax import tree_util, vmap
+from jax import flatten_util, tree_util, vmap
 import jax.numpy as jnp
 import optax
 
@@ -60,6 +60,41 @@ def concat_loss(base):
         return base(
             params, jnp.concatenate([xs1, xs2]), jnp.concatenate([ys1, ys2])
         )
+
+    return loss
+
+
+def diag_quad_con(base, lambda_, minimum, hessian):
+    """Return a loss function for diagonal quadratic consolidation."""
+    def loss(params, xs, ys):
+        return (
+            0.5 * lambda_ * tree.sum(
+                tree_util.tree_map(
+                    lambda h, p, m: h * (p - m) ** 2,
+                    hessian, params, minimum
+                )
+            ) + base(params, xs, ys)
+        )
+
+    return loss
+
+
+def flat_quad_con(base, flat_minimum, flat_hessian):
+    """Return a loss function for flattened quadratic consolidation."""
+    def loss(params, xs, ys):
+        diff = flatten_util.ravel_pytree(params)[0] - flat_minimum
+        return 0.5 * diff @ flat_hessian @ diff + base(params, xs, ys)
+
+    return loss
+
+
+def neu_con(base, con_state):
+    """Return a loss function for neural consolidation."""
+    def loss(params, xs, ys):
+        return con_state.apply_fn(
+            {'params': con_state.params},
+            jnp.expand_dims(flatten_util.ravel_pytree(params)[0], 0)
+        )[0, 0] + base(params, xs, ys)
 
     return loss
 

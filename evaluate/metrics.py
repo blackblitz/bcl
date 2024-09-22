@@ -7,7 +7,7 @@ from sklearn.metrics import roc_auc_score
 from dataops.array import batch, get_pass_size
 from models import FinAct
 
-from train.trainer import NNType
+from models.spec import FinAct
 from train.probability import cat_entr
 
 

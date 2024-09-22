@@ -64,10 +64,10 @@ class BMAPredictor:
         """Initialize self."""
         self.model = model
         self.model_spec = model_spec
-        self.param_sample  = param_sample
+        self.param_sample = param_sample
 
     @classmethod
-    def from_checkpoint(cls, model, model_spec, path):
+    def from_checkpoint(cls, model, model_spec, path, sample_size=10):
         """Initialize from a checkpoint."""
         with ocp.StandardCheckpointer() as ckpter:
             target = init(
@@ -75,9 +75,7 @@ class BMAPredictor:
             )
             param_sample = ckpter.restore(
                 path,
-                target=vmap(lambda x: target)(
-                    jnp.arange(immutables['pred_sample_size'])
-                )
+                target=vmap(lambda x: target)(jnp.arange(sample_size))
             )
         return cls(model, model_spec, param_sample)
 

@@ -234,5 +234,3 @@ def bern_entr(p):
 def cat_entr(p):
     """Calculate the entropy of categorical random variables."""
     return entr(p).sum(axis=-1)
-
-
