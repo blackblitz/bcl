@@ -1,14 +1,10 @@
 """Metrics."""
 
 import numpy as np
-from scipy.stats import entropy
 from sklearn.metrics import roc_auc_score
 
 from dataops.array import batch, get_pass_size
-from models import FinAct
-
-from models.spec import FinAct
-from train.probability import cat_entr
+from models import NLL
 
 
 def accuracy(predictor, xs, ys):
@@ -55,11 +51,11 @@ def ece(predictor, xs, ys, n_bins=100):
         np.asarray(predictor(xs[indices], decide=False))
         for indices in batch(pass_size, np.arange(len(ys)))
     ])
-    match predictor.model_spec.fin_act:
-        case FinAct.SIGMOID:
+    match predictor.model_spec.nll:
+        case NLL.SIGMOID_CROSS_ENTROPY:
             pred = proba >= 0.5
             pred_proba = np.maximum(proba, 1 - proba)
-        case FinAct.SOFTMAX:
+        case NLL.SOFTMAX_CROSS_ENTROPY:
             pred = proba.argmax(axis=-1)
             pred_proba = proba.max(axis=-1)
     count = np.zeros((n_bins,))

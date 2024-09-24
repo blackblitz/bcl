@@ -4,6 +4,7 @@ from pathlib import Path
 import tomllib
 
 import numpy as np
+import tomli_w
 
 
 def clear(path):
@@ -16,43 +17,26 @@ def clear(path):
             p.rmdir()
 
 
-def zarr_to_memmap(group, xs_path, ys_path):
-    """Write a zarr group to memory-mapped npy files."""
-    xs = np.lib.format.open_memmap(
-        xs_path, mode='w+',
-        dtype=np.float32,
-        shape=group['xs'].shape
-    )
-    ys = np.lib.format.open_memmap(
-        ys_path, mode='w+',
-        dtype=np.uint8,
-        shape=group['ys'].shape
-    )
-    for i, (x, y) in enumerate(zip(group['xs'], group['ys'])):
-        xs[i] = x
-        ys[i] = y
-    return (
-        np.lib.format.open_memmap(xs_path, mode='r'),
-        np.lib.format.open_memmap(ys_path, mode='r')
-    )
+def get_filenames(split, task_id):
+    """Return the file names for a task."""
+    return (f'{split}_{task_id}_xs.npy', f'{split}_{task_id}_ys.npy')
 
 
-def iter_tasks(path, split):
-    """Iterate through a task sequence."""
-    path = Path(path)
-    length = read_toml(path / 'metadata.toml')['length']
-    for i in range(length):
-        yield (
-            np.lib.format.open_memmap(
-                path / f'{split}_{i + 1}_xs.npy', mode='r'
-            ),
-            np.lib.format.open_memmap(
-                path / f'{split}_{i + 1}_ys.npy', mode='r'
-            )
-        )
+def read_task(path, split, task_id):
+    """Read the memory-mapped arrays for a task."""
+    return tuple(
+        np.lib.format.open_memmap(path / filename, mode='r')
+        for filename in get_filenames(split, task_id)
+    )
 
 
 def read_toml(path):
-    """Read metadata."""
+    """Read a toml file."""
     with open(path, 'rb') as file:
         return tomllib.load(file)
+
+
+def write_toml(data, path):
+    """Write a toml file."""
+    with open(path, 'wb') as file:
+        return tomli_w.dump(data, file)

@@ -5,7 +5,7 @@ from jax import jit, random
 from dataops.array import batch, shuffle
 
 from ..coreset import GDumbCoreset, TaskIncrementalCoreset
-from ..loss import basic_loss, concat_loss
+from ..loss import concat, l2_reg
 from ..state.functions import make_step
 from ..state.mixins import MAPMixin
 from ..trainer import ContinualTrainer
@@ -22,13 +22,9 @@ class ExactReplay(MAPMixin, ContinualTrainer):
 
     def update_loss(self, xs, ys):
         """Update the loss function."""
-        self.loss = jit(concat_loss(
-            basic_loss(
-                self.model_spec.fin_act,
-                self.immutables['precision'],
-                self.model.apply
-            )
-        ))
+        self.loss = jit(concat(l2_reg(
+            self.immutables['precision'], self.precomputed['nll']
+        )))
 
     def update_mutables(self, xs, ys):
         """Update the coreset."""

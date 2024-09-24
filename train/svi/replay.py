@@ -6,7 +6,7 @@ import jax.numpy as jnp
 from dataops.array import batch, get_n_batches, shuffle
 
 from ..coreset import TaskIncrementalCoreset
-from ..loss import basic_loss, gmfsvi_vfe_mc, gmfsvi_vfe_ub, gfsvi_vfe
+from ..loss import gmfsvi_vfe_mc, gmfsvi_vfe_ub, gfsvi_vfe
 from ..probability import get_gauss_prior
 from ..state.functions import make_step
 from ..state.mixins import GSGaussMixin, GaussMixin
@@ -79,11 +79,7 @@ class GSFSVI(GaussMixin, SFSVI):
         n_batches = -(len(ys) // -self.immutables['batch_size'])
         self.loss = jit(
             gfsvi_vfe(
-                basic_loss(
-                    self.model_spec.fin_act,
-                    0.0,
-                    self.model.apply
-                ),
+                self.precomputed['nll'],
                 self.mutables['prior'],
                 self.immutables.get('beta', 1 / n_batches),
                 self.model.apply
@@ -133,11 +129,7 @@ class GMSFSVI(GSGaussMixin, SFSVI):
                     [self.precomputed['keys']['update_loss']]
                     if self.immutables['mc_kldiv'] else []
                 ) + [
-                    basic_loss(
-                        self.model_spec.fin_act,
-                        0.0,
-                        self.model.apply
-                    ),
+                    self.precomputed['nll'],
                     self.mutables['prior'],
                     self.immutables.get('beta', 1 / n_batches),
                     self.model.apply

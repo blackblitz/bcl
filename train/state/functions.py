@@ -30,7 +30,7 @@ def gsgauss_init(key, model, n_comp, input_shape):
     return {
         'logit': random.normal(key2, (n_comp,)),
         'mean': mean,
-        'msd': tree.gauss(key2, mean, loc=-8.0)
+        'msd': tree.gauss(key2, mean, loc=-2.0, scale=0.05)
     }
 
 

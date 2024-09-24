@@ -5,7 +5,7 @@ import jax.numpy as jnp
 
 from dataops.array import batch, get_n_batches, shuffle
 
-from ..loss import basic_loss, gmvi_vfe_mc, gmvi_vfe_ub, gvi_vfe
+from ..loss import gmvi_vfe_mc, gmvi_vfe_ub, gvi_vfe
 from ..probability import get_gauss_prior
 from ..state.functions import make_step
 from ..state.mixins import GaussMixin, GSGaussMixin
@@ -58,11 +58,7 @@ class GVCL(GaussMixin, VCL):
         n_batches = -(len(ys) // -self.immutables['batch_size'])
         self.loss = jit(
             gvi_vfe(
-                basic_loss(
-                    self.model_spec.fin_act,
-                    0.0,
-                    self.model.apply
-                ),
+                self.precomputed['nll'],
                 self.mutables['prior'],
                 self.immutables.get('beta', 1 / n_batches)
             )
@@ -99,11 +95,7 @@ class GMVCL(GSGaussMixin, VCL):
         n_batches = -(len(ys) // -self.immutables['batch_size'])
         self.loss = jit(
             (gmvi_vfe_mc if self.immutables['mc_kldiv'] else gmvi_vfe_ub)(
-                basic_loss(
-                    self.model_spec.fin_act,
-                    0.0,
-                    self.model.apply
-                ),
+                self.precomputed['nll'],
                 self.mutables['prior'],
                 self.immutables.get('beta', 1 / n_batches),
             )

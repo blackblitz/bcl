@@ -13,20 +13,20 @@ dense1 = 20
 dense2 = 1
 
 [model.spec]
-fin_act = "SIGMOID"
+nll = "SIGMOID_CROSS_ENTROPY"
 in_shape = [ 2 ]
 out_shape = [ 1 ]
 
-# [[trainers]]
-# id = "joint"
-# name = "Joint"
-# 
-# [trainers.immutables]
-# batch_size = 64
-# lr = 0.001
-# n_epochs = 100
-# precision = 1.0
-# seed = 1337
+[[trainers]]
+id = "joint"
+name = "Joint"
+
+[trainers.immutables]
+batch_size = 64
+lr = 0.001
+n_epochs = 100
+precision = 1.0
+seed = 1337
 
 [[trainers]]
 id = "finetuning"
@@ -65,8 +65,8 @@ seed = 1337
 # n_epochs = 100
 # precision = 1.0
 # seed = 1337
-#
-
+# 
+# 
 # [[trainers]]
 # id = "ewc"
 # name = "ElasticWeightConsolidation"
@@ -91,7 +91,7 @@ seed = 1337
 # n_epochs = 100
 # precision = 1.0
 # seed = 1337
-
+# 
 # [[trainers]]
 # id = "aqc"
 # name = "AutodiffQuadraticConsolidation"
@@ -102,25 +102,25 @@ seed = 1337
 # n_epochs = 100
 # precision = 1.0
 # seed = 1337
-
-[[trainers]]
-id = "nc"
-name = "NeuralConsolidation"
-
-[trainers.immutables]
-batch_size = 64
-con_dense0 = 256
-con_dense1 = 256
-con_lr = 0.001
-con_n_steps = 1000
-con_precision = 1.0
-con_radius = 1.0
-con_sample_size = 64
-lr = 0.001
-n_epochs = 100
-precision = 1.0
-seed = 1337
-
+# 
+# [[trainers]]
+# id = "nc"
+# name = "NeuralConsolidation"
+# 
+# [trainers.immutables]
+# batch_size = 64
+# con_dense0 = 256
+# con_dense1 = 256
+# con_lr = 0.001
+# con_n_steps = 1000
+# con_precision = 1.0
+# con_radius = 1.0
+# con_sample_size = 64
+# lr = 0.001
+# n_epochs = 100
+# precision = 1.0
+# seed = 1337
+# 
 # [[trainers]]
 # id = "gvcl"
 # name = "GVCL"
@@ -146,7 +146,7 @@ seed = 1337
 # precision = 1.0
 # sample_size = 10
 # seed = 1337
-
+# 
 # [[trainers]]
 # id = "gsfsvi"
 # name = "GSFSVI"
@@ -164,7 +164,7 @@ seed = 1337
 # precision = 1.0
 # sample_size = 10
 # seed = 1337
-
+# 
 # [[trainers]]
 # id = "gmsfsvi"
 # name = "GMSFSVI"

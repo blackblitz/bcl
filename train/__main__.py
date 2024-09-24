@@ -2,14 +2,13 @@
 
 import argparse
 import datetime
-from itertools import islice
 import json
 from pathlib import Path
 
 import orbax.checkpoint as ocp
 from tqdm import tqdm
 
-from dataops.io import iter_tasks, read_toml
+from dataops.io import read_task, read_toml
 from evaluate import metrics
 import models
 import train
@@ -27,21 +26,29 @@ def main():
     exp = read_toml(exp_path / f'{args.experiment_id}.toml')
 
     # read metadata
-    ts_path = Path('data').resolve() / exp['task_sequence']['name']
+    ts_path = (
+        Path('features').resolve()
+        if 'feature_extractor' in exp
+        else Path('data').resolve() / exp['task_sequence']['name']
+    )
     metadata = read_toml(ts_path / 'metadata.toml')
     if 'ood_name' in exp['task_sequence']:
+        if metadata['length'] > 1 or 'feature_extractor' in exp:
+            raise ValueError(
+                'OOD testing is only for singleton task sequences '
+                'without a pre-trained feature extractor'
+            )
         ood_ts_path = Path('data').resolve() / exp['task_sequence']['ood_name']
 
     # prepare directory for checkpoints
-    result_path = Path('results').resolve() / args.experiment_id
-    ckpt_path = result_path / 'ckpt'
+    results_path = Path('results').resolve() / args.experiment_id
+    ckpt_path = results_path / 'ckpt'
     ckpt_path.mkdir(parents=True, exist_ok=True)
-    ocp.test_utils.erase_and_create_empty(ckpt_path)
 
     # create model and trainers
     model = getattr(models, exp['model']['name'])(**exp['model']['args'])
     model_spec = models.ModelSpec(
-        fin_act=models.FinAct[exp['model']['spec']['fin_act']],
+        nll=models.NLL[exp['model']['spec']['nll']],
         in_shape=exp['model']['spec']['in_shape'],
         out_shape=exp['model']['spec']['out_shape']
     )
@@ -53,6 +60,9 @@ def main():
         ) for trainer in exp['trainers']
     ]
 
+    if model_spec.in_shape != metadata['input_shape']:
+        raise ValueError('inconsistent input shapes')
+
     # train, log and checkpoint
     Path('logs').mkdir(exist_ok=True)
     log_path = (
@@ -61,21 +71,21 @@ def main():
         f'{datetime.datetime.now().isoformat()}.jsonl'
     )
     with ocp.StandardCheckpointer() as ckpter:
-        for trainer_id, name, immutables in tqdm(
-            trainers, leave=False, unit='trainer'
-        ):
+        trainers = tqdm(trainers, leave=False, unit='trainer')
+        for trainer_id, name, immutables in trainers:
             trainer = getattr(train, name)(model, model_spec, immutables)
-            for i, (xs, ys) in enumerate(
-                tqdm(
-                    iter_tasks(ts_path, 'training'),
-                    total=metadata['length'], leave=False, unit='task'
-                )
-            ):
-                for j, state in tqdm(
-                    enumerate(trainer.train(xs, ys)),
+            task_ids = tqdm(
+                range(1, metadata['length'] + 1),
+                leave=False, unit='task'
+            )
+            for task_id in task_ids:
+                xs, ys = read_task(ts_path, 'training', task_id)
+                states = tqdm(
+                    trainer.train(xs, ys),
                     total=immutables['n_epochs'],
                     leave=False, unit='epoch'
-                ):
+                )
+                for epoch_num, state in enumerate(states, start=1):
                     predictor = (
                         trainer.predictor(
                             model, model_spec,
@@ -88,36 +98,31 @@ def main():
                     )
                     result = {
                         'trainer_id': trainer_id,
-                        'task_id': i + 1,
-                        'epoch_num': j + 1
+                        'task_id': task_id,
+                        'epoch_num': epoch_num
                     }
                     for metric in exp['evaluation']['metrics']:
                         result[metric] = [
-                            getattr(metrics, metric)(predictor, xs, ys)
-                            for xs, ys in islice(
-                                iter_tasks(ts_path, 'validation'), i + 1
-                            )
+                            getattr(metrics, metric)(
+                                predictor,
+                                *read_task(ts_path, 'validation', i)
+                            ) for i in range(1, task_id + 1)
                         ]
                     if 'ood_metrics' in exp['evaluation']:
                         for metric in exp['evaluation']['ood_metrics']:
                             result[metric] = [
-                                getattr(metrics, metric)(predictor, xs0, xs1)
-                                for (xs0, ys0), (xs1, ys1) in zip(
-                                    islice(
-                                        iter_tasks(ts_path, 'validation'),
-                                        i + 1
-                                    ),
-                                    islice(
-                                        iter_tasks(ood_ts_path, 'validation'),
-                                        i + 1
-                                    )
-                                )
+                                getattr(metrics, metric)(
+                                    predictor,
+                                    read_task(ts_path, 'validation', i)[0],
+                                    read_task(ood_ts_path, 'validation', i)[0]
+                                ) for i in range(1, task_id + 1)
                             ]
                     with open(log_path, mode='a') as file:
                         print(json.dumps(result), file=file)
-                ckpter.save(
-                    ckpt_path / f'{trainer_id}_{i + 1}', trainer.state.params
-                )
+                path = ckpt_path / f'{trainer_id}_{task_id}'
+                ocp.test_utils.erase_and_create_empty(path)
+                path.rmdir()
+                ckpter.save(path, trainer.state.params)
 
 
 if __name__ == '__main__':

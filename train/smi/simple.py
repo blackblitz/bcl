@@ -9,11 +9,10 @@ from optax import adam
 
 from dataops import tree
 from dataops.array import batch, shuffle
-from models import FCNN3
-from models.spec import FinAct
+from models import FCNN3, NLL
 
 from ..coreset import JointCoreset
-from ..loss import basic_loss, diag_quad_con, flat_quad_con, huber, neu_con
+from ..loss import diag_quad_con, flat_quad_con, huber, l2_reg, neu_con
 from ..state.functions import init, make_step
 from ..state.mixins import MAPMixin
 from ..trainer import ContinualTrainer
@@ -39,11 +38,7 @@ class Joint(MAPMixin, ContinualTrainer):
     def update_loss(self, xs, ys):
         """Update the loss function."""
         self.loss = jit(
-            basic_loss(
-                self.model_spec.fin_act,
-                self.immutables['precision'],
-                self.model.apply
-            )
+            l2_reg(self.immutables['precision'], self.precomputed['nll'])
         )
 
     def update_state(self, xs, ys):
@@ -104,11 +99,7 @@ class Finetuning(RegularTrainer):
     def update_loss(self, xs, ys):
         """Update the loss function."""
         self.loss = jit(
-            basic_loss(
-                self.model_spec.fin_act,
-                self.immutables['precision'],
-                self.model.apply
-            )
+            l2_reg(self.immutables['precision'], self.precomputed['nll'])
         )
 
     def update_mutables(self, xs, ys):
@@ -137,21 +128,15 @@ class QuadraticConsolidation(RegularTrainer):
         """Update the loss function."""
         if self.loss is None:
             self.loss = jit(
-                basic_loss(
-                    self.model_spec.fin_act,
-                    self.immutables['precision'],
-                    self.model.apply
-                )
+                l2_reg(self.immutables['precision'], self.precomputed['nll'])
             )
         else:
             self.loss = jit(
                 diag_quad_con(
-                    basic_loss(
-                        self.model_spec.fin_act, 0.0, self.model.apply
-                    ),
                     self.immutables['lambda'],
                     self.mutables['minimum'],
-                    self.mutables['hessian']
+                    self.mutables['hessian'],
+                    self.precomputed['nll']
                 )
             )
 
@@ -162,18 +147,16 @@ class ElasticWeightConsolidation(QuadraticConsolidation):
     def update_mutables(self, xs, ys):
         """Update the mutable hyperparameters."""
         self.mutables['minimum'] = self.state.params
-        nll_grad = grad(
-            basic_loss(self.model_spec.fin_act, 0.0, self.model.apply)
-        )
+        nll_grad = grad(self.precomputed['nll'])
 
         @jit
         def mean_squared_grad(x):
             xs = jnp.expand_dims(x, 0)
             out = self.model.apply({'params': self.state.params}, xs)[0]
-            match self.model_spec.fin_act:
-                case FinAct.SIGMOID:
+            match self.model_spec.nll:
+                case NLL.SIGMOID_CROSS_ENTROPY:
                     pred = nn.softmax(jnp.array([0., out[0]]))
-                case FinAct.SOFTMAX:
+                case NLL.SOFTMAX_CROSS_ENTROPY:
                     pred = nn.softmax(out)
             return tree_util.tree_map(
                 lambda g: jnp.tensordot(pred, g ** 2, axes=(0, 0)),
@@ -259,20 +242,14 @@ class AutodiffQuadraticConsolidation(RegularTrainer):
         """Update the loss function."""
         if self.loss is None:
             self.loss = jit(
-                basic_loss(
-                    self.model_spec.fin_act,
-                    self.immutables['precision'],
-                    self.model.apply
-                )
+                l2_reg(self.immutables['precision'], self.precomputed['nll'])
             )
         else:
             self.loss = jit(
                 flat_quad_con(
-                    basic_loss(
-                        self.model_spec.fin_act, 0.0, self.model.apply
-                    ),
                     self.mutables['flat_minimum'],
-                    self.mutables['flat_hessian']
+                    self.mutables['flat_hessian'],
+                    self.precomputed['nll']
                 )
             )
 
@@ -280,14 +257,13 @@ class AutodiffQuadraticConsolidation(RegularTrainer):
         """Update hyperparameters."""
         flat_params, unflatten = flatten_util.ravel_pytree(self.state.params)
         self.mutables['flat_minimum'] = flat_params
-        nll = basic_loss(self.model_spec.fin_act, 0.0, self.model.apply)
 
         def flat_nll(flat_params, xs, ys):
-            return nll(unflatten(flat_params), xs, ys)
+            return self.precomputed['nll'](unflatten(flat_params), xs, ys)
 
-        nll_hessian = jit(jacfwd(grad(flat_nll)))
+        flat_nll_hessian = jit(jacfwd(grad(flat_nll)))
         self.mutables['flat_hessian'] = self.mutables['flat_hessian'] + sum(
-            nll_hessian(flat_params, xs[indices], ys[indices])
+            flat_nll_hessian(flat_params, xs[indices], ys[indices])
             for indices in batch(
                 self.precomputed['pass_size'], jnp.arange(len(ys))
             )
@@ -328,20 +304,11 @@ class NeuralConsolidation(RegularTrainer):
         """Update the loss function."""
         if self.loss is None:
             self.loss = jit(
-                basic_loss(
-                    self.model_spec.fin_act,
-                    self.immutables['precision'],
-                    self.model.apply
-                )
+                l2_reg(self.immutables['precision'], self.precomputed['nll'])
             )
         else:
             self.loss = jit(
-                neu_con(
-                    basic_loss(
-                        self.model_spec.fin_act, 0.0, self.model.apply
-                    ),
-                    self.mutables['con_state']
-                )
+                neu_con(self.mutables['con_state'], self.precomputed['nll'])
             )
 
     def _make_con_data(self, key, xs, ys):
@@ -370,9 +337,9 @@ class NeuralConsolidation(RegularTrainer):
         """Update hyperparameters."""
         self.mutables['minimum'] = self.state.params
         state = self.mutables['con_state']
-        loss = huber(
+        loss = l2_reg(
             self.immutables['con_precision'],
-            self.mutables['con_state'].apply_fn
+            huber(self.mutables['con_state'].apply_fn)
         )
         step = make_step(loss)
         for key in random.split(

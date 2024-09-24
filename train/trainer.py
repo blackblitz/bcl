@@ -6,6 +6,7 @@ from jax import random
 
 from dataops.array import get_pass_size
 
+from .loss import get_nll
 from .state.functions import init
 
 
@@ -39,7 +40,8 @@ class ContinualTrainer(ABC):
             'pass_size': get_pass_size(self.model_spec.in_shape),
             'param_example': init(
                 random.PRNGKey(1337), self.model, self.model_spec.in_shape
-            )
+            ),
+            'nll': get_nll(self.model_spec.nll)(self.model.apply)
         }
 
     @abstractmethod

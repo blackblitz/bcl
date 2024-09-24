@@ -1,25 +1,54 @@
 [task_sequence]
 name = "split_mnist"
 
+[evaluation]
+metrics = ["accuracy"]
+
+[feature_extractor]
+name = "CNN4"
+task_sequence_name = "mnist"
+
+[feature_extractor.args]
+conv0 = 32
+conv1 = 32
+dense0 = 64
+dense1 = 10
+activation = "swish"
+
+[feature_extractor.spec]
+nll = "SOFTMAX_CROSS_ENTROPY"
+in_shape = [ 28, 28, 1 ]
+out_shape = [ 10 ]
+
+[feature_extractor.immutables]
+batch_size = 32
+lr = 0.001
+n_epochs = 10
+precision = 0.01
+seed = 1337
+
 [model]
-name = "FCNN3"
+name = "FCNN1"
+
+[model.args]
+dense = 10
 
 [model.spec]
-dense0 = 256
-dense1 = 256
-dense2 = 10
+nll = "SOFTMAX_CROSS_ENTROPY"
+in_shape = [ 64 ]
+out_shape = [ 10 ]
 
-# [[trainers]]
-# id = "joint"
-# name = "Joint"
-# 
-# [trainers.immutables]
-# batch_size = 32
-# lr = 0.001
-# nntype = "SOFTMAX"
-# n_epochs = 10
-# precision = 0.01
-# seed = 1337
+[[trainers]]
+id = "joint"
+name = "Joint"
+
+[trainers.immutables]
+batch_size = 32
+lr = 0.001
+nntype = "SOFTMAX"
+n_epochs = 10
+precision = 0.01
+seed = 1337
 
 # [[trainers]]
 # id = "finetuning"

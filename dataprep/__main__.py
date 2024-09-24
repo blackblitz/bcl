@@ -27,8 +27,7 @@ def main():
                 path / f'{split}_{i + 1}_xs.npy',
                 path / f'{split}_{i + 1}_ys.npy'
             )
-    with open(path / 'metadata.toml', 'wb') as file:
-        tomli_w.dump(metadata, file)
+    write_toml(metadata, path / 'metadata.toml')
 
 
 if __name__ == '__main__':

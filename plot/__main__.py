@@ -1,16 +1,13 @@
 """Plotting script."""
 
 import argparse
-from functools import partial
 from pathlib import Path
 
-from jax import tree_util
 import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 import numpy as np
-import orbax.checkpoint as ocp
 
-from dataops.io import iter_tasks, read_toml
+from dataops.io import read_task, read_toml
 import models
 import train
 
@@ -89,7 +86,7 @@ def main():
     )
     model = getattr(models, exp['model']['name'])(**exp['model']['args'])
     model_spec = models.ModelSpec(
-        fin_act=models.FinAct[exp['model']['spec']['fin_act']],
+        nll=models.NLL[exp['model']['spec']['nll']],
         in_shape=exp['model']['spec']['in_shape'],
         out_shape=exp['model']['spec']['out_shape']
     )
@@ -106,10 +103,11 @@ def main():
         metadata['length'], len(trainers),
         figsize=(12, 6.75), sharex=True, sharey=True
     )
-    # with ocp.StandardCheckpointer() as ckpter:
     for i, (trainer_id, trainer, immutables) in enumerate(trainers):
-        for j, (xs, ys) in enumerate(iter_tasks(ts_path, 'training')):
-            path = results_path / f'ckpt/{trainer_id}_{j + 1}'
+        for j in range(metadata['length']):
+            task_id = j + 1
+            xs, ys = read_task(ts_path, 'training', task_id)
+            path = results_path / f'ckpt/{trainer_id}_{task_id}'
             predictor = (
                 trainer.predictor.from_checkpoint(
                     model, model_spec, immutables['n_comp'], path
@@ -121,7 +119,7 @@ def main():
             plotter.plot_pred(axes[j, i], predictor)
             plotter.plot_dataset(axes[j, i], xs, ys)
             if i == 0:
-                axes[j, 0].set_ylabel(f'Task {j + 1}')
+                axes[j, 0].set_ylabel(f'Task {task_id}')
         axes[-1, i].set_xlabel(trainer_id)
 
     (results_path / 'plots').mkdir(parents=True, exist_ok=True)
