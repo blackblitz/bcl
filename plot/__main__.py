@@ -80,7 +80,7 @@ def main():
     # set results path
     results_path = Path('results').resolve() / args.experiment_id
 
-    # create plotter, model and trainers
+    # create plotter and model
     plotter = Plotter(
         args.num_classes, args.left, args.right, args.bottom, args.top
     )
@@ -90,37 +90,30 @@ def main():
         in_shape=exp['model']['spec']['in_shape'],
         out_shape=exp['model']['spec']['out_shape']
     )
-    trainers = [
-        (
-            trainer['id'],
-            getattr(train, trainer['name']),
-            trainer['immutables']
-        ) for trainer in exp['trainers']
-    ]
 
     # restore checkpoint, predict and plot
     fig, axes = plt.subplots(
-        metadata['length'], len(trainers),
+        metadata['length'], len(exp['trainers']),
         figsize=(12, 6.75), sharex=True, sharey=True
     )
-    for i, (trainer_id, trainer, immutables) in enumerate(trainers):
+    for i, trainer_spec in enumerate(exp['trainers']):
+        trainer_id = trainer_spec['id']
+        trainer_label = trainer_spec['label']
+        trainer_class = getattr(train, trainer_spec['name'])
+        immutables = trainer_spec['immutables']['predict']
+
         for j in range(metadata['length']):
             task_id = j + 1
             xs, ys = read_task(ts_path, 'training', task_id)
             path = results_path / f'ckpt/{trainer_id}_{task_id}'
-            predictor = (
-                trainer.predictor.from_checkpoint(
-                    model, model_spec, immutables['n_comp'], path
-                ) if issubclass(trainer, train.state.mixins.GSGaussMixin)
-                else trainer.predictor.from_checkpoint(
-                    model, model_spec, path
-                )
+            predictor = trainer_class.predictor_class.from_checkpoint(
+                model, model_spec, immutables, path
             )
             plotter.plot_pred(axes[j, i], predictor)
             plotter.plot_dataset(axes[j, i], xs, ys)
             if i == 0:
                 axes[j, 0].set_ylabel(f'Task {task_id}')
-        axes[-1, i].set_xlabel(trainer_id)
+        axes[-1, i].set_xlabel(trainer_label)
 
     (results_path / 'plots').mkdir(parents=True, exist_ok=True)
     fig.savefig(results_path / 'plots/plot.png')

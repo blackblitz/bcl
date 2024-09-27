@@ -53,6 +53,16 @@ def huber(apply):
     return loss
 
 
+def l2(apply):
+    """Return an L2 loss function."""
+    def loss(params, xs, ys):
+        return optax.l2_loss(
+            apply({'params': params}, xs)[:, 0], ys
+        ).sum()
+
+    return loss
+
+
 def l2_reg(precision, nll):
     """Return an L2-regularized loss function."""
     def loss(params, xs, ys):

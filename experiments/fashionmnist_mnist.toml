@@ -16,7 +16,7 @@ dense0 = 256
 dense1 = 10
 
 [model.spec]
-fin_act = "SOFTMAX"
+nll = "SOFTMAX_CROSS_ENTROPY"
 in_shape = [ 28, 28, 1 ]
 out_shape = [ 10 ]
 
@@ -24,19 +24,21 @@ out_shape = [ 10 ]
 id = "finetuning"
 name = "Finetuning"
 
-[trainers.immutables]
+[trainers.immutables.train]
 batch_size = 32
 lr = 0.001
 nntype = "SOFTMAX"
 n_epochs = 20
 precision = 0.01
 seed = 1337
+
+[trainers.immutables.predict]
 
 [[trainers]]
 id = "gvcl"
 name = "GVCL"
 
-[trainers.immutables]
+[trainers.immutables.train]
 batch_size = 32
 lr = 0.001
 nntype = "SOFTMAX"
@@ -45,12 +47,14 @@ precision = 0.01
 pred_sample_size = 10
 sample_size = 1
 seed = 1337
+
+[trainers.immutables.predict]
 
 [[trainers]]
 id = "gmvcl"
 name = "GMVCL"
 
-[trainers.immutables]
+[trainers.immutables.train]
 batch_size = 32
 lr = 0.001
 mc_kldiv = false
@@ -61,12 +65,14 @@ precision = 0.01
 pred_sample_size = 10
 sample_size = 1
 seed = 1337
+
+[trainers.immutables.predict]
 
 [[trainers]]
 id = "gsfsvi"
 name = "GSFSVI"
 
-[trainers.immutables]
+[trainers.immutables.train]
 batch_size = 32
 coreset_batch_size_per_task = 16
 coreset_size_per_task = 32
@@ -82,11 +88,13 @@ pred_sample_size = 10
 sample_size = 1
 seed = 1337
 
+[trainers.immutables.predict]
+
 [[trainers]]
 id = "gmsfsvi"
 name = "GMSFSVI"
 
-[trainers.immutables]
+[trainers.immutables.train]
 batch_size = 32
 coreset_batch_size_per_task = 16
 coreset_size_per_task = 32
@@ -102,3 +110,5 @@ precision = 0.01
 pred_sample_size = 10
 sample_size = 1
 seed = 1337
+
+[trainers.immutables.predict]

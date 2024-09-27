@@ -1,22 +1,17 @@
 """Training package."""
 
-from .smi import (
-    AutodiffQuadraticConsolidation, Finetuning, ElasticWeightConsolidation,
-    GDumb, Joint, NeuralConsolidation, SynapticIntelligence, TICReplay
-)
-from .svi import GMSFSVI, GMVCL, GSFSVI, GVCL
-
-__all__ = [
-    'AutodiffQuadraticConsolidation',
-    'ElasticWeightConsolidation',
-    'Finetuning',
-    'GDumb',
-    'Joint',
-    'TICReplay',
-    'GMSFSVI',
-    'GMVCL',
-    'GSFSVI',
-    'GVCL',
-    'NeuralConsolidation',
-    'SynapticIntelligence'
+smi_simple = [
+    'AutodiffQuadraticConsolidation', 'Finetuning',
+    'ElasticWeightConsolidation', 'Joint',
+    'NeuralConsolidation', 'SynapticIntelligence'
 ]
+smi_replay = ['GDumb', 'TICReplay']
+svi_simple = ['GMVCL', 'GVCL']
+svi_replay = ['GMSFSVI', 'GSFSVI']
+
+module_map = (
+    dict.fromkeys(smi_simple, 'train.smi.simple')
+    | dict.fromkeys(smi_replay, 'train.smi.replay')
+    | dict.fromkeys(svi_simple, 'train.svi.simple')
+    | dict.fromkeys(svi_replay, 'train.svi.replay')
+)

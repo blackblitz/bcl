@@ -1,25 +1,17 @@
-"""Dataset sequences."""
+"""Preparation of task sequences."""
 
-from .singleton import (
-    cifar10, cifar100, emnist_letters, fashionmnist, iris, mnist, svhn, wine
-)
-from .split import (
-    split_cifar10, split_iris, split_mnist, split_wine
-)
-from .toy import sinusoid
-
-__all__ = [
-    'cifar10',
-    'cifar100',
-    'emnist_letters',
-    'fashionmnist',
-    'iris',
-    'mnist',
-    'sinusoid',
-    'split_cifar10',
-    'split_iris',
-    'split_mnist',
-    'split_wine',
-    'svhn',
-    'wine'
+singleton = [
+    'cifar10', 'cifar100', 'emnist_letters', 'fashionmnist',
+    'iris', 'mnist', 'svhn', 'wine'
 ]
+split = [
+    'split_cifar10', 'split_iris', 'split_iris_2',
+    'split_mnist', 'split_wine'
+]
+toy = ['sinusoid']
+
+module_map = (
+    dict.fromkeys(singleton, 'dataprep.singleton')
+    | dict.fromkeys(split, 'dataprep.split')
+    | dict.fromkeys(toy, 'dataprep.toy')
+)

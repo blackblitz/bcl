@@ -2,6 +2,7 @@
 
 import argparse
 import datetime
+from importlib import import_module
 import json
 from pathlib import Path
 
@@ -10,8 +11,9 @@ from tqdm import tqdm
 
 from dataops.io import read_task, read_toml
 from evaluate import metrics
-import models
-import train
+from models import ModelSpec, NLL
+from models import module_map as models_module_map
+from train import module_map as train_module_map
 
 
 def main():
@@ -45,23 +47,16 @@ def main():
     ckpt_path = results_path / 'ckpt'
     ckpt_path.mkdir(parents=True, exist_ok=True)
 
-    # create model and trainers
-    model = getattr(models, exp['model']['name'])(**exp['model']['args'])
-    model_spec = models.ModelSpec(
-        nll=models.NLL[exp['model']['spec']['nll']],
+    # create model
+    model = getattr(
+        import_module(models_module_map[exp['model']['name']]),
+        exp['model']['name']
+    )(**exp['model']['args'])
+    model_spec = ModelSpec(
+        nll=NLL[exp['model']['spec']['nll']],
         in_shape=exp['model']['spec']['in_shape'],
         out_shape=exp['model']['spec']['out_shape']
     )
-    trainers = [
-        (
-            trainer['id'],
-            trainer['name'],
-            trainer['immutables']
-        ) for trainer in exp['trainers']
-    ]
-
-    if model_spec.in_shape != metadata['input_shape']:
-        raise ValueError('inconsistent input shapes')
 
     # train, log and checkpoint
     Path('logs').mkdir(exist_ok=True)
@@ -71,9 +66,17 @@ def main():
         f'{datetime.datetime.now().isoformat()}.jsonl'
     )
     with ocp.StandardCheckpointer() as ckpter:
-        trainers = tqdm(trainers, leave=False, unit='trainer')
-        for trainer_id, name, immutables in trainers:
-            trainer = getattr(train, name)(model, model_spec, immutables)
+        trainer_specs = tqdm(exp['trainers'], leave=False, unit='trainer')
+        for trainer_spec in trainer_specs:
+            trainer_id = trainer_spec['id']
+            trainer_class = getattr(
+                import_module(train_module_map[trainer_spec['name']]),
+                trainer_spec['name']
+            )
+            train_immutables = trainer_spec['immutables']['train']
+            predict_immutables = trainer_spec['immutables']['predict']
+
+            trainer = trainer_class(model, model_spec, train_immutables)
             task_ids = tqdm(
                 range(1, metadata['length'] + 1),
                 leave=False, unit='task'
@@ -82,19 +85,12 @@ def main():
                 xs, ys = read_task(ts_path, 'training', task_id)
                 states = tqdm(
                     trainer.train(xs, ys),
-                    total=immutables['n_epochs'],
+                    total=train_immutables['n_epochs'],
                     leave=False, unit='epoch'
                 )
                 for epoch_num, state in enumerate(states, start=1):
-                    predictor = (
-                        trainer.predictor(
-                            model, model_spec,
-                            immutables['n_comp'], state.params
-                        ) if isinstance(
-                            trainer, train.state.mixins.GSGaussMixin
-                        ) else trainer.predictor(
-                            model, model_spec, state.params
-                        )
+                    predictor = trainer.predictor_class(
+                        model, model_spec, predict_immutables, state.params
                     )
                     result = {
                         'trainer_id': trainer_id,

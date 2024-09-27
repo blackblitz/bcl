@@ -14,8 +14,8 @@ root = 'pytorch'
 seed = 1337
 
 
-def task_sequence_0(load):
-    """Generate a task sequence of pattern 0."""
+def task_sequence_1(load):
+    """Generate a task sequence of pattern 1."""
     dataset = load()
     training_dataset = ArrayDataset(dataset['data'], dataset['target'])
     training_dataset, testing_dataset = random_split(
@@ -40,25 +40,32 @@ def task_sequence_0(load):
 
 def iris():
     """Make Iris."""
-    return task_sequence_0(load_iris)
+    return task_sequence_1(load_iris)
 
 
 def wine():
     """Make Wine."""
-    return task_sequence_0(load_wine)
+    return task_sequence_1(load_wine)
 
 
-def task_sequence_1(dataset_constructor, transform, **kwargs):
-    """Generate an task sequence of pattern 1."""
+def task_sequence_2(
+    dataset_constructor,
+    transform=lambda x: x,
+    target_transform=lambda x: x,
+    **kwargs
+):
+    """Generate an task sequence of pattern 2."""
 
     training_dataset = dataset_constructor(
-        root, download=True, transform=transform, train=True, **kwargs
+        root, download=True, transform=transform,
+        target_transform=target_transform, train=True, **kwargs
     )
     training_dataset, validation_dataset = random_split(
         random.PRNGKey(seed), 0.2, training_dataset
     )
     testing_dataset = dataset_constructor(
-        root, download=True, transform=transform, train=False, **kwargs
+        root, download=True, transform=transform,
+        target_transform=target_transform, train=False, **kwargs
     )
     return (
         {
@@ -86,27 +93,32 @@ def transform_rgb(x):
 
 def mnist():
     """Make MNIST."""
-    return task_sequence_1(MNIST, transform_grayscale)
+    return task_sequence_2(MNIST, transform=transform_grayscale)
 
 
 def emnist_letters():
     """Make MNIST."""
-    return task_sequence_1(EMNIST, transform_grayscale, split='letters')
+    return task_sequence_2(
+        EMNIST,
+        transform=transform_grayscale,
+        target_transform=lambda x: x - 1,
+        split='letters'
+    )
 
 
 def fashionmnist():
     """Make MNIST."""
-    return task_sequence_1(FashionMNIST, transform_grayscale)
+    return task_sequence_2(FashionMNIST, transform=transform_grayscale)
 
 
 def cifar10():
     """Make CIFAR-10."""
-    return task_sequence_1(CIFAR10, transform_rgb)
+    return task_sequence_2(CIFAR10, transform=transform_rgb)
 
 
 def cifar100():
     """Make CIFAR-100."""
-    return task_sequence_1(CIFAR100, transform_rgb)
+    return task_sequence_2(CIFAR100, transform=transform_rgb)
 
 
 def svhn():

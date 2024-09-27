@@ -9,7 +9,8 @@ from optax import adam
 
 from dataops import tree
 from dataops.array import batch, shuffle
-from models import FCNN3, NLL
+from models import NLL
+from models.fcnn import FCNN3
 
 from ..coreset import JointCoreset
 from ..loss import diag_quad_con, flat_quad_con, huber, l2_reg, neu_con

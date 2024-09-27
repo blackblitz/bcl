@@ -11,7 +11,7 @@ from ..probability import gauss_sample, gsgauss_sample
 class MAPMixin:
     """Mixin for MAP inference."""
 
-    predictor = MAPPredictor
+    predictor_class = MAPPredictor
 
     def init_state(self):
         """Initialize the state."""
@@ -28,7 +28,7 @@ class MAPMixin:
 class GaussMixin:
     """Mixin for Gaussian variation inference."""
 
-    predictor = GaussPredictor
+    predictor_class = GaussPredictor
 
     def init_state(self):
         """Initialize the state."""
@@ -53,7 +53,7 @@ class GaussMixin:
 class GSGaussMixin:
     """Mixin for Gaussian-mixture variation inference."""
 
-    predictor = GSGaussPredictor
+    predictor_class = GSGaussPredictor
 
     def init_state(self):
         """Initialize the state."""

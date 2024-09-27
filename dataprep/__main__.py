@@ -1,12 +1,14 @@
 """Script to prepare task sequences."""
 
 import argparse
+from importlib import import_module
 from pathlib import Path
 
 import orbax.checkpoint as ocp
-import tomli_w
 
-from . import *
+from dataops.io import write_toml
+
+from . import module_map
 from .datasets import write_npy
 
 
@@ -19,7 +21,10 @@ def main():
     path = Path('data') / args.name
     path.mkdir(parents=True, exist_ok=True)
     ocp.test_utils.erase_and_create_empty(path)
-    task_sequence, metadata = globals()[args.name]()
+    task_sequence, metadata = getattr(
+        import_module(module_map[args.name]),
+        args.name
+    )()
     for split, dataset_sequence in task_sequence.items():
         for i, dataset in enumerate(dataset_sequence):
             write_npy(

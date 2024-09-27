@@ -2,6 +2,7 @@
 ckpt/
 coreset.zarr/
 data/
+features/
 logs/
 plots/
 pytorch/

@@ -2,6 +2,7 @@
 
 import argparse
 import json
+import numpy as np
 from pathlib import Path
 
 from dataops.io import read_task, read_toml
@@ -30,6 +31,11 @@ def main():
     )
     metadata = read_toml(ts_path / 'metadata.toml')
     if 'ood_name' in exp['task_sequence']:
+        if metadata['length'] > 1 or 'feature_extractor' in exp:
+            raise ValueError(
+                'OOD testing is only for singleton task sequences '
+                'without a pre-trained feature extractor'
+            )
         ood_ts_path = Path('data').resolve() / exp['task_sequence']['ood_name']
 
     # set results path
@@ -42,26 +48,48 @@ def main():
         in_shape=exp['model']['spec']['in_shape'],
         out_shape=exp['model']['spec']['out_shape']
     )
-    trainers = [
-        (
-            trainer['id'],
-            getattr(train, trainer['name']),
-            trainer['immutables']
-        ) for trainer in exp['trainers']
-    ]
+
+    trainer_specs_map = {}
+    for trainer_spec in exp['trainers']:
+        name = trainer_spec['name']
+        trainer_specs_map.setdefault(name, [])
+        trainer_specs_map[name].append(trainer_spec)
+
+    for name, trainer_specs in trainer_specs_map.items():
+        if len(trainer_specs) > 1:
+            validation_scores = np.zeros((metadata['length'],))
+            for i, trainer_spec in enumerate(trainer_specs):
+                trainer_id = trainer_spec['id']
+                trainer_class = getattr(train, trainer_spec['name'])
+                immutables = trainer_spec['immutables']['predict']
+                task_id = metadata['length']
+                predictor = trainer_class.predictor_class.from_checkpoint(
+                    model, model_spec, immutables,
+                    results_path / f'ckpt/{trainer_id}_{task_id}'
+                )
+                metric = getattr(
+                    metrics, exp['evaluation']['validation_metric']
+                )
+                validation_scores[i] = np.mean([
+                    metric(predictor, *read_task(ts_path, 'validation', i))
+                    for i in range(1, task_id + 1)
+                ])
+            trainer_specs_map[name] = trainer_specs[validation_scores.argmax()]
+
+        else:
+            trainer_specs_map[name] = trainer_specs[0]
 
     # restore checkpoint and evaluate
     Path(results_path / 'evaluation.jsonl').write_bytes(b'')
-    for trainer_id, trainer, immutables in trainers:
+    for trainer_spec in trainer_specs_map.values():
+        trainer_id = trainer_spec['id']
+        trainer_class = getattr(train, trainer_spec['name'])
+        immutables = trainer_spec['immutables']['predict']
+
         for task_id in range(1, metadata['length'] + 1):
             path = results_path / f'ckpt/{trainer_id}_{task_id}'
-            predictor = (
-                trainer.predictor.from_checkpoint(
-                    model, model_spec, immutables['n_comp'], path
-                ) if issubclass(trainer, train.state.mixins.GSGaussMixin)
-                else trainer.predictor.from_checkpoint(
-                    model, model_spec, path
-                )
+            predictor = trainer_class.predictor_class.from_checkpoint(
+                model, model_spec, immutables, path
             )
             result = {'trainer_id': trainer_id, 'task_id': task_id}
             for metric in exp['evaluation']['metrics']:

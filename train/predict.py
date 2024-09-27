@@ -18,14 +18,15 @@ from .state.functions import init, gauss_init, gsgauss_init
 class MAPPredictor:
     """Maximum-a-posteriori predictor."""
 
-    def __init__(self, model, model_spec, params):
+    def __init__(self, model, model_spec, immutables, params):
         """Initialize self."""
         self.model = model
         self.model_spec = model_spec
+        self.immutables = immutables
         self.params = params
 
     @classmethod
-    def from_checkpoint(cls, model, model_spec, path):
+    def from_checkpoint(cls, model, model_spec, immutables, path):
         """Initialize from a checkpoint."""
         with ocp.StandardCheckpointer() as ckpter:
             params = ckpter.restore(
@@ -34,7 +35,7 @@ class MAPPredictor:
                     random.PRNGKey(1337), model, model_spec.in_shape
                 )
             )
-        return cls(model, model_spec, params)
+        return cls(model, model_spec, immutables, params)
 
     def __call__(self, xs, decide=True):
         """Predict the data."""
@@ -60,14 +61,15 @@ class MAPPredictor:
 class BMAPredictor:
     """Bayesian-model-averaging predictor."""
 
-    def __init__(self, model, model_spec, param_sample):
+    def __init__(self, model, model_spec, immutables, param_sample):
         """Initialize self."""
         self.model = model
         self.model_spec = model_spec
+        self.immutables = immutables
         self.param_sample = param_sample
 
     @classmethod
-    def from_checkpoint(cls, model, model_spec, path, sample_size=10):
+    def from_checkpoint(cls, model, model_spec, immutables, path):
         """Initialize from a checkpoint."""
         with ocp.StandardCheckpointer() as ckpter:
             target = init(
@@ -75,9 +77,11 @@ class BMAPredictor:
             )
             param_sample = ckpter.restore(
                 path,
-                target=vmap(lambda x: target)(jnp.arange(sample_size))
+                target=vmap(
+                    lambda x: target
+                )(jnp.arange(immutables['sample_size']))
             )
-        return cls(model, model_spec, param_sample)
+        return cls(model, model_spec, immutables, param_sample)
 
     def sample(self, xs):
         """Return prediction samples."""
@@ -130,25 +134,20 @@ class BMAPredictor:
 class GaussPredictor(BMAPredictor):
     """Gaussian-variational-inference predictor."""
 
-    def __init__(
-        self, model, model_spec, params,
-        key=random.PRNGKey(1337), sample_size=10
-    ):
+    def __init__(self, model, model_spec, immutables, params):
         """Initialize self."""
         param_sample = gauss_param(
             params,
             gauss_sample(
-                key, sample_size,
+                random.PRNGKey(immutables['seed']),
+                immutables['sample_size'],
                 init(random.PRNGKey(1337), model, model_spec.in_shape)
             )
         )
-        super().__init__(model, model_spec, param_sample)
+        super().__init__(model, model_spec, immutables, param_sample)
 
     @classmethod
-    def from_checkpoint(
-        cls, model, model_spec, path,
-        key=random.PRNGKey(1337), sample_size=10
-    ):
+    def from_checkpoint(cls, model, model_spec, immutables, path):
         """Initialize from a checkpoint."""
         with ocp.StandardCheckpointer() as ckpter:
             params = ckpter.restore(
@@ -156,44 +155,35 @@ class GaussPredictor(BMAPredictor):
                     random.PRNGKey(1337), model, model_spec.in_shape
                 )
             )
-        return cls(
-            model, model_spec, params, key=key, sample_size=sample_size
-        )
+        return cls(model, model_spec, immutables, params)
 
 
 class GSGaussPredictor(BMAPredictor):
     """Gumbel-softmax-Gaussian-mixture-variational-inference predictor."""
 
-    def __init__(
-        self, model, model_spec, n_comp, params,
-        key=random.PRNGKey(1337), sample_size=10
-    ):
+    def __init__(self, model, model_spec, immutables, params):
         """Initialize self."""
         param_sample = gsgauss_param(
             params,
             gsgauss_sample(
-                key, sample_size, n_comp,
+                random.PRNGKey(immutables['seed']),
+                immutables['sample_size'],
+                immutables['n_comp'],
                 init(random.PRNGKey(1337), model, model_spec.in_shape)
             )
         )
-        super().__init__(model, model_spec, param_sample)
+        super().__init__(model, model_spec, immutables, param_sample)
 
     @classmethod
-    def from_checkpoint(
-        cls, model, model_spec, n_comp, path,
-        key=random.PRNGKey(1337), sample_size=10
-    ):
+    def from_checkpoint(cls, model, model_spec, immutables, path):
         """Initialize from a checkpoint."""
         with ocp.StandardCheckpointer() as ckpter:
             params = ckpter.restore(
                 path, target=gsgauss_init(
                     random.PRNGKey(1337),
                     model,
-                    n_comp,
-                    model_spec.in_shape
+                    immutables['n_comp'],
+                    model_spec.in_shape,
                 )
             )
-        return cls(
-            model, model_spec, n_comp, params,
-            key=key, sample_size=sample_size
-        )
+        return cls(model, model_spec, immutables, params)

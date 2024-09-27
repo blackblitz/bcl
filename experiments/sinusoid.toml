@@ -21,166 +21,199 @@ out_shape = [ 1 ]
 id = "joint"
 name = "Joint"
 
-[trainers.immutables]
+[trainers.immutables.train]
 batch_size = 64
 lr = 0.001
 n_epochs = 100
 precision = 1.0
 seed = 1337
+
+[trainers.immutables.predict]
 
 [[trainers]]
 id = "finetuning"
 name = "Finetuning"
 
-[trainers.immutables]
+[trainers.immutables.train]
 batch_size = 64
 lr = 0.001
 n_epochs = 100
 precision = 1.0
 seed = 1337
 
-# [[trainers]]
-# id = "gdumb"
-# name = "GDumb"
-# 
-# [trainers.immutables]
-# batch_size = 64
-# coreset_batch_size = 16
-# coreset_size = 32
-# lr = 0.001
-# n_epochs = 100
-# precision = 1.0
-# seed = 1337
-# 
-# [[trainers]]
-# id = "ticreplay"
-# name = "TICReplay"
-# 
-# [trainers.immutables]
-# batch_size = 64
-# coreset_batch_size_per_task = 16
-# coreset_size_per_task = 32
-# lr = 0.001
-# noise_init = false
-# n_epochs = 100
-# precision = 1.0
-# seed = 1337
-# 
-# 
-# [[trainers]]
-# id = "ewc"
-# name = "ElasticWeightConsolidation"
-# 
-# [trainers.immutables]
-# batch_size = 64
-# lambda = 1.0
-# lr = 0.001
-# n_epochs = 100
-# precision = 1.0
-# seed = 1337
-# 
-# [[trainers]]
-# id = "si"
-# name = "SynapticIntelligence"
-# 
-# [trainers.immutables]
-# batch_size = 64
-# lambda = 1.0
-# xi = 1.0
-# lr = 0.001
-# n_epochs = 100
-# precision = 1.0
-# seed = 1337
-# 
-# [[trainers]]
-# id = "aqc"
-# name = "AutodiffQuadraticConsolidation"
-# 
-# [trainers.immutables]
-# batch_size = 64
-# lr = 0.001
-# n_epochs = 100
-# precision = 1.0
-# seed = 1337
-# 
-# [[trainers]]
-# id = "nc"
-# name = "NeuralConsolidation"
-# 
-# [trainers.immutables]
-# batch_size = 64
-# con_dense0 = 256
-# con_dense1 = 256
-# con_lr = 0.001
-# con_n_steps = 1000
-# con_precision = 1.0
-# con_radius = 1.0
-# con_sample_size = 64
-# lr = 0.001
-# n_epochs = 100
-# precision = 1.0
-# seed = 1337
-# 
-# [[trainers]]
-# id = "gvcl"
-# name = "GVCL"
-# 
-# [trainers.immutables]
-# batch_size = 64
-# lr = 0.001
-# n_epochs = 100
-# precision = 1.0
-# sample_size = 10
-# seed = 1337
-# 
-# [[trainers]]
-# id = "gmvcl"
-# name = "GMVCL"
-# 
-# [trainers.immutables]
-# batch_size = 64
-# lr = 0.001
-# mc_kldiv = false
-# n_comp = 3
-# n_epochs = 100
-# precision = 1.0
-# sample_size = 10
-# seed = 1337
-# 
-# [[trainers]]
-# id = "gsfsvi"
-# name = "GSFSVI"
-# 
-# [trainers.immutables]
-# batch_size = 64
-# beta = 1.0
-# coreset_batch_size_per_task = 16
-# coreset_size_per_task = 32
-# lr = 0.001
-# noise_init = true
-# noise_maxval = 4.0
-# noise_minval = -4.0
-# n_epochs = 100
-# precision = 1.0
-# sample_size = 10
-# seed = 1337
-# 
-# [[trainers]]
-# id = "gmsfsvi"
-# name = "GMSFSVI"
-# 
-# [trainers.immutables]
-# batch_size = 64
-# beta = 1.0
-# coreset_batch_size_per_task = 16
-# coreset_size_per_task = 32
-# lr = 0.001
-# mc_kldiv = false
-# noise_init = true
-# noise_maxval = 4.0
-# noise_minval = -4.0
-# n_comp = 3
-# n_epochs = 100
-# precision = 1.0
-# sample_size = 10
-# seed = 1337
+[trainers.immutables.predict]
+
+[[trainers]]
+id = "gdumb"
+name = "GDumb"
+
+[trainers.immutables.train]
+batch_size = 64
+coreset_batch_size = 16
+coreset_size = 32
+lr = 0.001
+n_epochs = 100
+precision = 1.0
+seed = 1337
+
+[trainers.immutables.predict]
+
+[[trainers]]
+id = "ticreplay"
+name = "TICReplay"
+
+[trainers.immutables.train]
+batch_size = 64
+coreset_batch_size_per_task = 16
+coreset_size_per_task = 32
+lr = 0.001
+noise_init = false
+n_epochs = 100
+precision = 1.0
+seed = 1337
+
+[trainers.immutables.predict]
+
+[[trainers]]
+id = "ewc"
+name = "ElasticWeightConsolidation"
+
+[trainers.immutables.train]
+batch_size = 64
+lambda = 1.0
+lr = 0.001
+n_epochs = 100
+precision = 1.0
+seed = 1337
+
+[trainers.immutables.predict]
+
+[[trainers]]
+id = "si"
+name = "SynapticIntelligence"
+
+[trainers.immutables.train]
+batch_size = 64
+lambda = 1.0
+xi = 1.0
+lr = 0.001
+n_epochs = 100
+precision = 1.0
+seed = 1337
+
+[trainers.immutables.predict]
+
+[[trainers]]
+id = "aqc"
+name = "AutodiffQuadraticConsolidation"
+
+[trainers.immutables.train]
+batch_size = 64
+lr = 0.001
+n_epochs = 100
+precision = 1.0
+seed = 1337
+
+[trainers.immutables.predict]
+
+[[trainers]]
+id = "nc"
+name = "NeuralConsolidation"
+
+[trainers.immutables.train]
+batch_size = 64
+con_dense0 = 256
+con_dense1 = 256
+con_lr = 0.001
+con_n_steps = 1000
+con_precision = 1.0
+con_radius = 1.0
+con_sample_size = 64
+lr = 0.001
+n_epochs = 100
+precision = 1.0
+seed = 1337
+
+[trainers.immutables.predict]
+
+[[trainers]]
+id = "gvcl"
+name = "GVCL"
+
+[trainers.immutables.train]
+batch_size = 64
+lr = 0.001
+n_epochs = 100
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.immutables.predict]
+sample_size = 10
+seed = 1337
+
+[[trainers]]
+id = "gmvcl"
+name = "GMVCL"
+
+[trainers.immutables.train]
+batch_size = 64
+lr = 0.001
+mc_kldiv = false
+n_comp = 3
+n_epochs = 100
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.immutables.predict]
+n_comp = 3
+sample_size = 10
+seed = 1337
+
+[[trainers]]
+id = "gsfsvi"
+name = "GSFSVI"
+
+[trainers.immutables.train]
+batch_size = 64
+beta = 1.0
+coreset_batch_size_per_task = 16
+coreset_size_per_task = 32
+lr = 0.001
+noise_init = true
+noise_maxval = 4.0
+noise_minval = -4.0
+n_epochs = 100
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.immutables.predict]
+sample_size = 10
+seed = 1337
+
+[[trainers]]
+id = "gmsfsvi"
+name = "GMSFSVI"
+
+[trainers.immutables.train]
+batch_size = 64
+beta = 1.0
+coreset_batch_size_per_task = 16
+coreset_size_per_task = 32
+lr = 0.001
+mc_kldiv = false
+noise_init = true
+noise_maxval = 4.0
+noise_minval = -4.0
+n_comp = 3
+n_epochs = 100
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.immutables.predict]
+n_comp = 3
+sample_size = 10
+seed = 1337

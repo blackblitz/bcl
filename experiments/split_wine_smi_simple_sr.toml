@@ -1,0 +1,203 @@
+[task_sequence]
+name = "split_wine"
+
+[evaluation]
+metrics = ["accuracy"]
+validation_metric = "accuracy"
+
+[model]
+name = "FCNN1"
+
+[model.args]
+dense = 3
+
+[model.spec]
+nll = "SOFTMAX_CROSS_ENTROPY"
+in_shape = [ 13 ]
+out_shape = [ 3 ]
+
+[[trainers]]
+id = "joint"
+name = "Joint"
+
+[trainers.immutables.train]
+batch_size = 16
+lr = 0.01
+n_epochs = 100
+precision = 0.1
+seed = 1337
+
+[trainers.immutables.predict]
+
+[[trainers]]
+id = "finetuning"
+name = "Finetuning"
+
+[trainers.immutables.train]
+batch_size = 16
+lr = 0.01
+n_epochs = 100
+precision = 0.1
+seed = 1337
+
+[trainers.immutables.predict]
+
+[[trainers]]
+id = "ewc1"
+name = "ElasticWeightConsolidation"
+
+[trainers.immutables.train]
+batch_size = 16
+lambda = 0.01
+lr = 0.01
+n_epochs = 100
+precision = 0.1
+seed = 1337
+
+[trainers.immutables.predict]
+
+[[trainers]]
+id = "ewc2"
+name = "ElasticWeightConsolidation"
+
+[trainers.immutables.train]
+batch_size = 16
+lambda = 1.0
+lr = 0.01
+n_epochs = 100
+precision = 0.1
+seed = 1337
+
+[trainers.immutables.predict]
+
+[[trainers]]
+id = "ewc3"
+name = "ElasticWeightConsolidation"
+
+[trainers.immutables.train]
+batch_size = 16
+lambda = 100.0
+lr = 0.01
+n_epochs = 100
+precision = 0.1
+seed = 1337
+
+[trainers.immutables.predict]
+
+[[trainers]]
+id = "si1"
+name = "SynapticIntelligence"
+
+[trainers.immutables.train]
+batch_size = 16
+lambda = 0.01
+lr = 0.01
+n_epochs = 100
+precision = 0.1
+seed = 1337
+xi = 1.0
+
+[trainers.immutables.predict]
+
+[[trainers]]
+id = "si2"
+name = "SynapticIntelligence"
+
+[trainers.immutables.train]
+batch_size = 16
+lambda = 1.0
+lr = 0.01
+n_epochs = 100
+precision = 0.1
+seed = 1337
+xi = 1.0
+
+[trainers.immutables.predict]
+
+[[trainers]]
+id = "si3"
+name = "SynapticIntelligence"
+
+[trainers.immutables.train]
+batch_size = 16
+lambda = 100.0
+lr = 0.01
+n_epochs = 100
+precision = 0.1
+seed = 1337
+xi = 1.0
+
+[trainers.immutables.predict]
+
+[[trainers]]
+id = "aqc"
+name = "AutodiffQuadraticConsolidation"
+
+[trainers.immutables.train]
+batch_size = 16
+lr = 0.01
+n_epochs = 100
+precision = 0.1
+seed = 1337
+
+[trainers.immutables.predict]
+
+[[trainers]]
+id = "nc1"
+name = "NeuralConsolidation"
+
+[trainers.immutables.train]
+batch_size = 16
+con_dense0 = 256
+con_dense1 = 256
+con_lr = 0.01
+con_n_steps = 1000
+con_precision = 0.1
+con_radius = 1.0
+con_sample_size = 64
+lr = 0.01
+n_epochs = 100
+precision = 0.1
+seed = 1337
+
+[trainers.immutables.predict]
+
+[[trainers]]
+id = "nc2"
+name = "NeuralConsolidation"
+
+[trainers.immutables.train]
+batch_size = 16
+con_dense0 = 256
+con_dense1 = 256
+con_lr = 0.01
+con_n_steps = 1000
+con_precision = 0.1
+con_radius = 10.0
+con_sample_size = 64
+lr = 0.01
+n_epochs = 100
+precision = 0.1
+seed = 1337
+
+[trainers.immutables.predict]
+
+[[trainers]]
+id = "nc3"
+name = "NeuralConsolidation"
+
+[trainers.immutables.train]
+batch_size = 16
+con_dense0 = 256
+con_dense1 = 256
+con_lr = 0.01
+con_n_steps = 1000
+con_precision = 0.1
+con_radius = 100.0
+con_sample_size = 64
+lr = 0.01
+n_epochs = 100
+precision = 0.1
+seed = 1337
+
+[trainers.immutables.predict]

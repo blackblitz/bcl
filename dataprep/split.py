@@ -60,6 +60,17 @@ def split_iris():
     return task_sequence_1(load_iris)
 
 
+def split_iris_2():
+    """Make Split Iris 2."""
+    def load():
+        dataset = load_iris()
+        dataset['data'] = dataset['data'][:, 2:4]
+        dataset.feature_names = dataset.feature_names[2:4]
+        return dataset
+
+    return task_sequence_1(load)
+
+
 def split_wine():
     """Make Split Wine."""
     return task_sequence_1(load_wine)
