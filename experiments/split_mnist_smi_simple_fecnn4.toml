@@ -17,7 +17,7 @@ conv0 = 32
 conv1 = 32
 dense0 = 32
 dense1 = 26
-feature_activation = "swish"
+dropout = 0.5
 
 [feature_extractor.spec]
 nll = "SOFTMAX_CROSS_ENTROPY"
@@ -28,7 +28,7 @@ out_shape = [ 10 ]
 batch_size = 32
 lr = 0.001
 n_epochs = 10
-precision = 0.1
+precision = 0.01
 seed = 1337
 
 [feature_extractor.immutables.predict]

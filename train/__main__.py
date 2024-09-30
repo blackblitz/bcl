@@ -104,6 +104,9 @@ def main():
                                 *read_task(ts_path, 'validation', i)
                             ) for i in range(1, task_id + 1)
                         ]
+                        result[f'average_{metric}'] = (
+                            sum(result[metric]) / task_id
+                        )
                     if 'ood_metrics' in exp['evaluation']:
                         for metric in exp['evaluation']['ood_metrics']:
                             result[metric] = [
@@ -113,6 +116,9 @@ def main():
                                     read_task(ood_ts_path, 'validation', i)[0]
                                 ) for i in range(1, task_id + 1)
                             ]
+                            result[f'average_{metric}'] = (
+                                sum(result[metric]) / task_id
+                            )
                     with open(log_path, mode='a') as file:
                         print(json.dumps(result), file=file)
                 path = ckpt_path / f'{trainer_id}_{task_id}'

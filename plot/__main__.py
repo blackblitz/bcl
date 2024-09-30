@@ -1,6 +1,7 @@
 """Plotting script."""
 
 import argparse
+from importlib import import_module
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -8,8 +9,9 @@ from matplotlib.colors import ListedColormap
 import numpy as np
 
 from dataops.io import read_task, read_toml
-import models
-import train
+from models import ModelSpec, NLL
+from models import module_map as models_module_map
+from train import module_map as train_module_map
 
 plt.style.use('bmh')
 
@@ -84,9 +86,12 @@ def main():
     plotter = Plotter(
         args.num_classes, args.left, args.right, args.bottom, args.top
     )
-    model = getattr(models, exp['model']['name'])(**exp['model']['args'])
-    model_spec = models.ModelSpec(
-        nll=models.NLL[exp['model']['spec']['nll']],
+    model = getattr(
+        import_module(models_module_map[exp['model']['name']]),
+        exp['model']['name']
+    )(**exp['model']['args'])
+    model_spec = ModelSpec(
+        nll=NLL[exp['model']['spec']['nll']],
         in_shape=exp['model']['spec']['in_shape'],
         out_shape=exp['model']['spec']['out_shape']
     )
@@ -99,7 +104,10 @@ def main():
     for i, trainer_spec in enumerate(exp['trainers']):
         trainer_id = trainer_spec['id']
         trainer_label = trainer_spec['label']
-        trainer_class = getattr(train, trainer_spec['name'])
+        trainer_class = getattr(
+            import_module(train_module_map[trainer_spec['name']]),
+            trainer_spec['name']
+        )
         immutables = trainer_spec['immutables']['predict']
 
         for j in range(metadata['length']):

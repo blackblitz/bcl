@@ -1,12 +1,15 @@
 """Evaluation script."""
 
 import argparse
+from importlib import import_module
 import json
 import numpy as np
 from pathlib import Path
 
 from dataops.io import read_task, read_toml
-import models
+from models import ModelSpec, NLL
+from models import module_map as models_module_map
+from train import module_map as train_module_map
 import train
 
 from . import metrics
@@ -42,9 +45,12 @@ def main():
     results_path = Path('results').resolve() / args.experiment_id
 
     # create model and trainers
-    model = getattr(models, exp['model']['name'])(**exp['model']['args'])
-    model_spec = models.ModelSpec(
-        nll=models.NLL[exp['model']['spec']['nll']],
+    model = getattr(
+        import_module(models_module_map[exp['model']['name']]),
+        exp['model']['name']
+    )(**exp['model']['args'])
+    model_spec = ModelSpec(
+        nll=NLL[exp['model']['spec']['nll']],
         in_shape=exp['model']['spec']['in_shape'],
         out_shape=exp['model']['spec']['out_shape']
     )
@@ -60,7 +66,10 @@ def main():
             validation_scores = np.zeros((metadata['length'],))
             for i, trainer_spec in enumerate(trainer_specs):
                 trainer_id = trainer_spec['id']
-                trainer_class = getattr(train, trainer_spec['name'])
+                trainer_class = getattr(
+                    import_module(train_module_map[trainer_spec['name']]),
+                    trainer_spec['name']
+                )
                 immutables = trainer_spec['immutables']['predict']
                 task_id = metadata['length']
                 predictor = trainer_class.predictor_class.from_checkpoint(
@@ -83,7 +92,10 @@ def main():
     Path(results_path / 'evaluation.jsonl').write_bytes(b'')
     for trainer_spec in trainer_specs_map.values():
         trainer_id = trainer_spec['id']
-        trainer_class = getattr(train, trainer_spec['name'])
+        trainer_class = getattr(
+            import_module(train_module_map[trainer_spec['name']]),
+            trainer_spec['name']
+        )
         immutables = trainer_spec['immutables']['predict']
 
         for task_id in range(1, metadata['length'] + 1):
@@ -99,6 +111,9 @@ def main():
                         *read_task(ts_path, 'testing', i)
                     ) for i in range(1, task_id + 1)
                 ]
+                result[f'average_{metric}'] = (
+                    sum(result[metric]) / task_id
+                )
             if 'ood_metrics' in exp['evaluation']:
                 for metric in exp['evaluation']['ood_metrics']:
                     result[metric] = [
@@ -108,6 +123,9 @@ def main():
                             read_task(ood_ts_path, 'testing', i)[0]
                         ) for i in range(1, task_id + 1)
                     ]
+                    result[f'average_{metric}'] = (
+                        sum(result[metric]) / task_id
+                    )
             with open(results_path / 'evaluation.jsonl', mode='a') as file:
                 print(json.dumps(result), file=file)
 

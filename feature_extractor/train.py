@@ -12,7 +12,9 @@ from tqdm import tqdm
 from dataops.io import read_task, read_toml
 from evaluate import metrics
 from models import ModelSpec, module_map, NLL
-from train.smi.simple import Finetuning
+
+from .predictor import Predictor
+from .trainer import Trainer
 
 
 def main():
@@ -38,38 +40,41 @@ def main():
         / f'{args.experiment_id}_feature_extractor_'
         f'{datetime.datetime.now().isoformat()}.jsonl'
     )
-    fe_model = getattr(
+    model = getattr(
         import_module(module_map[exp['feature_extractor']['name']]),
         exp['feature_extractor']['name']
     )(**exp['feature_extractor']['args'])
-    fe_model_spec = ModelSpec(
+    model_spec = ModelSpec(
         nll=NLL[exp['feature_extractor']['spec']['nll']],
         in_shape=exp['feature_extractor']['spec']['in_shape'],
         out_shape=exp['feature_extractor']['spec']['out_shape']
     )
-    fe_trainer = Finetuning(
-        fe_model, fe_model_spec,
+    trainer = Trainer(
+        model, model_spec,
         exp['feature_extractor']['immutables']['train']
     )
-    fe_ts_path = (
+    ts_path = (
         Path('data').resolve()
         / exp['feature_extractor']['task_sequence_name']
     )
-    for epoch_num, fe_state in enumerate(tqdm(
-        fe_trainer.train(*read_task(fe_ts_path, 'training', 1)),
+    train_xs, train_ys = read_task(ts_path, 'training', 1)
+    val_xs, val_ys = read_task(ts_path, 'validation', 1)
+    for epoch_num, (state, var) in enumerate(tqdm(
+        trainer.train(train_xs, train_ys),
         total=exp['feature_extractor']['immutables']['train']['n_epochs'],
         leave=False, unit='epoch'
     ), start=1):
-        predictor = fe_trainer.predictor_class(
-            fe_model,
-            fe_model_spec,
+        pass
+        predictor = Predictor(
+            model,
+            model_spec,
             exp['feature_extractor']['immutables']['predict'],
-            fe_state.params
+            {'params': state.params} | var
         )
         result = {'epoch_num': epoch_num}
         for metric in exp['evaluation']['metrics']:
             result[metric] = getattr(metrics, metric)(
-                predictor, *read_task(fe_ts_path, 'validation', 1)
+                predictor, val_xs, val_ys
             )
         with open(log_path, mode='a') as file:
             print(json.dumps(result), file=file)
@@ -77,7 +82,7 @@ def main():
     ocp.test_utils.erase_and_create_empty(path)
     path.rmdir()
     with ocp.StandardCheckpointer() as ckpter:
-        ckpter.save(path, fe_state.params)
+        ckpter.save(path, {'params': state.params} | var)
 
 
 if __name__ == '__main__':
