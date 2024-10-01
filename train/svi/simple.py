@@ -39,12 +39,6 @@ class VCL(ContinualTrainer):
 class GVCL(GaussMixin, VCL):
     """Gaussian variational continual learning."""
 
-    def precompute(self):
-        """Precompute."""
-        return super().precompute() | self._make_keys(
-            ['init_state', 'update_state']
-        )
-
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""
         return {
@@ -71,16 +65,6 @@ class GVCL(GaussMixin, VCL):
 
 class GMVCL(GSGaussMixin, VCL):
     """Gaussian-mixture variational continual learning."""
-
-    def precompute(self):
-        """Precompute."""
-        if self.immutables['mc_kldiv']:
-            return super().precompute() | self._make_keys(
-                ['init_state', 'update_loss', 'update_state']
-            )
-        return super().precompute() | self._make_keys(
-            ['precompute', 'init_state', 'update_state']
-        )
 
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""

@@ -14,12 +14,6 @@ from ..trainer import ContinualTrainer
 class ExactReplay(MAPMixin, ContinualTrainer):
     """Abstract class for exact replay."""
 
-    def precompute(self):
-        """Precompute."""
-        return super().precompute() | self._make_keys(
-            ['init_state', 'update_state', 'update_coreset']
-        )
-
     def update_loss(self, xs, ys):
         """Update the loss function."""
         self.loss = jit(concat(l2_reg(
@@ -29,7 +23,7 @@ class ExactReplay(MAPMixin, ContinualTrainer):
     def update_mutables(self, xs, ys):
         """Update the coreset."""
         self.mutables['coreset'].update(
-            self.precomputed['keys']['update_coreset'], xs, ys
+            self.precomputed['keys']['update_mutables'], xs, ys
         )
 
 

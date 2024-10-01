@@ -23,23 +23,23 @@ class ContinualTrainer(ABC):
         self.mutables = self.init_mutables()
         self.loss = None
 
-    def _make_keys(self, names):
-        """Make keys for pseudo-random number generation."""
-        return {
-            'keys': dict(zip(
-                names,
-                random.split(random.PRNGKey(
-                    self.immutables['seed']), num=len(names)
-                )
-            ))
-        }
-
     def precompute(self):
         """Precompute."""
+        key_names = [
+            'init_state', 'init_mutables',
+            'update_loss', 'update_state', 'update_mutables'
+        ]
         return {
+            'keys': dict(zip(
+                key_names,
+                random.split(
+                    random.key(self.immutables['seed']),
+                    num=len(key_names)
+                )
+            )),
             'pass_size': get_pass_size(self.model_spec.in_shape),
             'param_example': init(
-                random.PRNGKey(1337), self.model, self.model_spec.in_shape
+                random.key(1337), self.model, self.model_spec.in_shape
             ),
             'nll': get_nll(self.model_spec.nll)(self.model.apply)
         }

@@ -22,12 +22,6 @@ from ..trainer import ContinualTrainer
 class Joint(MAPMixin, ContinualTrainer):
     """Joint training."""
 
-    def precompute(self):
-        """Precompute."""
-        return super().precompute() | self._make_keys(
-            ['init_state', 'update_state', 'update_coreset']
-        )
-
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""
         return {
@@ -44,19 +38,16 @@ class Joint(MAPMixin, ContinualTrainer):
 
     def update_state(self, xs, ys):
         """Update the training state."""
-        self.mutables['coreset'].update(
-            self.precomputed['keys']['update_coreset'], xs, ys
-        )
+        key1, key2 = random.split(self.precomputed['keys']['update_state'])
+        self.mutables['coreset'].update(key1, xs, ys)
         self.mutables['coreset'].create_memmap()
         step = make_step(self.loss)
         for key in random.split(
-            self.precomputed['keys']['update_state'],
-            num=self.immutables['n_epochs']
+            key2, num=self.immutables['n_epochs']
         ):
-            key1, key2 = random.split(key)
             for xs_batch, ys_batch in (
                 self.mutables['coreset'].shuffle_batch(
-                    key2, self.immutables['batch_size']
+                    key, self.immutables['batch_size']
                 )
             ):
                 self.state = step(self.state, xs_batch, ys_batch)
@@ -87,12 +78,6 @@ class RegularTrainer(MAPMixin, ContinualTrainer):
 class Finetuning(RegularTrainer):
     """Fine-tuning for continual learning."""
 
-    def precompute(self):
-        """Precompute."""
-        return super().precompute() | self._make_keys(
-            ['init_state', 'update_state']
-        )
-
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""
         return {}
@@ -109,12 +94,6 @@ class Finetuning(RegularTrainer):
 
 class QuadraticConsolidation(RegularTrainer):
     """Quadratic consolidiation."""
-
-    def precompute(self):
-        """Precompute."""
-        return super().precompute() | self._make_keys(
-            ['init_state', 'update_state']
-        )
 
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""
@@ -223,12 +202,6 @@ class SynapticIntelligence(QuadraticConsolidation):
 class AutodiffQuadraticConsolidation(RegularTrainer):
     """Autodiff Quadratic Consolidation."""
 
-    def precompute(self):
-        """Precompute."""
-        return super().precompute() | self._make_keys(
-            ['init_state', 'update_state']
-        )
-
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""
         flat_params = flatten_util.ravel_pytree(self.state.params)[0]
@@ -273,12 +246,6 @@ class AutodiffQuadraticConsolidation(RegularTrainer):
 
 class NeuralConsolidation(RegularTrainer):
     """Neural Consolidation."""
-
-    def precompute(self):
-        """Precompute."""
-        return super().precompute() | self._make_keys(
-            ['init_state', 'init_mutables', 'update_state', 'update_mutables']
-        )
 
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""

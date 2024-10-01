@@ -8,10 +8,10 @@ split = [
     'split_cifar10', 'split_iris', 'split_iris_2',
     'split_mnist', 'split_wine'
 ]
-toy = ['sinusoid']
+synthetic = ['santong', 'sinusoid', 'triangle']
 
 module_map = (
     dict.fromkeys(singleton, 'dataprep.singleton')
     | dict.fromkeys(split, 'dataprep.split')
-    | dict.fromkeys(toy, 'dataprep.toy')
+    | dict.fromkeys(synthetic, 'dataprep.synthetic')
 )

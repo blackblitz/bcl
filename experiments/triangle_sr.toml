@@ -1,0 +1,74 @@
+[task_sequence]
+name = "triangle"
+
+[evaluation]
+metrics = ["accuracy"]
+
+[plot]
+n_classes = 3
+x1_max = 2.0
+x1_min = -2.0
+x2_max = 3.0
+x2_min = -1.0
+
+[model]
+name = "FCNN1"
+
+[model.args]
+dense = 3
+
+[model.spec]
+nll = "SOFTMAX_CROSS_ENTROPY"
+in_shape = [ 2 ]
+out_shape = [ 3 ]
+
+[[trainers]]
+id = "gsfsvi"
+name = "GSFSVI"
+label = "G-FSVI"
+
+[trainers.immutables.train]
+batch_size = 16
+beta = 1.0
+coreset_batch_size_per_task = 16
+coreset_prob = 0.5
+coreset_size_per_task = 32
+lr = 0.001
+noise_init = true
+noise_maxval = 2.0
+noise_minval = -2.0
+n_epochs = 100
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.immutables.predict]
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "gmsfsvi"
+name = "GMSFSVI"
+label = "GM-FSVI"
+
+[trainers.immutables.train]
+batch_size = 16
+beta = 1.0
+coreset_batch_size_per_task = 16
+coreset_prob = 0.5
+coreset_size_per_task = 32
+lr = 0.001
+mc_kldiv = false
+noise_init = true
+noise_maxval = 2.0
+noise_minval = -2.0
+n_comp = 3
+n_epochs = 100
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.immutables.predict]
+n_comp = 3
+sample_size = 100
+seed = 1337

@@ -10,7 +10,7 @@ ood_metrics = ["ood_entropy_roc_auc"]
 name = "CNN4"
 
 [model.args]
-conv0 = 64
+conv0 = 32
 conv1 = 64
 dense0 = 256
 dense1 = 10
@@ -20,53 +20,53 @@ nll = "SOFTMAX_CROSS_ENTROPY"
 in_shape = [ 28, 28, 1 ]
 out_shape = [ 10 ]
 
-[[trainers]]
-id = "finetuning"
-name = "Finetuning"
-
-[trainers.immutables.train]
-batch_size = 32
-lr = 0.001
-nntype = "SOFTMAX"
-n_epochs = 20
-precision = 0.01
-seed = 1337
-
-[trainers.immutables.predict]
-
-[[trainers]]
-id = "gvcl"
-name = "GVCL"
-
-[trainers.immutables.train]
-batch_size = 32
-lr = 0.001
-nntype = "SOFTMAX"
-n_epochs = 20
-precision = 0.01
-pred_sample_size = 10
-sample_size = 1
-seed = 1337
-
-[trainers.immutables.predict]
-
-[[trainers]]
-id = "gmvcl"
-name = "GMVCL"
-
-[trainers.immutables.train]
-batch_size = 32
-lr = 0.001
-mc_kldiv = false
-nntype = "SOFTMAX"
-n_comp = 3
-n_epochs = 20
-precision = 0.01
-pred_sample_size = 10
-sample_size = 1
-seed = 1337
-
-[trainers.immutables.predict]
+# [[trainers]]
+# id = "finetuning"
+# name = "Finetuning"
+# 
+# [trainers.immutables.train]
+# batch_size = 32
+# lr = 0.001
+# nntype = "SOFTMAX"
+# n_epochs = 20
+# precision = 1.0
+# seed = 1337
+# 
+# [trainers.immutables.predict]
+# 
+# [[trainers]]
+# id = "gvcl"
+# name = "GVCL"
+# 
+# [trainers.immutables.train]
+# batch_size = 32
+# lr = 0.001
+# nntype = "SOFTMAX"
+# n_epochs = 20
+# precision = 1.0
+# pred_sample_size = 10
+# sample_size = 1
+# seed = 1337
+# 
+# [trainers.immutables.predict]
+# 
+# [[trainers]]
+# id = "gmvcl"
+# name = "GMVCL"
+# 
+# [trainers.immutables.train]
+# batch_size = 32
+# lr = 0.001
+# mc_kldiv = false
+# nntype = "SOFTMAX"
+# n_comp = 3
+# n_epochs = 20
+# precision = 1.0
+# pred_sample_size = 10
+# sample_size = 1
+# seed = 1337
+# 
+# [trainers.immutables.predict]
 
 [[trainers]]
 id = "gsfsvi"
@@ -83,12 +83,14 @@ noise_init = true
 noise_maxval = 1.0
 noise_minval = 0.0
 n_epochs = 20
-precision = 0.01
+precision = 1.0
 pred_sample_size = 10
 sample_size = 1
 seed = 1337
 
 [trainers.immutables.predict]
+sample_size = 10
+seed = 1337
 
 [[trainers]]
 id = "gmsfsvi"
@@ -106,9 +108,12 @@ noise_maxval = 1.0
 noise_minval = 0.0
 n_comp = 3
 n_epochs = 20
-precision = 0.01
+precision = 1.0
 pred_sample_size = 10
 sample_size = 1
 seed = 1337
 
 [trainers.immutables.predict]
+n_comp = 3
+sample_size = 10
+seed = 1337

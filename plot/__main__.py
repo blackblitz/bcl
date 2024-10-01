@@ -62,13 +62,6 @@ def main():
     # parse arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('experiment_id', help='experiment ID')
-    parser.add_argument(
-        'num_classes', help='number of classes', type=int, choices=[2, 3]
-    )
-    parser.add_argument('left', help='lower limit of x-axis', type=float)
-    parser.add_argument('right', help='upper limit of x-axis', type=float)
-    parser.add_argument('bottom', help='lower limit of y-axis', type=float)
-    parser.add_argument('top', help='lower limit of y-axis', type=float)
     args = parser.parse_args()
 
     # read experiment specifications
@@ -83,9 +76,7 @@ def main():
     results_path = Path('results').resolve() / args.experiment_id
 
     # create plotter and model
-    plotter = Plotter(
-        args.num_classes, args.left, args.right, args.bottom, args.top
-    )
+    plotter = Plotter(**exp['plot'])
     model = getattr(
         import_module(models_module_map[exp['model']['name']]),
         exp['model']['name']
@@ -101,6 +92,7 @@ def main():
         metadata['length'], len(exp['trainers']),
         figsize=(12, 6.75), sharex=True, sharey=True
     )
+    axes = axes.reshape((metadata['length'], len(exp['trainers'])))
     for i, trainer_spec in enumerate(exp['trainers']):
         trainer_id = trainer_spec['id']
         trainer_label = trainer_spec['label']

@@ -20,29 +20,34 @@ class SFSVI(ContinualTrainer):
         """Update the training state."""
         self.mutables['coreset'].create_memmap()
         step = make_step(self.loss)
-        for key in random.split(
+        for epoch_key in random.split(
             self.precomputed['keys']['update_state'],
             num=self.immutables['n_epochs']
         ):
-            key1, key2, key3 = random.split(key, num=3)
             n_batches = get_n_batches(len(ys), self.immutables['batch_size'])
-            for key3, key4, indices in zip(
-                random.split(key1, num=n_batches),
-                random.split(key2, num=n_batches),
+            epoch_key, shuffle_key = random.split(epoch_key)
+            for key, indices in zip(
+                random.split(epoch_key, num=n_batches),
                 batch(
                     self.immutables['batch_size'],
-                    shuffle(key1, len(ys))
+                    shuffle(shuffle_key, len(ys))
                 )
             ):
+                key1, key2, key3 = random.split(key, num=3)
                 self.state = step(
-                    self.state, self.sample(key3), xs[indices], ys[indices],
+                    self.state, self.sample(key1), xs[indices], ys[indices],
                     *(
                         self.mutables['coreset'].choice(
-                            key4,
+                            key3,
                             self.immutables['coreset_batch_size_per_task']
-                        ) if self.mutables['coreset'].task_count > 0
-                        else self.mutables['coreset'].noise(
-                            key4,
+                        ) if (
+                            self.mutables['coreset'].task_count > 0
+                            and random.bernoulli(
+                                key2,
+                                p=self.immutables['coreset_prob']
+                            )
+                        ) else self.mutables['coreset'].noise(
+                            key3,
                             self.immutables['coreset_batch_size_per_task'],
                             minval=self.immutables['noise_minval'],
                             maxval=self.immutables['noise_maxval']
@@ -55,12 +60,6 @@ class SFSVI(ContinualTrainer):
 
 class GSFSVI(GaussMixin, SFSVI):
     """Gaussian sequential function-space variational inference."""
-
-    def precompute(self):
-        """Precompute."""
-        return super().precompute() | self._make_keys([
-            'init_state', 'init_coreset', 'update_state', 'update_coreset'
-        ])
 
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""
@@ -97,17 +96,6 @@ class GSFSVI(GaussMixin, SFSVI):
 class GMSFSVI(GSGaussMixin, SFSVI):
     """Gaussian sequential function-space variational inference."""
 
-    def precompute(self):
-        """Precompute."""
-        if self.immutables['mc_kldiv']:
-            return super().precompute() | self._make_keys([
-                'init_state', 'init_coreset', 'update_loss',
-                'update_state', 'update_coreset'
-            ])
-        return super().precompute() | self._make_keys([
-            'init_state', 'init_coreset', 'update_state', 'update_coreset'
-        ])
-
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""
         return {
@@ -141,5 +129,5 @@ class GMSFSVI(GSGaussMixin, SFSVI):
         """Update the hyperparameters."""
         self.mutables['prior'] = self.state.params
         self.mutables['coreset'].update(
-            self.precomputed['keys']['update_coreset'], xs, ys
+            self.precomputed['keys']['update_mutables'], xs, ys
         )
