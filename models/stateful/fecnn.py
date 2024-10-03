@@ -82,7 +82,6 @@ class FE3(nn.Module):
         xs = nn.Dense(self.dense)(xs)
         xs = nn.BatchNorm(use_running_average=not train)(xs)
         xs = nn.swish(xs)
-        xs = nn.Dropout(rate=self.dropout, deterministic=not train)(xs)
         return xs
 
 
@@ -121,5 +120,4 @@ class FE6(nn.Module):
         xs = nn.Dense(self.dense1)(xs)
         xs = nn.BatchNorm(use_running_average=not train)(xs)
         xs = nn.swish(xs)
-        xs = nn.Dropout(rate=self.dropout, deterministic=not train)(xs)
         return xs
