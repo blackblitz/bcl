@@ -1,21 +1,19 @@
-"""Predicting functions."""
+"""Stateless predictor."""
 
 from jax import random, vmap
-from jax.nn import sigmoid, softmax
 import jax.numpy as jnp
 import orbax.checkpoint as ocp
 
-from models import NLL
-
-from .probability import (
-    bern_entr, cat_entr,
+from ..probability import (
     gauss_param, gsgauss_param,
     gauss_sample, gsgauss_sample
 )
-from .state.functions import init, gauss_init, gsgauss_init
+from ..training.init import init, gauss_init, gsgauss_init
+
+from .predictor import MAPMixin, BMAMixin
 
 
-class MAPPredictor:
+class MAPPredictor(MAPMixin):
     """Maximum-a-posteriori predictor."""
 
     def __init__(self, model, model_spec, immutables, params):
@@ -37,28 +35,12 @@ class MAPPredictor:
             )
         return cls(model, model_spec, immutables, params)
 
-    def __call__(self, xs, decide=True):
-        """Predict the data."""
-        match self.model_spec.nll:
-            case NLL.SIGMOID_CROSS_ENTROPY:
-                proba = sigmoid(
-                    self.model.apply({'params': self.params}, xs)[:, 0]
-                )
-                return proba >= 0.5 if decide else proba
-            case NLL.SOFTMAX_CROSS_ENTROPY:
-                proba = softmax(self.model.apply({'params': self.params}, xs))
-                return proba.argmax(axis=-1) if decide else proba
-
-    def entropy(self, xs):
-        """Calculate the entropy of predictions."""
-        match self.model_spec.nll:
-            case NLL.SIGMOID_CROSS_ENTROPY:
-                return bern_entr(self(xs, decide=False))
-            case NLL.SOFTMAX_CROSS_ENTROPY:
-                return cat_entr(self(xs, decide=False))
+    def apply(self, xs):
+        """Apply on the data."""
+        return self.model.apply({'params': self.params}, xs)
 
 
-class BMAPredictor:
+class BMAPredictor(BMAMixin):
     """Bayesian-model-averaging predictor."""
 
     def __init__(self, model, model_spec, immutables, param_sample):
@@ -83,52 +65,9 @@ class BMAPredictor:
             )
         return cls(model, model_spec, immutables, param_sample)
 
-    def sample(self, xs):
-        """Return prediction samples."""
-        match self.model_spec.nll:
-            case NLL.SIGMOID_CROSS_ENTROPY:
-                return vmap(
-                    lambda params: sigmoid(
-                        self.model.apply({'params': params}, xs)[:, 0]
-                    )
-                )(self.param_sample)
-            case NLL.SOFTMAX_CROSS_ENTROPY:
-                return vmap(
-                    lambda params: softmax(
-                        self.model.apply({'params': params}, xs))
-                )(self.param_sample)
-
-    def __call__(self, xs, decide=True):
-        """Predict the data."""
-        match self.model_spec.nll:
-            case NLL.SIGMOID_CROSS_ENTROPY:
-                proba = self.sample(xs).mean(axis=0)
-                return proba >= 0.5 if decide else proba
-            case NLL.SOFTMAX_CROSS_ENTROPY:
-                proba = self.sample(xs).mean(axis=0)
-                return proba.argmax(axis=-1) if decide else proba
-
-    def entropy(self, xs):
-        """Calculate the entropy of predictions."""
-        match self.model_spec.nll:
-            case NLL.SIGMOID_CROSS_ENTROPY:
-                return bern_entr(self.sample(xs).mean(axis=0))
-            case NLL.SOFTMAX_CROSS_ENTROPY:
-                return cat_entr(self.sample(xs).mean(axis=0))
-
-    def mutual_information(self, xs):
-        """Calculate the MI between the predictions and the parameters."""
-        match self.model_spec.nll:
-            case NLL.SIGMOID_CROSS_ENTROPY:
-                return (
-                    bern_entr(self.sample(xs).mean(axis=0))
-                    - bern_entr(self.sample(xs)).mean(axis=0)
-                )
-            case NLL.SOFTMAX_CROSS_ENTROPY:
-                return (
-                    cat_entr(self.sample(xs).mean(axis=0))
-                    - cat_entr(self.sample(xs)).mean(axis=0)
-                )
+    def apply(self, xs):
+        """Apply on the data."""
+        return self.model.apply({'params': self.params}, xs)
 
 
 class GaussPredictor(BMAPredictor):

@@ -4,11 +4,18 @@ name = "split_iris_2"
 [evaluation]
 metrics = ["accuracy"]
 
+[plot]
+n_classes = 3
+x1_max = 7.0
+x1_min = 0.0
+x2_max = 3.0
+x2_min = 0.0
+
 [model]
 name = "FCNN2"
 
 [model.args]
-dense0 = 3
+dense0 = 4
 dense1 = 3
 
 [model.spec]

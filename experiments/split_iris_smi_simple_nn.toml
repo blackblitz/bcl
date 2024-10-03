@@ -9,7 +9,7 @@ validation_metric = "accuracy"
 name = "FCNN2"
 
 [model.args]
-dense0 = 3
+dense0 = 4
 dense1 = 3
 
 [model.spec]

@@ -1,4 +1,4 @@
-"""Loss functions."""
+"""Stateless loss functions."""
 
 import optax
 
@@ -7,7 +7,7 @@ from models import NLL
 
 
 def get_nll(nll_enum):
-    """Return the negative log-likelihood function."""
+    """Return the negative log-likelihood function with mutable variables."""
     match nll_enum:
         case NLL.SIGMOID_CROSS_ENTROPY:
             return sigmoid_cross_entropy
@@ -16,7 +16,7 @@ def get_nll(nll_enum):
 
 
 def sigmoid_cross_entropy(apply, **kwargs):
-    """Return a sigmoid cross-entropy loss function."""
+    """Return a sigmoid cross-entropy loss function with mutable variables."""
     def loss(params, var, rngs, xs, ys):
         out, var = apply({'params': params} | var, xs, rngs=rngs, **kwargs)
         return optax.sigmoid_binary_cross_entropy(out[:, 0], ys).sum(), var
@@ -25,7 +25,7 @@ def sigmoid_cross_entropy(apply, **kwargs):
 
 
 def softmax_cross_entropy(apply, **kwargs):
-    """Return a softmax cross-entropy loss function."""
+    """Return a softmax cross-entropy loss function with mutable variables."""
     def loss(params, var, rngs, xs, ys):
         out, var = apply({'params': params} | var, xs, rngs=rngs, **kwargs)
         return (
@@ -36,8 +36,26 @@ def softmax_cross_entropy(apply, **kwargs):
     return loss
 
 
+def huber(apply, **kwargs):
+    """Return a Huber loss function with mutable variables."""
+    def loss(params, var, rngs, xs, ys):
+        out, var = apply({'params': params} | var, xs, rngs=rngs, **kwargs)
+        return optax.huber_loss(out[:, 0], ys).sum(), var
+
+    return loss
+
+
+def l2(apply, **kwargs):
+    """Return a Huber loss function."""
+    def loss(params, var, rngs, xs, ys):
+        out, var = apply({'params': params} | var, xs, rngs=rngs, **kwargs)
+        return optax.l2_loss(out[:, 0], ys).sum(), var
+
+    return loss
+
+
 def l2_reg(precision, nll):
-    """Return an L2-regularized loss function."""
+    """Return an L2-regularized loss function with mutable variables."""
     def loss(params, var, rngs, xs, ys):
         loss_val, var = nll(params, var, rngs, xs, ys)
         return (

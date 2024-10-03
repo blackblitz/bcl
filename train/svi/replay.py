@@ -6,11 +6,10 @@ import jax.numpy as jnp
 from dataops.array import batch, get_n_batches, shuffle
 
 from ..coreset import TaskIncrementalCoreset
-from ..loss import gmfsvi_vfe_mc, gmfsvi_vfe_ub, gfsvi_vfe
+from ..loss.stateless import gmfsvi_vfe_mc, gmfsvi_vfe_ub, gfsvi_vfe
 from ..probability import get_gauss_prior
-from ..state.functions import make_step
-from ..state.mixins import GSGaussMixin, GaussMixin
-from ..trainer import ContinualTrainer
+from ..trainer import ContinualTrainer, GSGaussMixin, GaussMixin
+from ..training.stateless import make_step
 
 
 class SFSVI(ContinualTrainer):

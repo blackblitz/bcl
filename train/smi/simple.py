@@ -10,13 +10,15 @@ from optax import adam
 from dataops import tree
 from dataops.array import batch, shuffle
 from models import NLL
-from models.fcnn import FCNN3
+from models.stateless.fcnn import FCNN3
 
 from ..coreset import JointCoreset
-from ..loss import diag_quad_con, flat_quad_con, huber, l2_reg, neu_con
-from ..state.functions import init, make_step
-from ..state.mixins import MAPMixin
-from ..trainer import ContinualTrainer
+from ..loss.stateless import (
+    diag_quad_con, flat_quad_con, huber, l2_reg, neu_con
+)
+from ..trainer import ContinualTrainer, MAPMixin
+from ..training.init import init
+from ..training.stateless import make_step
 
 
 class Joint(MAPMixin, ContinualTrainer):
@@ -250,22 +252,22 @@ class NeuralConsolidation(RegularTrainer):
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""
         flat_params, unflatten = flatten_util.ravel_pytree(self.state.params)
-        con_model = FCNN3(
+        model = FCNN3(
             dense0=self.immutables['con_dense0'],
             dense1=self.immutables['con_dense1'],
             dense2=1
         )
-        con_state = TrainState.create(
-            apply_fn=con_model.apply,
+        state = TrainState.create(
+            apply_fn=model.apply,
             params=init(
                 self.precomputed['keys']['init_mutables'],
-                con_model, flat_params.shape
+                model, flat_params.shape
             ),
             tx=adam(self.immutables['con_lr'])
         )
         return {
             'minimum': tree.full_like(self.state.params, 0.0),
-            'con_state': con_state
+            'con_state': state
         }
 
     def update_loss(self, xs, ys):

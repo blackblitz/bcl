@@ -191,6 +191,7 @@ name = "NeuralConsolidation"
 batch_size = 16
 con_dense0 = 256
 con_dense1 = 256
+con_dropout = 0.5
 con_lr = 0.01
 con_n_steps = 1000
 con_precision = 0.1

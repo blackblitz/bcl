@@ -1,7 +1,7 @@
-"""Functions for the training state."""
+"""Initialization."""
 
 import jax.numpy as jnp
-from jax import grad, jit, random, vmap
+from jax import random, vmap
 
 from dataops import tree
 
@@ -32,12 +32,3 @@ def gsgauss_init(key, model, n_comp, input_shape):
         'mean': mean,
         'msd': tree.gauss(key2, mean, loc=-2.0, scale=0.05)
     }
-
-
-def make_step(loss):
-    """Make a gradient-descent step function for a loss function."""
-    return jit(
-        lambda state, *args: state.apply_gradients(
-            grads=grad(loss)(state.params, *args)
-        )
-    )

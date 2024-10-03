@@ -5,11 +5,10 @@ import jax.numpy as jnp
 
 from dataops.array import batch, get_n_batches, shuffle
 
-from ..loss import gmvi_vfe_mc, gmvi_vfe_ub, gvi_vfe
+from ..loss.stateless import gmvi_vfe_mc, gmvi_vfe_ub, gvi_vfe
 from ..probability import get_gauss_prior
-from ..state.functions import make_step
-from ..state.mixins import GaussMixin, GSGaussMixin
-from ..trainer import ContinualTrainer
+from ..trainer import ContinualTrainer, GaussMixin, GSGaussMixin
+from ..training.stateless import make_step
 
 
 class VCL(ContinualTrainer):

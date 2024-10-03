@@ -1,12 +1,13 @@
 """Trainer."""
 
 from flax.training.train_state import TrainState
-from jax import jit, random, value_and_grad
+from jax import random
 import jax.numpy as jnp
 import optax
 
 from dataops.array import batch, shuffle
-from .loss import get_nll, l2_reg
+from train.loss.stateful import get_nll, l2_reg
+from train.training.stateful import make_step
 
 
 class Trainer:
@@ -18,7 +19,7 @@ class Trainer:
         self.model_spec = model_spec
         self.hyperparams = hyperparams
         init_key, dropout_key, shuffle_key = random.split(
-            random.PRNGKey(self.hyperparams['seed']), num=3
+            random.key(self.hyperparams['seed']), num=3
         )
         self.keys = {'dropout': dropout_key, 'shuffle': shuffle_key}
         var = self.model.init(
@@ -34,20 +35,14 @@ class Trainer:
         self.loss = l2_reg(
             self.hyperparams['precision'],
             get_nll(self.model_spec.nll)(
-                self.model.apply, mutable=list(self.var.keys()), train=True
+                self.model.apply, mutable=list(self.var.keys()),
+                train=True
             )
         )
 
     def train(self, xs, ys):
         """Train with a dataset."""
-        @jit
-        def step(state, var, xs, ys):
-            dropout_key = random.fold_in(self.keys['dropout'], state.step)
-            (loss_val, var), grads = value_and_grad(self.loss, has_aux=True)(
-                state.params, var, {'dropout': dropout_key}, xs, ys
-            )
-            return state.apply_gradients(grads=grads), var
-
+        step = make_step(self.keys['dropout'], self.loss)
         keys = random.split(
             self.keys['shuffle'],
             num=self.hyperparams['n_epochs']

@@ -13,7 +13,8 @@ from dataops.io import read_task, read_toml
 from evaluate import metrics
 from models import ModelSpec, module_map, NLL
 
-from .predictor import Predictor
+from train.predictor.stateful import MAPPredictor
+
 from .trainer import Trainer
 
 
@@ -65,11 +66,12 @@ def main():
         leave=False, unit='epoch'
     ), start=1):
         pass
-        predictor = Predictor(
+        predictor = MAPPredictor(
             model,
             model_spec,
             exp['feature_extractor']['immutables']['predict'],
-            {'params': state.params} | var
+            state.params,
+            var
         )
         result = {'epoch_num': epoch_num}
         for metric in exp['evaluation']['metrics']:

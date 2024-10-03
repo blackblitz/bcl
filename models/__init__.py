@@ -8,9 +8,9 @@ fecnn = ['FECNN4', 'FECNN7']
 fcnn = ['FCNN1', 'FCNN2', 'FCNN3']
 
 module_map = (
-    dict.fromkeys(cnn, 'models.cnn')
-    | dict.fromkeys(fecnn, 'models.fecnn')
-    | dict.fromkeys(fcnn, 'models.fcnn')
+    dict.fromkeys(fecnn, 'models.stateful.fecnn')
+    | dict.fromkeys(cnn, 'models.stateless.cnn')
+    | dict.fromkeys(fcnn, 'models.stateless.fcnn')
 )
 
 
