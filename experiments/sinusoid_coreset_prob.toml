@@ -4,6 +4,13 @@ name = "sinusoid"
 [evaluation]
 metrics = ["accuracy"]
 
+[plot]
+n_classes = 2
+x1_max = 3.0
+x1_min = -0.5
+x2_max = 1.5
+x2_min = -1.0
+
 [model]
 name = "FCNN3"
 

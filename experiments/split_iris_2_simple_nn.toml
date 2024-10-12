@@ -29,7 +29,7 @@ name = "Joint"
 label = "Joint training"
 
 [trainers.immutables.train]
-batch_size = 16
+batch_size = 8
 lr = 0.01
 n_epochs = 100
 precision = 0.1
@@ -43,7 +43,7 @@ name = "Finetuning"
 label = "Fine-tuning"
 
 [trainers.immutables.train]
-batch_size = 16
+batch_size = 8
 lr = 0.01
 n_epochs = 100
 precision = 0.1
@@ -57,7 +57,7 @@ name = "ElasticWeightConsolidation"
 label = "EWC"
 
 [trainers.immutables.train]
-batch_size = 16
+batch_size = 8
 lambda = 1.0
 lr = 0.01
 n_epochs = 100
@@ -72,8 +72,8 @@ name = "SynapticIntelligence"
 label="SI"
 
 [trainers.immutables.train]
-batch_size = 16
-lambda = 0.01
+batch_size = 8
+lambda = 1.0
 lr = 0.01
 n_epochs = 100
 precision = 0.1
@@ -88,7 +88,8 @@ name = "AutodiffQuadraticConsolidation"
 label = "AQC"
 
 [trainers.immutables.train]
-batch_size = 16
+batch_size = 8
+lambda = 1.0
 lr = 0.01
 n_epochs = 100
 precision = 0.1
@@ -102,7 +103,7 @@ name = "NeuralConsolidation"
 label = "NC"
 
 [trainers.immutables.train]
-batch_size = 16
+batch_size = 8
 con_dense0 = 256
 con_dense1 = 256
 con_lr = 0.01
@@ -116,3 +117,83 @@ precision = 0.1
 seed = 1337
 
 [trainers.immutables.predict]
+
+[[trainers]]
+id = "gvcl"
+name = "GVCL"
+label = "G-VCL"
+
+[trainers.immutables.train]
+batch_size = 8
+lr = 0.01
+n_epochs = 100
+precision = 0.1
+sample_size = 10
+seed = 1337
+
+[trainers.immutables.predict]
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "gmvcl"
+name = "GMVCL"
+label = "GM-VCL"
+
+[trainers.immutables.train]
+batch_size = 8
+lr = 0.01
+mc_kldiv = false
+n_comp = 3
+n_epochs = 100
+precision = 0.1
+sample_size = 10
+seed = 1337
+
+[trainers.immutables.predict]
+n_comp = 3
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "gsfsvi"
+name = "SimpleGSFSVI"
+label = "G-S-FSVI"
+
+[trainers.immutables.train]
+batch_size = 8
+lr = 0.01
+noise_batch_size = 8
+noise_maxval = [ 6.7, 2.4 ]
+noise_minval = [ 1.0, 0.1 ]
+n_epochs = 100
+precision = 0.1
+sample_size = 10
+seed = 1337
+
+[trainers.immutables.predict]
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "gmsfsvi"
+name = "SimpleGMSFSVI"
+label = "GM-S-FSVI"
+
+[trainers.immutables.train]
+batch_size = 8
+lr = 0.01
+mc_kldiv = false
+noise_batch_size = 8
+noise_maxval = [ 6.7, 2.4 ]
+noise_minval = [ 1.0, 0.1 ]
+n_comp = 3
+n_epochs = 100
+precision = 0.1
+sample_size = 10
+seed = 1337
+
+[trainers.immutables.predict]
+n_comp = 3
+sample_size = 100
+seed = 1337

@@ -51,9 +51,18 @@ def task_sequence_1(load):
             'classes': dataset.target_names.tolist(),
             'features': dataset.feature_names,
             'input_shape': [len(dataset.feature_names)],
+            'input_min': np.min(
+                [x for x, y in training_dataset],
+                axis=0
+            ).tolist(),
+            'input_max': np.max(
+                [x for x, y in training_dataset],
+                axis=0
+            ).tolist(),
             'length': len(css)
         }
     )
+
 
 def split_iris():
     """Make Split Iris."""

@@ -5,7 +5,7 @@ from jax import random
 import jax.numpy as jnp
 import optax
 
-from dataops.array import batch, shuffle
+from dataops.array import batch, get_n_batches, shuffle
 from train.loss.stateful import get_nll, l2_reg
 from train.training.stateful import make_step
 
@@ -13,7 +13,7 @@ from train.training.stateful import make_step
 class Trainer:
     """Trainer for feature extractor."""
 
-    def __init__(self, model, model_spec, hyperparams):
+    def __init__(self, model, model_spec, hyperparams, total_size):
         """Initialize self."""
         self.model = model
         self.model_spec = model_spec
@@ -26,10 +26,22 @@ class Trainer:
             init_key, jnp.zeros((1, *self.model_spec.in_shape)),
             train=False
         )
+        match self.hyperparams['lr_schedule']:
+            case 'constant':
+                lr = self.hyperparams['base_lr']
+            case 'onecycle':
+                lr = optax.cosine_onecycle_schedule(
+                    transition_steps=(
+                        self.hyperparams['n_epochs'] * get_n_batches(
+                            total_size, self.hyperparams['batch_size']
+                        )
+                    ),
+                    peak_value=self.hyperparams['base_lr']
+                )
         self.state = TrainState.create(
             apply_fn=self.model.apply,
             params=var.pop('params'),
-            tx=optax.adam(self.hyperparams['lr'])
+            tx=optax.adam(lr)
         )
         self.var = var
         self.loss = l2_reg(

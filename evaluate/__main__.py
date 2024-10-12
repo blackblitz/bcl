@@ -63,7 +63,7 @@ def main():
 
     for name, trainer_specs in trainer_specs_map.items():
         if len(trainer_specs) > 1:
-            validation_scores = np.zeros((metadata['length'],))
+            validation_scores = np.zeros((len(trainer_specs),))
             for i, trainer_spec in enumerate(trainer_specs):
                 trainer_id = trainer_spec['id']
                 trainer_class = getattr(

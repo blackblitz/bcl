@@ -223,6 +223,7 @@ class AutodiffQuadraticConsolidation(RegularTrainer):
         else:
             self.loss = jit(
                 flat_quad_con(
+                    self.immutables['lambda'],
                     self.mutables['flat_minimum'],
                     self.mutables['flat_hessian'],
                     self.precomputed['nll']

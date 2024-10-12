@@ -37,11 +37,11 @@ class BMAMixin:
         match self.model_spec.nll:
             case NLL.SIGMOID_CROSS_ENTROPY:
                 return vmap(
-                    lambda params: nn.sigmoid(self.apply(xs)[:, 0])
+                    lambda params: nn.sigmoid(self.apply(params, xs)[:, 0])
                 )(self.param_sample)
             case NLL.SOFTMAX_CROSS_ENTROPY:
                 return vmap(
-                    lambda params: nn.softmax(self.apply(xs))
+                    lambda params: nn.softmax(self.apply(params, xs))
                 )(self.param_sample)
 
     def __call__(self, xs, decide=True):

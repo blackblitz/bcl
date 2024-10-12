@@ -65,9 +65,9 @@ class BMAPredictor(BMAMixin):
             )
         return cls(model, model_spec, immutables, param_sample)
 
-    def apply(self, xs):
+    def apply(self, params, xs):
         """Apply on the data."""
-        return self.model.apply({'params': self.params}, xs)
+        return self.model.apply({'params': params}, xs)
 
 
 class GaussPredictor(BMAPredictor):

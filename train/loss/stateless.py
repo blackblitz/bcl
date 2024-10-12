@@ -98,11 +98,13 @@ def diag_quad_con(lambda_, minimum, hessian, nll):
     return loss
 
 
-def flat_quad_con(flat_minimum, flat_hessian, nll):
+def flat_quad_con(lambda_, flat_minimum, flat_hessian, nll):
     """Return a loss function for flattened quadratic consolidation."""
     def loss(params, xs, ys):
         diff = flatten_util.ravel_pytree(params)[0] - flat_minimum
-        return 0.5 * diff @ flat_hessian @ diff + nll(params, xs, ys)
+        return (
+            0.5 * lambda_ * diff @ flat_hessian @ diff + nll(params, xs, ys)
+        )
 
     return loss
 

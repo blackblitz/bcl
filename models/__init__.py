@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from enum import Enum, unique
 
 cnn = ['CNN4']
-fecnn = ['FECNN4', 'FECNN7']
+fecnn = ['FECNN4', 'FECNN7', 'FEResNet18']
 fcnn = ['FCNN1', 'FCNN2', 'FCNN3']
 
 module_map = (

@@ -6,8 +6,8 @@ smi_simple = [
     'NeuralConsolidation', 'SynapticIntelligence'
 ]
 smi_replay = ['GDumb', 'TICReplay']
-svi_simple = ['GMVCL', 'GVCL']
-svi_replay = ['GMSFSVI', 'GSFSVI']
+svi_simple = ['GMVCL', 'GVCL', 'SimpleGMSFSVI', 'SimpleGSFSVI']
+svi_replay = ['PriorExactGMSFSVI', 'PriorExactGSFSVI']
 
 module_map = (
     dict.fromkeys(smi_simple, 'train.smi.simple')

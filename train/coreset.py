@@ -154,25 +154,6 @@ class TaskIncrementalCoreset(Coreset):
         self.zarr[name]['xs'] = xs[indices]
         self.zarr[name]['ys'] = ys[indices]
 
-    def noise(self, key, batch_size_per_task, minval=0.0, maxval=1.0):
-        """Return random data."""
-        key1, key2 = random.split(key)
-        return (
-            np.asarray(random.uniform(
-                key1,
-                shape=(
-                    batch_size_per_task,
-                    *self.model_spec.in_shape
-                ),
-                minval=minval,
-                maxval=maxval
-            )),
-            np.asarray(random.choice(
-                key2, self.model_spec.out_shape[0],
-                shape=(batch_size_per_task,)
-            ))
-        )
-
     def choice(self, key, batch_size_per_task):
         """Draw a batch by random choice."""
         if self.task_count == 0:

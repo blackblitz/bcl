@@ -12,8 +12,8 @@ from ..trainer import ContinualTrainer, GSGaussMixin, GaussMixin
 from ..training.stateless import make_step
 
 
-class SFSVI(ContinualTrainer):
-    """Sequential function-space variational inference."""
+class PriorExactSFSVI(ContinualTrainer):
+    """Prior-focused exact-replay S-FSVI."""
 
     def update_state(self, xs, ys):
         """Update the training state."""
@@ -45,11 +45,18 @@ class SFSVI(ContinualTrainer):
                                 key2,
                                 p=self.immutables['coreset_prob']
                             )
-                        ) else self.mutables['coreset'].noise(
-                            key3,
-                            self.immutables['coreset_batch_size_per_task'],
-                            minval=self.immutables['noise_minval'],
-                            maxval=self.immutables['noise_maxval']
+                        ) else (
+                            random.uniform(
+                                key3,
+                                shape=(
+                                    self.immutables[
+                                        'coreset_batch_size_per_task'
+                                    ], *self.model_spec.in_shape
+                                ),
+                                minval=self.immutables['noise_minval'],
+                                maxval=self.immutables['noise_maxval'],
+                            ),
+                            None
                         )
                     )
                 )
@@ -57,8 +64,8 @@ class SFSVI(ContinualTrainer):
         self.mutables['coreset'].delete_memmap()
 
 
-class GSFSVI(GaussMixin, SFSVI):
-    """Gaussian sequential function-space variational inference."""
+class PriorExactGSFSVI(GaussMixin, PriorExactSFSVI):
+    """Prior-focused exact-replay Gaussian S-FSVI."""
 
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""
@@ -88,12 +95,12 @@ class GSFSVI(GaussMixin, SFSVI):
         """Update the hyperparameters."""
         self.mutables['prior'] = self.state.params
         self.mutables['coreset'].update(
-            self.precomputed['keys']['update_coreset'], xs, ys
+            self.precomputed['keys']['update_mutables'], xs, ys
         )
 
 
-class GMSFSVI(GSGaussMixin, SFSVI):
-    """Gaussian sequential function-space variational inference."""
+class PriorExactGMSFSVI(GSGaussMixin, PriorExactSFSVI):
+    """Prior-focused exact-replay Gaussian-mixture S-FSVI."""
 
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""

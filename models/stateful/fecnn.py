@@ -11,20 +11,18 @@ class FECNN4(nn.Module):
     conv1: int
     dense0: int
     dense1: int
-    dropout: float
 
     def setup(self):
-        """Set up model."""
+        """Set up module."""
         self.tail = FE3(
             conv0=self.conv0,
             conv1=self.conv1,
             dense=self.dense0,
-            dropout=self.dropout
         )
         self.head = nn.Dense(self.dense1)
 
     def __call__(self, xs, train: bool):
-        """Apply model."""
+        """Apply module."""
         xs = self.tail(xs, train=train)
         xs = self.head(xs)
         return xs
@@ -40,20 +38,44 @@ class FECNN7(nn.Module):
     dense0: int
     dense1: int
     dense2: int
-    dropout: float
 
     def setup(self):
-        """Set up model."""
+        """Set up module."""
         self.tail = FE6(
             conv0=self.conv0, conv1=self.conv1,
             conv2=self.conv2, conv3=self.conv3,
             dense0=self.dense0, dense1=self.dense1,
-            dropout=self.dropout
         )
         self.head = nn.Dense(self.dense2)
 
     def __call__(self, xs, train: bool):
-        """Apply model."""
+        """Apply module."""
+        xs = self.tail(xs, train=train)
+        xs = self.head(xs)
+        return xs
+
+
+class FEResNet18(nn.Module):
+    """Feature-extracting ResNet-18."""
+
+    conv0: int
+    conv1: int
+    conv2: int
+    conv3: int
+    conv4: int
+    dense: int
+
+    def setup(self):
+        """Set up module."""
+        self.tail = FERes17(
+            conv0=self.conv0, conv1=self.conv1,
+            conv2=self.conv2, conv3=self.conv3,
+            conv4=self.conv4
+        )
+        self.head = nn.Dense(self.dense)
+
+    def __call__(self, xs, train: bool):
+        """Apply module."""
         xs = self.tail(xs, train=train)
         xs = self.head(xs)
         return xs
@@ -65,11 +87,10 @@ class FE3(nn.Module):
     conv0: int
     conv1: int
     dense: int
-    dropout: float
 
     @nn.compact
     def __call__(self, xs, train: bool):
-        """Apply model."""
+        """Apply module."""
         xs = nn.Conv(self.conv0, (3, 3))(xs)
         xs = nn.BatchNorm(use_running_average=not train)(xs)
         xs = nn.swish(xs)
@@ -94,11 +115,10 @@ class FE6(nn.Module):
     conv3: int
     dense0: int
     dense1: int
-    dropout: float
 
     @nn.compact
     def __call__(self, xs, train: bool):
-        """Apply model."""
+        """Apply module."""
         xs = nn.Conv(self.conv0, (3, 3))(xs)
         xs = nn.BatchNorm(use_running_average=not train)(xs)
         xs = nn.swish(xs)
@@ -119,5 +139,77 @@ class FE6(nn.Module):
         xs = nn.swish(xs)
         xs = nn.Dense(self.dense1)(xs)
         xs = nn.BatchNorm(use_running_average=not train)(xs)
+        xs = nn.swish(xs)
+        return xs
+
+
+class FERes17(nn.Module):
+    """A feature extractor with 17 convolutional layers for ResNet."""
+    
+    conv0: int
+    conv1: int
+    conv2: int
+    conv3: int
+    conv4: int
+
+    @nn.compact
+    def __call__(self, xs, train: bool):
+        """Apply module."""
+        xs = nn.Conv(self.conv0, (3, 3))(xs)
+        xs = nn.BatchNorm(use_running_average=not train)(xs)
+        xs = nn.swish(xs)
+        xs = ResidualBlock(self.conv1)(xs, train=train)
+        xs = ResidualBlock(self.conv1)(xs, train=train)
+        xs = nn.avg_pool(xs, window_shape=(2, 2), strides=(2, 2))
+        xs = ResidualBlock(self.conv2)(xs, train=train)
+        xs = ResidualBlock(self.conv2)(xs, train=train)
+        xs = nn.avg_pool(xs, window_shape=(2, 2), strides=(2, 2))
+        xs = ResidualBlock(self.conv3)(xs, train=train)
+        xs = ResidualBlock(self.conv3)(xs, train=train)
+        xs = nn.avg_pool(xs, window_shape=(2, 2), strides=(2, 2))
+        xs = ResidualBlock(self.conv4)(xs, train=train)
+        xs = ResidualBlock(self.conv4)(xs, train=train)
+        xs = jnp.mean(xs, axis=(1, 2))
+        return xs
+
+
+class ResidualBlock(nn.Module):
+    """A convolutional residual block used in ResNet."""
+
+    conv: int
+
+    @nn.compact
+    def __call__(self, xs, train: bool):
+        """Apply module."""
+        res = nn.Conv(self.conv, (3, 3))(xs)
+        res = nn.BatchNorm(use_running_average=not train)(res)
+        res = nn.swish(res)
+        res = nn.Conv(self.conv, (3, 3))(res)
+        res = nn.BatchNorm(use_running_average=not train)(res)
+        if xs.shape != res.shape:
+            xs = nn.Conv(self.conv, (1, 1))(xs)
+            xs = nn.BatchNorm(use_running_average=not train)(xs)
+        xs = xs + res
+        xs = nn.swish(xs)
+        return xs
+
+
+class DownsamplingResidualBlock(nn.Module):
+    """A downsampling convolutional residual block used in ResNet."""
+
+    conv: int
+
+    @nn.compact
+    def __call__(self, xs, train: bool):
+        """Apply module."""
+        res = nn.Conv(self.conv, (3, 3))(xs)
+        res = nn.BatchNorm(use_running_average=not train)(res)
+        res = nn.swish(res)
+        res = nn.Conv(self.conv, (3, 3), strides=(2, 2))(res)
+        res = nn.BatchNorm(use_running_average=not train)(res)
+        if xs.shape != res.shape:
+            xs = nn.Conv(self.conv, (1, 1), strides=(2, 2))(xs)
+            xs = nn.BatchNorm(use_running_average=not train)(xs)
+        xs = xs + res
         xs = nn.swish(xs)
         return xs

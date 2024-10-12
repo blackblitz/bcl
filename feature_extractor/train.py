@@ -6,6 +6,8 @@ from importlib import import_module
 import json
 from pathlib import Path
 
+from jax import random
+import jax.numpy as jnp
 import orbax.checkpoint as ocp
 from tqdm import tqdm
 
@@ -41,10 +43,23 @@ def main():
         / f'{args.experiment_id}_feature_extractor_'
         f'{datetime.datetime.now().isoformat()}.jsonl'
     )
+    ts_path = (
+        Path('data').resolve()
+        / exp['feature_extractor']['task_sequence_name']
+    )
+    train_xs, train_ys = read_task(ts_path, 'training', 1)
+    val_xs, val_ys = read_task(ts_path, 'validation', 1)
     model = getattr(
         import_module(module_map[exp['feature_extractor']['name']]),
         exp['feature_extractor']['name']
     )(**exp['feature_extractor']['args'])
+    print(
+        model.tabulate(
+            random.key(1337),
+            jnp.zeros((1, 32, 32, 3)),
+            train=False
+        )
+    )
     model_spec = ModelSpec(
         nll=NLL[exp['feature_extractor']['spec']['nll']],
         in_shape=exp['feature_extractor']['spec']['in_shape'],
@@ -52,14 +67,8 @@ def main():
     )
     trainer = Trainer(
         model, model_spec,
-        exp['feature_extractor']['immutables']['train']
+        exp['feature_extractor']['immutables']['train'], len(train_ys)
     )
-    ts_path = (
-        Path('data').resolve()
-        / exp['feature_extractor']['task_sequence_name']
-    )
-    train_xs, train_ys = read_task(ts_path, 'training', 1)
-    val_xs, val_ys = read_task(ts_path, 'validation', 1)
     for epoch_num, (state, var) in enumerate(tqdm(
         trainer.train(train_xs, train_ys),
         total=exp['feature_extractor']['immutables']['train']['n_epochs'],
