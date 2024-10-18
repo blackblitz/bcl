@@ -9,9 +9,11 @@ from optax import adam
 from dataops.array import get_pass_size
 
 from .loss.stateless import get_nll
-from .predictor.stateless import MAPPredictor, GaussPredictor, GSGaussPredictor
-from .probability import gauss_sample, gsgauss_sample
-from .training.init import init, gauss_init, gsgauss_init
+from .predictor.stateless import (
+    MAPPredictor, GaussPredictor, GSGaussPredictor, TPredictor
+)
+from .probability import gauss_sample, gsgauss_sample, t_sample
+from .training.init import init, gauss_init, gsgauss_init, t_init
 
 
 class MAPMixin:
@@ -79,6 +81,32 @@ class GSGaussMixin:
         return gsgauss_sample(
             key, self.immutables['sample_size'],
             self.immutables['n_comp'], self.precomputed['param_example']
+        )
+
+
+class TMixin:
+    """Mixin for t variation inference."""
+
+    predictor_class = TPredictor
+
+    def init_state(self):
+        """Initialize the state."""
+        return TrainState.create(
+            apply_fn=self.model.apply,
+            params=t_init(
+                self.precomputed['keys']['init_state'],
+                self.model,
+                self.model_spec.in_shape
+            ),
+            tx=adam(self.immutables['lr'])
+        )
+
+    def sample(self, key):
+        """Draw a standard sample for the reparameterization trick."""
+        return t_sample(
+            key, self.immutables['sample_size'],
+            self.immutables['df'],
+            self.precomputed['param_example']
         )
 
 

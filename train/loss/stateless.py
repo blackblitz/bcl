@@ -10,7 +10,8 @@ from models import NLL
 from ..probability import (
     gaussmix_output_kldiv_mc, gaussmix_output_kldiv_ub,
     gaussmix_params_kldiv_mc, gaussmix_params_kldiv_ub,
-    gauss_output_kldiv, gauss_param, gauss_params_kldiv, gsgauss_param
+    gauss_output_kldiv, gauss_param, gauss_params_kldiv, gsgauss_param,
+    t_output_kldiv_mc, t_param, t_params_kldiv_mc
 )
 
 
@@ -132,6 +133,18 @@ def gvi_vfe(nll, prior, beta):
     return loss
 
 
+def tvi_vfe(nll, prior, beta, df):
+    """Return the VFE function for t VI."""
+    def loss(params, sample, xs, ys):
+        param_sample = t_param(params, sample)
+        return (
+            vmap(nll, in_axes=(0, None, None))(param_sample, xs, ys).mean()
+            + beta * t_params_kldiv_mc(param_sample, params, prior, df)
+        )
+
+    return loss
+
+
 def gmvi_vfe_mc(nll, prior, beta):
     """Return the VFE function for Gaussian-mixture VI by MC integration."""
     def loss(params, sample, xs, ys):
@@ -191,6 +204,21 @@ def gmfsvi_vfe_ub(nll, prior, beta, apply):
         return (
             vmap(nll, in_axes=(0, None, None))(param_sample, xs1, ys1).mean()
             + beta * gaussmix_output_kldiv_ub(params, prior, apply, xs2)
+        )
+
+    return loss
+
+
+def tfsvi_vfe(key, nll, prior, beta, df, apply):
+    """Return the VFE function for t FSVI."""
+    def loss(params, sample, xs1, ys1, xs2, ys2):
+        sample_size = len(tree_util.tree_leaves(sample)[0])
+        param_sample = t_param(params, sample)
+        return (
+            vmap(nll, in_axes=(0, None, None))(param_sample, xs1, ys1).mean()
+            + beta * t_output_kldiv_mc(
+                key, sample_size, params, prior, df, apply, xs2
+            )
         )
 
     return loss

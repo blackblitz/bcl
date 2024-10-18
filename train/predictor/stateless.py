@@ -5,10 +5,10 @@ import jax.numpy as jnp
 import orbax.checkpoint as ocp
 
 from ..probability import (
-    gauss_param, gsgauss_param,
-    gauss_sample, gsgauss_sample
+    gauss_param, gsgauss_param, t_param,
+    gauss_sample, gsgauss_sample, t_sample
 )
-from ..training.init import init, gauss_init, gsgauss_init
+from ..training.init import init, gauss_init, gsgauss_init, t_init
 
 from .predictor import MAPMixin, BMAMixin
 
@@ -123,6 +123,34 @@ class GSGaussPredictor(BMAPredictor):
                     model,
                     immutables['n_comp'],
                     model_spec.in_shape,
+                )
+            )
+        return cls(model, model_spec, immutables, params)
+
+
+class TPredictor(BMAPredictor):
+    """t-variational-inference predictor."""
+
+    def __init__(self, model, model_spec, immutables, params):
+        """Initialize self."""
+        param_sample = t_param(
+            params,
+            t_sample(
+                random.PRNGKey(immutables['seed']),
+                immutables['sample_size'],
+                immutables['df'],
+                init(random.PRNGKey(1337), model, model_spec.in_shape)
+            )
+        )
+        super().__init__(model, model_spec, immutables, param_sample)
+
+    @classmethod
+    def from_checkpoint(cls, model, model_spec, immutables, path):
+        """Initialize from a checkpoint."""
+        with ocp.StandardCheckpointer() as ckpter:
+            params = ckpter.restore(
+                path, target=t_init(
+                    random.PRNGKey(1337), model, model_spec.in_shape
                 )
             )
         return cls(model, model_spec, immutables, params)

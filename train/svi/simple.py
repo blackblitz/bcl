@@ -7,10 +7,11 @@ from dataops.array import batch, get_n_batches, shuffle
 
 from ..loss.stateless import (
     gmvi_vfe_mc, gmvi_vfe_ub, gvi_vfe,
-    gmfsvi_vfe_mc, gmfsvi_vfe_ub, gfsvi_vfe
+    gmfsvi_vfe_mc, gmfsvi_vfe_ub, gfsvi_vfe,
+    tfsvi_vfe, tvi_vfe
 )
-from ..probability import get_gauss_prior
-from ..trainer import ContinualTrainer, GaussMixin, GSGaussMixin
+from ..probability import get_gauss_prior, get_t_prior
+from ..trainer import ContinualTrainer, GaussMixin, GSGaussMixin, TMixin
 from ..training.stateless import make_step
 
 
@@ -84,6 +85,34 @@ class GMVCL(GSGaussMixin, VCL):
                 self.precomputed['nll'],
                 self.mutables['prior'],
                 self.immutables.get('beta', 1 / n_batches),
+            )
+        )
+
+    def update_mutables(self, xs, ys):
+        """Update the mutable hyperparameters."""
+        self.mutables['prior'] = self.state.params
+
+
+class TVCL(TMixin, VCL):
+    """t variational continual learning."""
+
+    def init_mutables(self):
+        """Initialize the mutable hyperparameters."""
+        return {
+            'prior': get_t_prior(
+                self.immutables['invscale'], self.state.params
+            )
+        }
+
+    def update_loss(self, xs, ys):
+        """Update the loss function."""
+        n_batches = -(len(ys) // -self.immutables['batch_size'])
+        self.loss = jit(
+            tvi_vfe(
+                self.precomputed['nll'],
+                self.mutables['prior'],
+                self.immutables.get('beta', 1 / n_batches),
+                self.immutables['df']
             )
         )
 
@@ -181,6 +210,36 @@ class SimpleGMSFSVI(GSGaussMixin, SimpleSFSVI):
                     self.immutables.get('beta', 1 / n_batches),
                     self.model.apply
                 ])
+            )
+        )
+
+    def update_mutables(self, xs, ys):
+        """Update the hyperparameters."""
+        self.mutables['prior'] = self.state.params
+
+
+class SimpleTSFSVI(TMixin, SimpleSFSVI):
+    """Simple t S-FSVI."""
+
+    def init_mutables(self):
+        """Initialize the mutable hyperparameters."""
+        return {
+            'prior': get_t_prior(
+                self.immutables['invscale'], self.state.params
+            )
+        }
+
+    def update_loss(self, xs, ys):
+        """Update the loss function."""
+        n_batches = -(len(ys) // -self.immutables['batch_size'])
+        self.loss = jit(
+            tfsvi_vfe(
+                self.precomputed['keys']['update_loss'],
+                self.precomputed['nll'],
+                self.mutables['prior'],
+                self.immutables.get('beta', 1 / n_batches),
+                self.immutables['df'],
+                self.model.apply
             )
         )
 

@@ -111,7 +111,7 @@ def main():
             )
             plotter.plot_pred(axes[j, i], predictor)
             plotter.plot_dataset(axes[j, i], xs, ys)
-            if i == 0:
+            if i == 0 and metadata['length'] > 1:
                 axes[j, 0].set_ylabel(f'Task {task_id}')
         axes[-1, i].set_xlabel(trainer_label)
 

@@ -7,7 +7,7 @@ import distrax
 from jax import jvp, random, tree_util, vmap
 from jax.nn import softmax, softplus
 import jax.numpy as jnp
-from jax.scipy.special import entr, logsumexp, rel_entr
+from jax.scipy.special import entr, gammaln, logsumexp, rel_entr
 from toolz import compose
 
 from dataops import tree
@@ -31,6 +31,18 @@ def get_gauss_prior(precision, params):
         'mean': tree_util.tree_map(jnp.zeros_like, params['mean']),
         'msd': tree_util.tree_map(
             lambda x: jnp.full_like(x, msd), params['msd']
+        )
+    }
+
+
+def get_t_prior(invscale, params):
+    """Return the t prior parameters with fixed inverse scale."""
+    rs = math.sqrt(1 / invscale)
+    mrs = rs + math.log(-math.expm1(-rs))
+    return {
+        'loc': tree_util.tree_map(jnp.zeros_like, params['loc']),
+        'mrs': tree_util.tree_map(
+            lambda x: jnp.full_like(x, mrs), params['mrs']
         )
     }
 
@@ -106,6 +118,66 @@ def gaussmix_kldiv_mc(key, n, weight1, mean1, var1, weight2, mean2, var2):
     return (logpdf1 - logpdf2).mean()
 
 
+def t_kldiv_mc(key, n, loc1, scale1, loc2, scale2, df):
+    """Compute the KL divergence of t PDFs."""
+    key1, key2 = random.split(key)
+    gauss = random.normal(key1, shape=(n, *loc1.shape))
+    gamma = 2 / df * random.gamma(key2, df / 2, shape=(n,))
+    sample = vmap(lambda x, y : x / y)(
+        loc1 + jnp.sqrt(scale1) * gauss,
+        jnp.sqrt(gamma)
+    )
+    logpdf1 = t_logpdf(sample, loc1, scale1, df)
+    logpdf2 = t_logpdf(sample, loc2, scale2, df)
+    return (logpdf1 - logpdf2).mean()
+
+
+def get_loc_scale(params):
+    """Compute the means and variances from a params."""
+    return (
+        params['loc'],
+        tree_util.tree_map(lambda x: softplus(x) ** 2, params['mrs'])
+    )
+
+
+def t_logpdf(x, loc, scale, df):
+    """Compute the t log density."""
+    size = x.size
+    return (
+        gammaln(0.5 * (df + size)) - gammaln(0.5 * df)
+        - 0.5 * size * jnp.log(df) - 0.5 * size * jnp.log(jnp.pi)
+        - 0.5 * jnp.log(scale).sum()
+        - 0.5 * (df + size) * jnp.log(1 + ((x - loc) ** 2 / scale).sum() / df)
+    )
+
+
+def t_params_logpdf(x, params, df):
+    """Compute the log density of t parameters."""
+    size = tree.size(x)
+    loc, scale = get_loc_scale(params)
+    return (
+        gammaln(0.5 * (df + size)) - gammaln(0.5 * df)
+        - 0.5 * size * jnp.log(df) - 0.5 * size * jnp.log(jnp.pi)
+        - 0.5 * tree.sum(tree_util.tree_map(jnp.log, scale))
+        - 0.5 * (df + size) * jnp.log(
+            1 + tree.sum(
+                tree_util.tree_map(
+                    lambda xl, locl, scalel: (xl - locl) ** 2 / scalel,
+                    x, loc, scale
+                )
+            ) / df
+        )
+    )
+
+
+def t_params_kldiv_mc(param_sample, params1, params2, df):
+    """Compute the KL divergence of PDFs over t parameters."""
+    return vmap(
+        lambda x: t_params_logpdf(x, params1, df)
+        - t_params_logpdf(x, params2, df)
+    )(param_sample).mean()
+
+
 def gauss_output_kldiv(params, prior, apply, xs):
     """Compute the KL divergence of Gaussian outputs."""
     mean, var = get_mean_var(params)
@@ -166,13 +238,17 @@ def gaussmix_output_kldiv_mc(key, n, params, prior, apply, xs):
         weight, output_mean, output_var,
         prior_weight, prior_output_mean, prior_output_var
     ) = gaussmix_output_params(params, prior, apply, xs)
-    return vmap(
-        vmap(gaussmix_kldiv_mc, in_axes=(None, None, None, 1, 1, None, 1, 1)),
-        in_axes=(None, None, None, 2, 2, None, 2, 2)
-    )(
+    return gaussmix_kldiv_mc(
         key, n, weight, output_mean, output_var,
         prior_weight, prior_output_mean, prior_output_var
-    ).sum()
+    )
+    # return vmap(
+    #     vmap(gaussmix_kldiv_mc, in_axes=(None, None, None, 1, 1, None, 1, 1)),
+    #     in_axes=(None, None, None, 2, 2, None, 2, 2)
+    # )(
+    #     key, n, weight, output_mean, output_var,
+    #     prior_weight, prior_output_mean, prior_output_var
+    # ).sum()
 
 
 def gaussmix_output_kldiv_ub(params, prior, apply, xs):
@@ -186,6 +262,27 @@ def gaussmix_output_kldiv_ub(params, prior, apply, xs):
         output_mean, output_var, prior_output_mean, prior_output_var
     )
     return cat_kldiv_val + weight @ gauss_kldiv_val
+
+
+def t_output_kldiv_mc(key, n, params, prior, df, apply, xs):
+    """Compute the KL divergence of t outputs."""
+    loc, scale = get_loc_scale(params)
+    prior_loc, prior_scale = get_loc_scale(prior)
+    output_loc = apply({'params': loc}, xs)
+    prior_output_loc = apply({'params': prior_loc}, xs)
+    get_output_scale = empirical_ntk(apply, (), (0, 1), 0)
+    output_scale = get_output_scale(
+        xs, None, {'params': loc}, {'params': scale}
+    )
+    prior_output_scale = get_output_scale(
+        xs, None, {'params': prior_loc}, {'params': prior_scale}
+    )
+    return t_kldiv_mc(
+        key, n,
+        output_loc, output_scale,
+        prior_output_loc, prior_output_scale,
+        df
+    )
 
 
 def gauss_sample(key, n, target):
@@ -202,7 +299,18 @@ def gsgauss_sample(key, n, m, target):
     key1, key2 = random.split(key)
     return gauss_sample(
         key1, n, vmap(lambda x: target)(jnp.zeros(m))
-    ) | {'gumbel': random.gumbel(key2, (n, m))}
+    ) | {'gumbel': random.gumbel(key2, shape=(n, m))}
+
+
+def t_sample(key, n, df, target):
+    """Generate Gaussian and chi-square samples."""
+    key1, key2 = random.split(key)
+    return {
+        'gauss': vmap(
+            lambda x: tree.gauss(x, target)
+        )(random.split(key1, num=n)),
+        'gamma': 2 / df * random.gamma(key2, df / 2, shape=(n,))
+    }
 
 
 def gauss_param(params, sample):
@@ -224,6 +332,16 @@ def gsgauss_param(params, sample):
             lambda x: jnp.tensordot(x, w, axes=(0, 0)), g
         )
     )(weight, gauss)
+
+
+def t_param(params, sample):
+    """Parameterize a t sample."""
+    return vmap(
+        lambda zs, u: tree_util.tree_map(
+            lambda m, r, z: m + softplus(r) / jnp.sqrt(u) * z,
+            params['loc'], params['mrs'], zs
+        )
+    )(sample['gauss'], sample['gamma'])
 
 
 def bern_entr(p):

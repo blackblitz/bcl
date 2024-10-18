@@ -32,3 +32,13 @@ def gsgauss_init(key, model, n_comp, input_shape):
         'mean': mean,
         'msd': tree.gauss(key2, mean, loc=-2.0, scale=0.05)
     }
+
+
+def t_init(key, model, input_shape):
+    """Initialize parameters for t variational inference."""
+    key1, key2 = random.split(key)
+    loc = init(key1, model, input_shape)
+    return {
+        'loc': loc,
+        'mrs': tree.gauss(key2, loc, loc=-2.0, scale=0.05)
+    }
