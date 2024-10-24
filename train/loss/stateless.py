@@ -7,12 +7,7 @@ import optax
 from dataops import tree
 from models import NLL
 
-from ..probability import (
-    gaussmix_output_kldiv_mc, gaussmix_output_kldiv_ub,
-    gaussmix_params_kldiv_mc, gaussmix_params_kldiv_ub,
-    gauss_output_kldiv, gauss_param, gauss_params_kldiv, gsgauss_param,
-    t_output_kldiv_mc, t_param, t_params_kldiv_mc
-)
+from ..kldiv import gauss, gaussmix, t
 
 
 def get_nll(nll_enum):
@@ -121,104 +116,150 @@ def neu_con(con_state, nll):
     return loss
 
 
-def gvi_vfe(nll, prior, beta):
-    """Return the VFE function for Gaussian VI."""
+def gpvfe_cf(nll, beta, prior):
+    """Return the closed-form Gaussian parameter-space VFE."""
     def loss(params, sample, xs, ys):
-        param_sample = gauss_param(params, sample)
+        q = gauss.get_param(params)
+        p = gauss.get_param(prior)
+        param_sample = gauss.transform(q, sample)
         return (
             vmap(nll, in_axes=(0, None, None))(param_sample, xs, ys).mean()
-            + beta * gauss_params_kldiv(params, prior)
+            + beta * gauss.kldiv_cf(q, p)
         )
 
     return loss
 
 
-def tvi_vfe(nll, prior, beta, df):
-    """Return the VFE function for t VI."""
+def gpvfe_mc(nll, beta, prior):
+    """Return the Monte Carlo Gaussian parameter-space VFE."""
     def loss(params, sample, xs, ys):
-        param_sample = t_param(params, sample)
+        q = gauss.get_param(params)
+        p = gauss.get_param(prior)
+        param_sample = gauss.transform(q, sample)
         return (
             vmap(nll, in_axes=(0, None, None))(param_sample, xs, ys).mean()
-            + beta * t_params_kldiv_mc(param_sample, params, prior, df)
+            + beta * gauss.kldiv_mc(param_sample, q, p)
         )
 
     return loss
 
 
-def gmvi_vfe_mc(nll, prior, beta):
-    """Return the VFE function for Gaussian-mixture VI by MC integration."""
-    def loss(params, sample, xs, ys):
-        param_sample = gsgauss_param(params, sample)
+def gfvfe_cf(nll, beta, prior, apply):
+    """Return the closed-form Gaussian function-space VFE."""
+    def loss(params, param_sample, output_sample, xs, ys, ind_xs):
+        param_sample = gauss.transform(gauss.get_param(params), param_sample)
+        q = gauss.get_output(params, apply, ind_xs)
+        p = gauss.get_output(prior, apply, ind_xs)
+        output_sample = gauss.transform(q, output_sample)
         return (
             vmap(nll, in_axes=(0, None, None))(param_sample, xs, ys).mean()
-            + beta * gaussmix_params_kldiv_mc(param_sample, params, prior)
+            + beta * gauss.kldiv_cf(q, p)
         )
 
     return loss
 
 
-def gmvi_vfe_ub(nll, prior, beta):
-    """Return the VFE function for Gaussian-mixture VI by KL upper bound."""
-    def loss(params, sample, xs, ys):
-        param_sample = gsgauss_param(params, sample)
+def gfvfe_mc(nll, beta, prior, apply):
+    """Return the Monte Carlo Gaussian function-space VFE."""
+    def loss(params, param_sample, output_sample, xs, ys, ind_xs):
+        param_sample = gauss.transform(gauss.get_param(params), param_sample)
+        q = gauss.get_output(params, apply, ind_xs)
+        p = gauss.get_output(prior, apply, ind_xs)
+        output_sample = gauss.transform(q, output_sample)
         return (
             vmap(nll, in_axes=(0, None, None))(param_sample, xs, ys).mean()
-            + beta * gaussmix_params_kldiv_ub(params, prior)
+            + beta * gauss.kldiv_mc(output_sample, q, p)
         )
 
     return loss
 
 
-def gfsvi_vfe(nll, prior, beta, apply):
-    """Return the VFE function for Gaussian FSVI."""
-    def loss(params, sample, xs1, ys1, xs2, ys2):
-        param_sample = gauss_param(params, sample)
+def tpvfe_mc(nll, beta, prior, df):
+    """Return the Monte Carlo t parameter-space VFE."""
+    def loss(params, sample, xs, ys):
+        q = t.get_param(params, df)
+        p = t.get_param(prior, df)
+        param_sample = t.transform(q, sample)
         return (
-            vmap(nll, in_axes=(0, None, None))(param_sample, xs1, ys1).mean()
-            + beta * gauss_output_kldiv(params, prior, apply, xs2)
+            vmap(nll, in_axes=(0, None, None))(param_sample, xs, ys).mean()
+            + beta * t.kldiv_mc(param_sample, q, p)
         )
 
     return loss
 
 
-def gmfsvi_vfe_mc(key, nll, prior, beta, apply):
-    """Return the VFE function for Gaussian-mixture FSVI by MC integration."""
-
-    def loss(params, sample, xs1, ys1, xs2, ys2):
-        sample_size = len(tree_util.tree_leaves(sample)[0])
-        param_sample = gsgauss_param(params, sample)
+def tfvfe_mc(nll, beta, prior, apply, df):
+    """Return the Monte Carlo t function-space VFE."""
+    def loss(params, param_sample, output_sample, xs, ys, ind_xs):
+        param_sample = t.transform(t.get_param(params, df), param_sample)
+        q = t.get_output(params, df, apply, ind_xs)
+        p = t.get_output(prior, df, apply, ind_xs)
+        output_sample = t.transform(q, output_sample)
         return (
-            vmap(nll, in_axes=(0, None, None))(param_sample, xs1, ys1).mean()
-            + beta * gaussmix_output_kldiv_mc(
-                key, sample_size, params, prior, apply, xs2
-            )
+            vmap(nll, in_axes=(0, None, None))(param_sample, xs, ys).mean()
+            + beta * t.kldiv_mc(output_sample, q, p)
         )
 
     return loss
 
 
-def gmfsvi_vfe_ub(nll, prior, beta, apply):
-    """Return the VFE function for Gaussian-mixture FSVI by KL upper bound."""
-    def loss(params, sample, xs1, ys1, xs2, ys2):
-        param_sample = gsgauss_param(params, sample)
+def gmpvfe_ub(nll, beta, prior):
+    """Return the upper-bound Gaussian mixture parameter-space VFE."""
+    def loss(params, sample, xs, ys):
+        q = gaussmix.get_param(params)
+        p = gaussmix.get_param(prior)
+        param_sample = gaussmix.transform(q, sample)
         return (
-            vmap(nll, in_axes=(0, None, None))(param_sample, xs1, ys1).mean()
-            + beta * gaussmix_output_kldiv_ub(params, prior, apply, xs2)
+            vmap(nll, in_axes=(0, None, None))(param_sample, xs, ys).mean()
+            + beta * gaussmix.kldiv_cf(q, p)
         )
 
     return loss
 
 
-def tfsvi_vfe(key, nll, prior, beta, df, apply):
-    """Return the VFE function for t FSVI."""
-    def loss(params, sample, xs1, ys1, xs2, ys2):
-        sample_size = len(tree_util.tree_leaves(sample)[0])
-        param_sample = t_param(params, sample)
+def gmpvfe_mc(nll, beta, prior):
+    """Return the Monte Carlo Gaussian mixture parameter-space VFE."""
+    def loss(params, sample, xs, ys):
+        q = gaussmix.get_param(params)
+        p = gaussmix.get_param(prior)
+        param_sample = gaussmix.transform(q, sample)
         return (
-            vmap(nll, in_axes=(0, None, None))(param_sample, xs1, ys1).mean()
-            + beta * t_output_kldiv_mc(
-                key, sample_size, params, prior, df, apply, xs2
-            )
+            vmap(nll, in_axes=(0, None, None))(param_sample, xs, ys).mean()
+            + beta * gaussmix.kldiv_mc(param_sample, q, p)
+        )
+
+    return loss
+
+
+def gmfvfe_ub(nll, beta, prior, apply):
+    """Return the upper-bound Gaussian mixture function-space VFE."""
+    def loss(params, param_sample, output_sample, xs, ys, ind_xs):
+        param_sample = gaussmix.transform(
+            gaussmix.get_param(params), param_sample
+        )
+        q = gaussmix.get_output(params, apply, ind_xs)
+        p = gaussmix.get_output(prior, apply, ind_xs)
+        output_sample = gaussmix.transform(q, output_sample)
+        return (
+            vmap(nll, in_axes=(0, None, None))(param_sample, xs, ys).mean()
+            + beta * gaussmix.kldiv_cf(q, p)
+        )
+
+    return loss
+
+
+def gmfvfe_mc(nll, beta, prior, apply):
+    """Return the Monte Carlo Gaussian mixture function-space VFE."""
+    def loss(params, param_sample, output_sample, xs, ys, ind_xs):
+        param_sample = gaussmix.transform(
+            gaussmix.get_param(params), param_sample
+        )
+        q = gaussmix.get_output(params, apply, ind_xs)
+        p = gaussmix.get_output(prior, apply, ind_xs)
+        output_sample = gaussmix.transform(q, output_sample)
+        return (
+            vmap(nll, in_axes=(0, None, None))(param_sample, xs, ys).mean()
+            + beta * gaussmix.kldiv_mc(output_sample, q, p)
         )
 
     return loss

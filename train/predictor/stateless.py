@@ -4,10 +4,7 @@ from jax import random, vmap
 import jax.numpy as jnp
 import orbax.checkpoint as ocp
 
-from ..probability import (
-    gauss_param, gsgauss_param, t_param,
-    gauss_sample, gsgauss_sample, t_sample
-)
+from ..kldiv import gauss, gaussmix, t
 from ..training.init import init, gauss_init, gsgauss_init, t_init
 
 from .predictor import MAPMixin, BMAMixin
@@ -75,9 +72,9 @@ class GaussPredictor(BMAPredictor):
 
     def __init__(self, model, model_spec, immutables, params):
         """Initialize self."""
-        param_sample = gauss_param(
-            params,
-            gauss_sample(
+        param_sample = gauss.transform(
+            gauss.get_param(params),
+            gauss.sample(
                 random.PRNGKey(immutables['seed']),
                 immutables['sample_size'],
                 init(random.PRNGKey(1337), model, model_spec.in_shape)
@@ -102,13 +99,13 @@ class GSGaussPredictor(BMAPredictor):
 
     def __init__(self, model, model_spec, immutables, params):
         """Initialize self."""
-        param_sample = gsgauss_param(
-            params,
-            gsgauss_sample(
+        param_sample = gaussmix.transform(
+            gaussmix.get_param(params),
+            gaussmix.sample(
                 random.PRNGKey(immutables['seed']),
                 immutables['sample_size'],
-                immutables['n_comp'],
-                init(random.PRNGKey(1337), model, model_spec.in_shape)
+                init(random.PRNGKey(1337), model, model_spec.in_shape),
+                immutables['n_comp']
             )
         )
         super().__init__(model, model_spec, immutables, param_sample)
@@ -133,13 +130,13 @@ class TPredictor(BMAPredictor):
 
     def __init__(self, model, model_spec, immutables, params):
         """Initialize self."""
-        param_sample = t_param(
-            params,
-            t_sample(
+        param_sample = t.transform(
+            t.get_param(params, immutables['df']),
+            t.sample(
                 random.PRNGKey(immutables['seed']),
                 immutables['sample_size'],
-                immutables['df'],
-                init(random.PRNGKey(1337), model, model_spec.in_shape)
+                init(random.PRNGKey(1337), model, model_spec.in_shape),
+                immutables['df']
             )
         )
         super().__init__(model, model_spec, immutables, param_sample)

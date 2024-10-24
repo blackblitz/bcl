@@ -18,8 +18,10 @@ module_map = (
 class NLL(Enum):
     """Negative log likelihood."""
 
-    SIGMOID_CROSS_ENTROPY = 1
-    SOFTMAX_CROSS_ENTROPY = 2
+    HUBER = 1
+    L2 = 2
+    SIGMOID_CROSS_ENTROPY = 3
+    SOFTMAX_CROSS_ENTROPY = 4
 
 
 @dataclass

@@ -6,7 +6,7 @@ import jax.numpy as jnp
 import optax
 
 from dataops.array import batch, get_n_batches, shuffle
-from train.loss.stateful import get_nll, l2_reg
+from train.loss.stateful import l2_reg, param_nll, out_nll
 from train.training.stateful import make_step
 
 
@@ -46,10 +46,7 @@ class Trainer:
         self.var = var
         self.loss = l2_reg(
             self.hyperparams['precision'],
-            get_nll(self.model_spec.nll)(
-                self.model.apply, mutable=list(self.var.keys()),
-                train=True
-            )
+            param_nll(out_nll(self.model_spec.nll), self.model.apply, True)
         )
 
     def train(self, xs, ys):

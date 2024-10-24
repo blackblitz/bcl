@@ -92,6 +92,7 @@ def main():
         metadata['length'], len(exp['trainers']),
         figsize=(12, 6.75), sharex=True, sharey=True
     )
+    axes = np.array([axes])
     axes = axes.reshape((metadata['length'], len(exp['trainers'])))
     for i, trainer_spec in enumerate(exp['trainers']):
         trainer_id = trainer_spec['id']

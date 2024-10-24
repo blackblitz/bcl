@@ -40,5 +40,5 @@ def t_init(key, model, input_shape):
     loc = init(key1, model, input_shape)
     return {
         'loc': loc,
-        'mrs': tree.gauss(key2, loc, loc=-2.0, scale=0.05)
+        'ms': tree.gauss(key2, loc, loc=-2.0, scale=0.05)
     }

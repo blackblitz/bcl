@@ -8,11 +8,11 @@ from optax import adam
 
 from dataops.array import get_pass_size
 
+from .kldiv import gauss, gaussmix, t
 from .loss.stateless import get_nll
 from .predictor.stateless import (
     MAPPredictor, GaussPredictor, GSGaussPredictor, TPredictor
 )
-from .probability import gauss_sample, gsgauss_sample, t_sample
 from .training.init import init, gauss_init, gsgauss_init, t_init
 
 
@@ -50,11 +50,14 @@ class GaussMixin:
             tx=adam(self.immutables['lr'])
         )
 
-    def sample(self, key):
-        """Draw a standard sample for the reparameterization trick."""
-        return gauss_sample(
+    def sample(self, key, xs=None):
+        """Draw a standard sample for the parameter."""
+        return gauss.sample(
             key, self.immutables['sample_size'],
-            self.precomputed['param_example']
+            self.precomputed['param_example'] if xs is None
+            else self.model.apply(
+                {'params': self.precomputed['param_example']}, xs
+            )
         )
 
 
@@ -76,11 +79,15 @@ class GSGaussMixin:
             tx=adam(self.immutables['lr'])
         )
 
-    def sample(self, key):
-        """Draw a standard sample for the reparameterization trick."""
-        return gsgauss_sample(
+    def sample(self, key, xs=None):
+        """Draw a standard sample for the parameter."""
+        return gaussmix.sample(
             key, self.immutables['sample_size'],
-            self.immutables['n_comp'], self.precomputed['param_example']
+            self.precomputed['param_example'] if xs is None
+            else self.model.apply(
+                {'params': self.precomputed['param_example']}, xs
+            ),
+            self.immutables['n_comp']
         )
 
 
@@ -101,12 +108,15 @@ class TMixin:
             tx=adam(self.immutables['lr'])
         )
 
-    def sample(self, key):
-        """Draw a standard sample for the reparameterization trick."""
-        return t_sample(
+    def sample(self, key, xs=None):
+        """Draw a standard sample for the parameter."""
+        return t.sample(
             key, self.immutables['sample_size'],
-            self.immutables['df'],
-            self.precomputed['param_example']
+            self.precomputed['param_example'] if xs is None
+            else self.model.apply(
+                {'params': self.precomputed['param_example']}, xs
+            ),
+            self.immutables['df']
         )
 
 

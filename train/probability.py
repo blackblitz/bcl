@@ -7,6 +7,7 @@ import distrax
 from jax import jvp, random, tree_util, vmap
 from jax.nn import softmax, softplus
 import jax.numpy as jnp
+from jax.scipy import stats
 from jax.scipy.special import entr, gammaln, logsumexp, rel_entr
 from toolz import compose
 
@@ -41,16 +42,17 @@ def get_t_prior(invscale, params):
     mrs = rs + math.log(-math.expm1(-rs))
     return {
         'loc': tree_util.tree_map(jnp.zeros_like, params['loc']),
-        'mrs': tree_util.tree_map(
-            lambda x: jnp.full_like(x, mrs), params['mrs']
+        'ms': tree_util.tree_map(
+            lambda x: jnp.full_like(x, mrs), params['ms']
         )
     }
 
 
 def gauss_kldiv(mean1, var1, mean2, var2):
     """Compute the KL divergence of Gaussian PDFs."""
-    return distrax.Normal(mean1, jnp.sqrt(var1)).kl_divergence(
-        distrax.Normal(mean2, jnp.sqrt(var2))
+    var_ratio = var1 / var2
+    return 0.5 * (
+        -jnp.log(var_ratio) + var_ratio + (mean1 - mean2) ** 2 / var2 - 1
     )
 
 
@@ -65,15 +67,24 @@ def gauss_params_kldiv(params1, params2):
     )
 
 
-def gauss_logpdf(x, mean, var):
+def gauss_logpdf(xs, mean, var):
     """Compute the Gaussian log density."""
-    return distrax.Normal(mean, jnp.sqrt(var)).log_prob(x)
+    return vmap(jnp.sum)(stats.norm.logpdf(xs, loc=mean, scale=jnp.sqrt(var)))
 
 
 def gauss_params_logpdf(x, params):
     """Compute the log density of diagonal Gaussian parameters."""
     return tree.sum(
         tree_util.tree_map(gauss_logpdf, x, *get_mean_var(params))
+    )
+
+
+def gaussmix_logpdf(x, weight, mean, var):
+    """Compute the Gaussian mixture log density."""
+    return logsumexp(
+        gauss_logpdf(x, mean, var),
+        #vmap(gauss_logpdf, in_axes=(None, 0, 0))(x, mean, var),
+        b=weight, axis=-1
     )
 
 
@@ -113,8 +124,13 @@ def gaussmix_kldiv_mc(key, n, weight1, mean1, var1, weight2, mean2, var2):
         distrax.Categorical(weight2),
         distrax.MultivariateNormalDiag(f(mean2), f(jnp.sqrt(var2)))
     )
-    sample, logpdf1 = dist1.sample_and_log_prob(seed=key, sample_shape=(n,))
-    logpdf2 = dist2.log_prob(sample)
+    sample = dist1.sample(
+        seed=key, sample_shape=(n,)
+    )#.reshape((-1, *mean1.shape))
+    logpdf1 = gaussmix_logpdf(sample, weight1, f(mean1), f(var1))
+    logpdf2 = gaussmix_logpdf(sample, weight2, f(mean2), f(var2))
+    #logpdf1 = dist1.log_prob(sample)
+    #logpdf2 = dist2.log_prob(sample)
     return (logpdf1 - logpdf2).mean()
 
 
@@ -123,7 +139,7 @@ def t_kldiv_mc(key, n, loc1, scale1, loc2, scale2, df):
     key1, key2 = random.split(key)
     gauss = random.normal(key1, shape=(n, *loc1.shape))
     gamma = 2 / df * random.gamma(key2, df / 2, shape=(n,))
-    sample = vmap(lambda x, y : x / y)(
+    sample = vmap(lambda x, y: x / y)(
         loc1 + jnp.sqrt(scale1) * gauss,
         jnp.sqrt(gamma)
     )
@@ -242,13 +258,6 @@ def gaussmix_output_kldiv_mc(key, n, params, prior, apply, xs):
         key, n, weight, output_mean, output_var,
         prior_weight, prior_output_mean, prior_output_var
     )
-    # return vmap(
-    #     vmap(gaussmix_kldiv_mc, in_axes=(None, None, None, 1, 1, None, 1, 1)),
-    #     in_axes=(None, None, None, 2, 2, None, 2, 2)
-    # )(
-    #     key, n, weight, output_mean, output_var,
-    #     prior_weight, prior_output_mean, prior_output_var
-    # ).sum()
 
 
 def gaussmix_output_kldiv_ub(params, prior, apply, xs):
@@ -313,8 +322,8 @@ def t_sample(key, n, df, target):
     }
 
 
-def gauss_param(params, sample):
-    """Parameterize a Gaussian sample."""
+def gauss_transform(params, sample):
+    """Transform a Gaussian sample."""
     return vmap(
         lambda zs: tree_util.tree_map(
             lambda m, r, z: m + softplus(r) * z,
@@ -323,8 +332,8 @@ def gauss_param(params, sample):
     )(sample['gauss'])
 
 
-def gsgauss_param(params, sample):
-    """Parameterize a Gumbel-softmax-Gaussian-mixture sample."""
+def gsgauss_transform(params, sample):
+    """Transform a Gumbel-softmax-Gaussian-mixture sample."""
     weight = softmax(1000 * (params['logit'] + sample['gumbel']))
     gauss = gauss_param(params, sample)
     return vmap(
@@ -334,8 +343,8 @@ def gsgauss_param(params, sample):
     )(weight, gauss)
 
 
-def t_param(params, sample):
-    """Parameterize a t sample."""
+def t_transform(params, sample):
+    """Transform a t sample."""
     return vmap(
         lambda zs, u: tree_util.tree_map(
             lambda m, r, z: m + softplus(r) / jnp.sqrt(u) * z,
