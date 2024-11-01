@@ -25,151 +25,209 @@ in_shape = [ 2 ]
 out_shape = [ 1 ]
 
 [[trainers]]
-id = "gsfsvi1"
-name = "PriorExactGSFSVI"
-label = "S-FSVI (p=0.0)"
+id = "tsfsvi8"
+name = "PriorExactTSFSVI"
+label = "t S-FSVI\n($\\nu=8$)"
 
 [trainers.immutables.train]
 batch_size = 64
 beta = 1.0
 coreset_batch_size_per_task = 16
-coreset_prob = 0.0
+coreset_prob = 0.5
 coreset_size_per_task = 32
+df = 8
 lr = 0.001
-mc = true
 noise_init = true
 noise_maxval = 4.0
 noise_minval = -4.0
 n_epochs = 100
-precision = 1.0
+invscale = 1.0
 sample_size = 10
 seed = 1337
 
 [trainers.immutables.predict]
-sample_size = 10
+df = 8
+sample_size = 100
 seed = 1337
 
 [[trainers]]
-id = "gsfsvi2"
-name = "PriorExactGSFSVI"
-label = "S-FSVI (p=0.2)"
+id = "tsfsvi7"
+name = "PriorExactTSFSVI"
+label = "t S-FSVI\n($\\nu=7$)"
 
 [trainers.immutables.train]
 batch_size = 64
 beta = 1.0
 coreset_batch_size_per_task = 16
-coreset_prob = 0.2
+coreset_prob = 0.5
 coreset_size_per_task = 32
+df = 7
 lr = 0.001
-mc = true
 noise_init = true
 noise_maxval = 4.0
 noise_minval = -4.0
 n_epochs = 100
-precision = 1.0
+invscale = 1.0
 sample_size = 10
 seed = 1337
 
 [trainers.immutables.predict]
-sample_size = 10
+df = 7
+sample_size = 100
 seed = 1337
 
 [[trainers]]
-id = "gsfsvi3"
-name = "PriorExactGSFSVI"
-label = "S-FSVI (p=0.4)"
+id = "tsfsvi6"
+name = "PriorExactTSFSVI"
+label = "t S-FSVI\n($\\nu=6$)"
 
 [trainers.immutables.train]
 batch_size = 64
 beta = 1.0
 coreset_batch_size_per_task = 16
-coreset_prob = 0.4
+coreset_prob = 0.5
 coreset_size_per_task = 32
+df = 6
 lr = 0.001
-mc = true
 noise_init = true
 noise_maxval = 4.0
 noise_minval = -4.0
 n_epochs = 100
-precision = 1.0
+invscale = 1.0
 sample_size = 10
 seed = 1337
 
 [trainers.immutables.predict]
-sample_size = 10
+df = 6
+sample_size = 100
 seed = 1337
 
 [[trainers]]
-id = "gsfsvi4"
-name = "PriorExactGSFSVI"
-label = "S-FSVI (p=0.6)"
+id = "tsfsvi5"
+name = "PriorExactTSFSVI"
+label = "t S-FSVI\n($\\nu=5$)"
 
 [trainers.immutables.train]
 batch_size = 64
 beta = 1.0
 coreset_batch_size_per_task = 16
-coreset_prob = 0.6
+coreset_prob = 0.5
 coreset_size_per_task = 32
+df = 5
 lr = 0.001
-mc = true
 noise_init = true
 noise_maxval = 4.0
 noise_minval = -4.0
 n_epochs = 100
-precision = 1.0
+invscale = 1.0
 sample_size = 10
 seed = 1337
 
 [trainers.immutables.predict]
-sample_size = 10
+df = 5
+sample_size = 100
 seed = 1337
 
 [[trainers]]
-id = "gsfsvi5"
-name = "PriorExactGSFSVI"
-label = "S-FSVI (p=0.8)"
+id = "tsfsvi4"
+name = "PriorExactTSFSVI"
+label = "t S-FSVI\n($\\nu=4$)"
 
 [trainers.immutables.train]
 batch_size = 64
 beta = 1.0
 coreset_batch_size_per_task = 16
-coreset_prob = 0.8
+coreset_prob = 0.5
 coreset_size_per_task = 32
+df = 4
 lr = 0.001
-mc = true
 noise_init = true
 noise_maxval = 4.0
 noise_minval = -4.0
 n_epochs = 100
-precision = 1.0
+invscale = 1.0
 sample_size = 10
 seed = 1337
 
 [trainers.immutables.predict]
-sample_size = 10
+df = 4
+sample_size = 100
 seed = 1337
 
 [[trainers]]
-id = "gsfsvi6"
-name = "PriorExactGSFSVI"
-label = "S-FSVI (p=1.0)"
+id = "tsfsvi3"
+name = "PriorExactTSFSVI"
+label = "t S-FSVI\n($\\nu=3$)"
 
 [trainers.immutables.train]
 batch_size = 64
 beta = 1.0
 coreset_batch_size_per_task = 16
-coreset_prob = 1.0
+coreset_prob = 0.5
 coreset_size_per_task = 32
+df = 3
 lr = 0.001
-mc = true
 noise_init = true
 noise_maxval = 4.0
 noise_minval = -4.0
 n_epochs = 100
-precision = 1.0
+invscale = 1.0
 sample_size = 10
 seed = 1337
 
 [trainers.immutables.predict]
+df = 3
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "tsfsvi2"
+name = "PriorExactTSFSVI"
+label = "t S-FSVI\n($\\nu=2$)"
+
+[trainers.immutables.train]
+batch_size = 64
+beta = 1.0
+coreset_batch_size_per_task = 16
+coreset_prob = 0.5
+coreset_size_per_task = 32
+df = 2
+lr = 0.001
+noise_init = true
+noise_maxval = 4.0
+noise_minval = -4.0
+n_epochs = 100
+invscale = 1.0
 sample_size = 10
+seed = 1337
+
+[trainers.immutables.predict]
+df = 2
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "tsfsvi1"
+name = "PriorExactTSFSVI"
+label = "t S-FSVI\n($\\nu=1$)"
+
+[trainers.immutables.train]
+batch_size = 64
+beta = 1.0
+coreset_batch_size_per_task = 16
+coreset_prob = 0.5
+coreset_size_per_task = 32
+df = 1
+lr = 0.001
+noise_init = true
+noise_maxval = 4.0
+noise_minval = -4.0
+n_epochs = 100
+invscale = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.immutables.predict]
+df = 1
+sample_size = 100
 seed = 1337

@@ -12,13 +12,12 @@ from dataops.array import batch, shuffle
 from models import NLL
 from models.stateless.fcnn import FCNN3
 
+from ..base import ContinualTrainer, MAPMixin
 from ..coreset import JointCoreset
-from ..loss.stateless import (
+from ...training.loss.stateless import (
     diag_quad_con, flat_quad_con, huber, l2_reg, neu_con
 )
-from ..trainer import ContinualTrainer, MAPMixin
-from ..training.init import init
-from ..training.stateless import make_step
+from ...training.stateless import init, make_step
 
 
 class Joint(MAPMixin, ContinualTrainer):

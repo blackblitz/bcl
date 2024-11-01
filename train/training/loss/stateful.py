@@ -7,13 +7,6 @@ import optax
 from dataops import tree
 from models import NLL
 
-from ..probability import (
-    gaussmix_output_kldiv_mc, gaussmix_output_kldiv_ub,
-    gaussmix_params_kldiv_mc, gaussmix_params_kldiv_ub,
-    gauss_output_kldiv, gauss_param, gauss_params_kldiv, gsgauss_param,
-    t_output_kldiv_mc, t_param, t_params_kldiv_mc
-)
-
 
 def out_nll(nll):
     """Return the negative log-likelihood as a function of outputs."""

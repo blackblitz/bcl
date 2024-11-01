@@ -1,11 +1,25 @@
 """Gaussian KL divergence."""
 
+import math
+
 from jax import nn, random, tree_util, vmap
 import jax.numpy as jnp
 
 from dataops import tree
 
 from ..neural_tangents.extended import empirical_ntk
+
+
+def get_prior(precision, params):
+    """Return the Gaussian prior parameters with fixed precision."""
+    sd = math.sqrt(1 / precision)
+    msd = sd + math.log(-math.expm1(-sd))
+    return {
+        'mean': tree_util.tree_map(jnp.zeros_like, params['mean']),
+        'msd': tree_util.tree_map(
+            lambda x: jnp.full_like(x, msd), params['msd']
+        )
+    }
 
 
 def kldiv_cf(q, p):

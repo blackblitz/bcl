@@ -5,13 +5,13 @@ import jax.numpy as jnp
 
 from dataops.array import batch, get_n_batches, shuffle
 
-from ..loss.stateless import (
+from ..base import ContinualTrainer, GaussMixin, GSGaussMixin, TMixin
+from ...training.loss.stateless import (
     gpvfe_cf, gpvfe_mc, gfvfe_cf, gfvfe_mc, tpvfe_mc, tfvfe_mc,
     gmpvfe_ub, gmpvfe_mc, gmfvfe_ub, gmfvfe_mc,
 )
-from ..probability import get_gauss_prior, get_t_prior
-from ..trainer import ContinualTrainer, GaussMixin, GSGaussMixin, TMixin
-from ..training.stateless import make_step
+from ...training.stateless import make_step
+from ...training.vi import gauss, gaussmix, t
 
 
 class VCL(ContinualTrainer):
@@ -49,7 +49,7 @@ class GVCL(GaussMixin, VCL):
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""
         return {
-            'prior': get_gauss_prior(
+            'prior': gauss.get_prior(
                 self.immutables['precision'], self.state.params
             )
         }
@@ -72,7 +72,7 @@ class TVCL(TMixin, VCL):
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""
         return {
-            'prior': get_t_prior(
+            'prior': t.get_prior(
                 self.immutables['invscale'], self.state.params
             )
         }
@@ -96,9 +96,9 @@ class GMVCL(GSGaussMixin, VCL):
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""
         return {
-            'prior': get_gauss_prior(
+            'prior': gaussmix.get_prior(
                 self.immutables['precision'], self.state.params
-            ) | {'logit': jnp.zeros_like(self.state.params['logit'])}
+            )
         }
 
     def update_loss(self, xs, ys):
@@ -133,6 +133,7 @@ class SimpleSFSVI(ContinualTrainer):
                 )
             ):
                 key1, key2, key3 = random.split(key, num=3)
+                param_sample = self.sample(key1)
                 ind_xs = random.uniform(
                     key2,
                     shape=(
@@ -143,10 +144,10 @@ class SimpleSFSVI(ContinualTrainer):
                     maxval=jnp.array(self.immutables['noise_maxval']),
                 )
                 self.state = step(
-                    self.state,
-                    self.sample(key1), self.sample(key3, xs=ind_xs),
+                    self.state, param_sample, output_sample,
                     xs[indices], ys[indices], ind_xs
                 )
+                output_sample = self.sample(key3, xs=ind_xs)
             yield self.state
 
     def update_mutables(self, xs, ys):
@@ -160,7 +161,7 @@ class SimpleGSFSVI(GaussMixin, SimpleSFSVI):
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""
         return {
-            'prior': get_gauss_prior(
+            'prior': gauss.get_prior(
                 self.immutables['precision'], self.state.params
             )
         }
@@ -184,7 +185,7 @@ class SimpleTSFSVI(TMixin, SimpleSFSVI):
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""
         return {
-            'prior': get_t_prior(
+            'prior': t.get_prior(
                 self.immutables['invscale'], self.state.params
             )
         }
@@ -209,9 +210,9 @@ class SimpleGMSFSVI(GSGaussMixin, SimpleSFSVI):
     def init_mutables(self):
         """Initialize the mutable hyperparameters."""
         return {
-            'prior': get_gauss_prior(
+            'prior': gaussmix.get_prior(
                 self.immutables['precision'], self.state.params
-            ) | {'logit': jnp.zeros_like(self.state.params['logit'])}
+            )
         }
 
     def update_loss(self, xs, ys):

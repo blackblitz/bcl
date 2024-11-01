@@ -13,7 +13,7 @@ from dataops.io import read_task, read_toml
 from evaluate import metrics
 from models import ModelSpec, NLL
 from models import module_map as models_module_map
-from train import module_map as train_module_map
+from train.trainer import module_map as trainer_module_map
 
 
 def main():
@@ -70,7 +70,7 @@ def main():
         for trainer_spec in trainer_specs:
             trainer_id = trainer_spec['id']
             trainer_class = getattr(
-                import_module(train_module_map[trainer_spec['name']]),
+                import_module(trainer_module_map[trainer_spec['name']]),
                 trainer_spec['name']
             )
             train_immutables = trainer_spec['immutables']['train']

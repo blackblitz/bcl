@@ -6,7 +6,7 @@ import jax.numpy as jnp
 import optax
 
 from dataops.array import batch, get_n_batches, shuffle
-from train.loss.stateful import l2_reg, param_nll, out_nll
+from train.training.loss.stateful import l2_reg, param_nll, out_nll
 from train.training.stateful import make_step
 
 

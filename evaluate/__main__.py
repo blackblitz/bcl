@@ -9,7 +9,7 @@ from pathlib import Path
 from dataops.io import read_task, read_toml
 from models import ModelSpec, NLL
 from models import module_map as models_module_map
-from train import module_map as train_module_map
+from train.trainer import module_map as trainer_module_map
 import train
 
 from . import metrics
@@ -67,7 +67,7 @@ def main():
             for i, trainer_spec in enumerate(trainer_specs):
                 trainer_id = trainer_spec['id']
                 trainer_class = getattr(
-                    import_module(train_module_map[trainer_spec['name']]),
+                    import_module(trainer_module_map[trainer_spec['name']]),
                     trainer_spec['name']
                 )
                 immutables = trainer_spec['immutables']['predict']
@@ -93,7 +93,7 @@ def main():
     for trainer_spec in trainer_specs_map.values():
         trainer_id = trainer_spec['id']
         trainer_class = getattr(
-            import_module(train_module_map[trainer_spec['name']]),
+            import_module(trainer_module_map[trainer_spec['name']]),
             trainer_spec['name']
         )
         immutables = trainer_spec['immutables']['predict']

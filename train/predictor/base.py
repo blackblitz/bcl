@@ -1,10 +1,19 @@
 """Predictor base classes and mixins."""
 
 from jax import nn, vmap
+from jax.scipy.special import entr
 
 from models import NLL
 
-from ..probability import bern_entr, cat_entr
+
+def bern_entr(p):
+    """Calculate the entropy of Bernoulli random variables."""
+    return entr(p) + entr(1 - p)
+
+
+def cat_entr(p):
+    """Calculate the entropy of categorical random variables."""
+    return entr(p).sum(axis=-1)
 
 
 class MAPMixin:

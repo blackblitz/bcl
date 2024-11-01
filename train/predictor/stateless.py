@@ -4,10 +4,10 @@ from jax import random, vmap
 import jax.numpy as jnp
 import orbax.checkpoint as ocp
 
-from ..kldiv import gauss, gaussmix, t
-from ..training.init import init, gauss_init, gsgauss_init, t_init
+from ..training.stateless import init, gauss_init, gsgauss_init, t_init
+from ..training.vi import gauss, gaussmix, t
 
-from .predictor import MAPMixin, BMAMixin
+from .base import MAPMixin, BMAMixin
 
 
 class MAPPredictor(MAPMixin):

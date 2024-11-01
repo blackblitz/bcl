@@ -4,10 +4,10 @@ from jax import jit, random
 
 from dataops.array import batch, shuffle
 
+from ..base import ContinualTrainer, MAPMixin
 from ..coreset import GDumbCoreset, TaskIncrementalCoreset
-from ..loss.stateless import concat, l2_reg
-from ..trainer import ContinualTrainer, MAPMixin
-from ..training.stateless import make_step
+from ...training.loss.stateless import concat, l2_reg
+from ...training.stateless import make_step
 
 
 class ExactReplay(MAPMixin, ContinualTrainer):

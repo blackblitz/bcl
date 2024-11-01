@@ -2,12 +2,22 @@
 
 from operator import sub
 
-from jax import jvp, nn, random, tree_util, vmap
+from jax import jacrev, jvp, nn, random, tree_util, vmap
 import jax.numpy as jnp
 from jax.scipy.special import logsumexp, rel_entr
 
+from dataops import tree
+
 from . import gauss
 from ..neural_tangents.extended import empirical_ntk
+
+
+def get_prior(precision, params):
+    """Return the Gaussian prior parameters with fixed precision."""
+    return (
+        gauss.get_prior(precision, params)
+        | {'logit': jnp.zeros_like(params['logit'])}
+    )
 
 
 def kldiv_ub(q, p):
@@ -45,8 +55,14 @@ def get_param(params):
     }
 
 
-def get_output(params, apply, xs):
-    """Compute the parameters of the outputs."""
+def get_output_mean(params, apply, xs):
+    """
+    Compute the parameters of the outputs by approximating at the mean.
+
+    Affine approximation is done by using the Jacobian matrix of the neural
+    network with respect to the parameters at the mean of the Gaussian
+    mixture.
+    """
     param = get_param(params)
     center = tree_util.tree_map(lambda x: x.mean(axis=0), param['mean'])
     mean = vmap(
@@ -62,6 +78,47 @@ def get_output(params, apply, xs):
         empirical_ntk(apply, (), (0, 1), 0),
         in_axes=(None, None, None, 0)
     )(xs, None, {'params': center}, {'params': param['var']})
+    return {'logit': params['logit'], 'mean': mean, 'var': var}
+
+
+def get_output_avg(params, apply, xs):
+    """
+    Compute the parameters of the outputs by averaging approximations.
+
+    Affine approximation is done by using a weighted average of the affine
+    approximations at the means of the Gaussian components, weighted by the
+    mixing probabilities of the Gaussian mixture.
+    """
+    param = get_param(params)
+    weight = nn.softmax(params['logit'])
+    mean = jnp.tensordot(
+        weight,
+        vmap(vmap(
+            lambda m1, m2:
+            apply({'params': m1}, xs)
+            + jvp(
+                lambda var: apply(var, xs),
+                ({'params': m1},),
+                ({'params': tree_util.tree_map(sub, m2, m1)},)
+            )[1],
+            in_axes=(0, None),
+        ), in_axes=(None, 0))(param['mean'], param['mean']),
+        axes=(0, 0)
+    )
+    jac = vmap(lambda m: jacrev(apply)({'params': m}, xs))(param['mean'])
+    jac = tree_util.tree_map(
+        lambda j: jnp.tensordot(weight, j, axes=(0, 0)), jac
+    )
+    var = vmap(
+        lambda v: vmap(
+            vmap(
+                lambda j, v: tree.sum(
+                    tree_util.tree_map(lambda jl, vl: vl * jl ** 2, j, v)
+                ), in_axes=(0, None)
+            ),
+            in_axes=(0, None)
+        )(jac, {'params': v})
+    )(param['var'])
     return {'logit': params['logit'], 'mean': mean, 'var': var}
 
 

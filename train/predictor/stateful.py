@@ -4,7 +4,7 @@ from jax import random
 import jax.numpy as jnp
 import orbax.checkpoint as ocp
 
-from .predictor import MAPMixin
+from .base import MAPMixin
 
 
 class MAPPredictor(MAPMixin):

@@ -1,5 +1,7 @@
 """Student's t KL divergence."""
 
+import math
+
 from jax import nn, random, tree_util, vmap
 import jax.numpy as jnp
 from jax.scipy.special import gammaln
@@ -7,6 +9,18 @@ from jax.scipy.special import gammaln
 from dataops import tree
 
 from ..neural_tangents.extended import empirical_ntk
+
+
+def get_prior(invscale, params):
+    """Return the t prior parameters with fixed inverse scale."""
+    rs = math.sqrt(1 / invscale)
+    mrs = rs + math.log(-math.expm1(-rs))
+    return {
+        'loc': tree_util.tree_map(jnp.zeros_like, params['loc']),
+        'ms': tree_util.tree_map(
+            lambda x: jnp.full_like(x, mrs), params['ms']
+        )
+    }
 
 
 def logpdf(value, loc, scale, df):

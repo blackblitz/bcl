@@ -8,12 +8,12 @@ from optax import adam
 
 from dataops.array import get_pass_size
 
-from .kldiv import gauss, gaussmix, t
-from .loss.stateless import get_nll
-from .predictor.stateless import (
+from ..predictor.stateless import (
     MAPPredictor, GaussPredictor, GSGaussPredictor, TPredictor
 )
-from .training.init import init, gauss_init, gsgauss_init, t_init
+from ..training.stateless import init, gauss_init, gsgauss_init, t_init
+from ..training.loss.stateless import get_nll
+from ..training.vi import gauss, gaussmix, t
 
 
 class MAPMixin:

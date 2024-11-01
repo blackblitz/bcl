@@ -11,7 +11,7 @@ import numpy as np
 from dataops.io import read_task, read_toml
 from models import ModelSpec, NLL
 from models import module_map as models_module_map
-from train import module_map as train_module_map
+from train.trainer import module_map as trainer_module_map
 
 plt.style.use('bmh')
 
@@ -90,7 +90,8 @@ def main():
     # restore checkpoint, predict and plot
     fig, axes = plt.subplots(
         metadata['length'], len(exp['trainers']),
-        figsize=(12, 6.75), sharex=True, sharey=True
+        figsize=(12, 6.75), sharex=True, sharey=True,
+        constrained_layout=True
     )
     axes = np.array([axes])
     axes = axes.reshape((metadata['length'], len(exp['trainers'])))
@@ -98,7 +99,7 @@ def main():
         trainer_id = trainer_spec['id']
         trainer_label = trainer_spec['label']
         trainer_class = getattr(
-            import_module(train_module_map[trainer_spec['name']]),
+            import_module(trainer_module_map[trainer_spec['name']]),
             trainer_spec['name']
         )
         immutables = trainer_spec['immutables']['predict']
