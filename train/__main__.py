@@ -73,10 +73,10 @@ def main():
                 import_module(trainer_module_map[trainer_spec['name']]),
                 trainer_spec['name']
             )
-            train_immutables = trainer_spec['immutables']['train']
-            predict_immutables = trainer_spec['immutables']['predict']
+            train_hparams = trainer_spec['hparams']['train']
+            predict_hparams = trainer_spec['hparams']['predict']
 
-            trainer = trainer_class(model, model_spec, train_immutables)
+            trainer = trainer_class(model, model_spec, train_hparams)
             task_ids = tqdm(
                 range(1, metadata['length'] + 1),
                 leave=False, unit='task'
@@ -85,12 +85,12 @@ def main():
                 xs, ys = read_task(ts_path, 'training', task_id)
                 states = tqdm(
                     trainer.train(xs, ys),
-                    total=train_immutables['n_epochs'],
+                    total=train_hparams['n_epochs'],
                     leave=False, unit='epoch'
                 )
                 for epoch_num, state in enumerate(states, start=1):
                     predictor = trainer.predictor_class(
-                        model, model_spec, predict_immutables, state.params
+                        model, model_spec, predict_hparams, state.params
                     )
                     result = {
                         'trainer_id': trainer_id,

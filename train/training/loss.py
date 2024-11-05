@@ -1,4 +1,4 @@
-"""Stateless loss functions."""
+"""Loss functions."""
 
 from jax import flatten_util, tree_util, vmap
 import jax.numpy as jnp
@@ -7,7 +7,7 @@ import optax
 from dataops import tree
 from models import NLL
 
-from ..vi import gauss, gaussmix, t
+from .vi import gauss, gaussmix, t
 
 
 def get_nll(nll_enum):

@@ -5,57 +5,58 @@ from operator import add, mul, sub
 from flax.training.train_state import TrainState
 from jax import flatten_util, grad, jacfwd, jit, nn, random, tree_util, vmap
 import jax.numpy as jnp
-from optax import adam
+from optax import adam, constant_schedule, cosine_onecycle_schedule
 
 from dataops import tree
 from dataops.array import batch, shuffle
 from models import NLL
-from models.stateless.fcnn import FCNN3
+from models.fcnn import FCNN3
 
-from ..base import ContinualTrainer, MAPMixin
+from . import MAPMixin
+from .. import ContinualTrainer
 from ..coreset import JointCoreset
-from ...training.loss.stateless import (
+from ...training import init, make_step
+from ...training.loss import (
     diag_quad_con, flat_quad_con, huber, l2_reg, neu_con
 )
-from ...training.stateless import init, make_step
 
 
 class Joint(MAPMixin, ContinualTrainer):
     """Joint training."""
 
-    def init_mutables(self):
-        """Initialize the mutable hyperparameters."""
-        return {
-            'coreset': JointCoreset(
-                'coreset.zarr', 'coreset.memmap', self.model_spec
-            )
-        }
+    def __init__(self, model, mspec, hparams):
+        """Initialize self."""
+        super().__init__(model, mspec, hparams)
+        self.hparams['coreset'] = JointCoreset(
+            'coreset.zarr', 'coreset.memmap', self.mspec
+        )
 
     def update_loss(self, xs, ys):
         """Update the loss function."""
         self.loss = jit(
-            l2_reg(self.immutables['precision'], self.precomputed['nll'])
+            l2_reg(self.hparams['precision'], self.hparams['nll'])
         )
 
     def update_state(self, xs, ys):
         """Update the training state."""
-        key1, key2 = random.split(self.precomputed['keys']['update_state'])
-        self.mutables['coreset'].update(key1, xs, ys)
-        self.mutables['coreset'].create_memmap()
+        key1, key2, key3 = random.split(
+            self.hparams['keys']['update_state'], num=3
+        )
+        self.hparams['coreset'].update(key1, xs, ys)
+        self.hparams['coreset'].create_memmap()
         step = make_step(self.loss)
-        for key in random.split(
-            key2, num=self.immutables['n_epochs']
-        ):
+        self.state = self._init_state(key2, len(ys))
+        for key in random.split(key3, num=self.hparams['n_epochs']):
             for xs_batch, ys_batch in (
-                self.mutables['coreset'].shuffle_batch(
-                    key, self.immutables['batch_size']
+                self.hparams['coreset'].shuffle_batch(
+                    key, self.hparams['batch_size']
                 )
             ):
                 self.state = step(self.state, xs_batch, ys_batch)
             yield self.state
-        self.mutables['coreset'].delete_memmap()
+        self.hparams['coreset'].delete_memmap()
 
-    def update_mutables(self, xs, ys):
+    def update_hparams(self, xs, ys):
         """Update mutables."""
 
 
@@ -64,13 +65,12 @@ class RegularTrainer(MAPMixin, ContinualTrainer):
 
     def update_state(self, xs, ys):
         """Update the training state."""
+        key1, key2 = random.split(self.hparams['keys']['update_state'])
         step = make_step(self.loss)
-        for key in random.split(
-            self.precomputed['keys']['update_state'],
-            num=self.immutables['n_epochs']
-        ):
+        self.state = self._init_state(key1, len(ys))
+        for key in random.split(key2, num=self.hparams['n_epochs']):
             for indices in batch(
-                self.immutables['batch_size'], shuffle(key, len(ys))
+                self.hparams['batch_size'], shuffle(key, len(ys))
             ):
                 self.state = step(self.state, xs[indices], ys[indices])
             yield self.state
@@ -79,29 +79,26 @@ class RegularTrainer(MAPMixin, ContinualTrainer):
 class Finetuning(RegularTrainer):
     """Fine-tuning for continual learning."""
 
-    def init_mutables(self):
-        """Initialize the mutable hyperparameters."""
-        return {}
-
     def update_loss(self, xs, ys):
         """Update the loss function."""
         self.loss = jit(
-            l2_reg(self.immutables['precision'], self.precomputed['nll'])
+            l2_reg(self.hparams['precision'], self.hparams['nll'])
         )
 
-    def update_mutables(self, xs, ys):
+    def update_hparams(self, xs, ys):
         """Update the mutable hyperparameters."""
 
 
 class QuadraticConsolidation(RegularTrainer):
     """Quadratic consolidiation."""
 
-    def init_mutables(self):
-        """Initialize the mutable hyperparameters."""
-        return {
-            'minimum': tree.full_like(self.state.params, 0.0),
+    def __init__(self, model, mspec, hparams):
+        """Initialize self."""
+        super().__init__(model, mspec, hparams)
+        self.hparams |= {
+            'minimum': tree.full_like(self.hparams['param_example'], 0.0),
             'hessian': tree.full_like(
-                self.state.params, self.immutables['precision']
+                self.hparams['param_example'], self.hparams['precision']
             )
         }
 
@@ -109,15 +106,15 @@ class QuadraticConsolidation(RegularTrainer):
         """Update the loss function."""
         if self.loss is None:
             self.loss = jit(
-                l2_reg(self.immutables['precision'], self.precomputed['nll'])
+                l2_reg(self.hparams['precision'], self.hparams['nll'])
             )
         else:
             self.loss = jit(
                 diag_quad_con(
-                    self.immutables['lambda'],
-                    self.mutables['minimum'],
-                    self.mutables['hessian'],
-                    self.precomputed['nll']
+                    self.hparams['lambda'],
+                    self.hparams['minimum'],
+                    self.hparams['hessian'],
+                    self.hparams['nll']
                 )
             )
 
@@ -125,16 +122,16 @@ class QuadraticConsolidation(RegularTrainer):
 class ElasticWeightConsolidation(QuadraticConsolidation):
     """Elastic weight consolidation."""
 
-    def update_mutables(self, xs, ys):
+    def update_hparams(self, xs, ys):
         """Update the mutable hyperparameters."""
-        self.mutables['minimum'] = self.state.params
-        nll_grad = grad(self.precomputed['nll'])
+        self.hparams['minimum'] = self.state.params
+        nll_grad = grad(self.hparams['nll'])
 
         @jit
         def mean_squared_grad(x):
             xs = jnp.expand_dims(x, 0)
             out = self.model.apply({'params': self.state.params}, xs)[0]
-            match self.model_spec.nll:
+            match self.mspec.nll:
                 case NLL.SIGMOID_CROSS_ENTROPY:
                     pred = nn.softmax(jnp.array([0., out[0]]))
                 case NLL.SOFTMAX_CROSS_ENTROPY:
@@ -150,8 +147,8 @@ class ElasticWeightConsolidation(QuadraticConsolidation):
         for x in xs:
             fisher = tree_util.tree_map(add, fisher, mean_squared_grad(x))
         fisher = tree_util.tree_map(lambda x: x / len(ys), fisher)
-        self.mutables['hessian'] = tree_util.tree_map(
-            add, self.mutables['hessian'], fisher
+        self.hparams['hessian'] = tree_util.tree_map(
+            add, self.hparams['hessian'], fisher
         )
 
 
@@ -160,6 +157,9 @@ class SynapticIntelligence(QuadraticConsolidation):
 
     def update_state(self, xs, ys):
         """Update the training state."""
+        key1, key2 = random.split(
+            self.hparams['keys']['update_state']
+        )
 
         @jit
         def step(state, loss_change, xs, ys):
@@ -171,45 +171,46 @@ class SynapticIntelligence(QuadraticConsolidation):
             )
             return next_state, loss_change
 
+        self.state = self._init_state(key1, len(ys))
         loss_change = tree.full_like(self.state.params, 0.0)
         start_params = self.state.params
-        for key in random.split(
-            self.precomputed['keys']['update_state'],
-            num=self.immutables['n_epochs']
-        ):
+        for key in random.split(key2, num=self.hparams['n_epochs']):
             for indices in batch(
-                self.immutables['batch_size'], shuffle(key, len(ys))
+                self.hparams['batch_size'], shuffle(key, len(ys))
             ):
                 self.state, loss_change = step(
                     self.state, loss_change, xs[indices], ys[indices]
                 )
             yield self.state
 
-        self.mutables['minimum'] = self.state.params
-        self.mutables['hessian'] = tree_util.tree_map(
+        self.hparams['minimum'] = self.state.params
+        self.hparams['hessian'] = tree_util.tree_map(
             add,
-            self.mutables['hessian'],
+            self.hparams['hessian'],
             tree_util.tree_map(
-                lambda dl, dp: dl / (self.immutables['xi'] + dp ** 2),
+                lambda dl, dp: dl / (self.hparams['xi'] + dp ** 2),
                 loss_change,
                 tree_util.tree_map(sub, self.state.params, start_params)
             )
         )
 
-    def update_mutables(self, xs, ys):
+    def update_hparams(self, xs, ys):
         """Update the mutable hyperparameters."""
 
 
 class AutodiffQuadraticConsolidation(RegularTrainer):
     """Autodiff Quadratic Consolidation."""
 
-    def init_mutables(self):
-        """Initialize the mutable hyperparameters."""
-        flat_params = flatten_util.ravel_pytree(self.state.params)[0]
-        return {
+    def __init__(self, model, mspec, hparams):
+        """Initialize self."""
+        super().__init__(model, mspec, hparams)
+        flat_params = flatten_util.ravel_pytree(
+            self.hparams['param_example']
+        )[0]
+        self.hparams |= {
             'flat_minimum': jnp.zeros_like(flat_params),
             'flat_hessian': jnp.diag(
-                jnp.full_like(flat_params, self.immutables['precision'])
+                jnp.full_like(flat_params, self.hparams['precision'])
             )
         }
 
@@ -217,31 +218,31 @@ class AutodiffQuadraticConsolidation(RegularTrainer):
         """Update the loss function."""
         if self.loss is None:
             self.loss = jit(
-                l2_reg(self.immutables['precision'], self.precomputed['nll'])
+                l2_reg(self.hparams['precision'], self.hparams['nll'])
             )
         else:
             self.loss = jit(
                 flat_quad_con(
-                    self.immutables['lambda'],
-                    self.mutables['flat_minimum'],
-                    self.mutables['flat_hessian'],
-                    self.precomputed['nll']
+                    self.hparams['lambda'],
+                    self.hparams['flat_minimum'],
+                    self.hparams['flat_hessian'],
+                    self.hparams['nll']
                 )
             )
 
-    def update_mutables(self, xs, ys):
+    def update_hparams(self, xs, ys):
         """Update hyperparameters."""
         flat_params, unflatten = flatten_util.ravel_pytree(self.state.params)
-        self.mutables['flat_minimum'] = flat_params
+        self.hparams['flat_minimum'] = flat_params
 
         def flat_nll(flat_params, xs, ys):
-            return self.precomputed['nll'](unflatten(flat_params), xs, ys)
+            return self.hparams['nll'](unflatten(flat_params), xs, ys)
 
         flat_nll_hessian = jit(jacfwd(grad(flat_nll)))
-        self.mutables['flat_hessian'] = self.mutables['flat_hessian'] + sum(
+        self.hparams['flat_hessian'] = self.hparams['flat_hessian'] + sum(
             flat_nll_hessian(flat_params, xs[indices], ys[indices])
             for indices in batch(
-                self.precomputed['pass_size'], jnp.arange(len(ys))
+                self.hparams['pass_size'], jnp.arange(len(ys))
             )
         )
 
@@ -249,47 +250,45 @@ class AutodiffQuadraticConsolidation(RegularTrainer):
 class NeuralConsolidation(RegularTrainer):
     """Neural Consolidation."""
 
-    def init_mutables(self):
-        """Initialize the mutable hyperparameters."""
-        flat_params, unflatten = flatten_util.ravel_pytree(self.state.params)
-        model = FCNN3(
-            dense0=self.immutables['con_dense0'],
-            dense1=self.immutables['con_dense1'],
-            dense2=1
-        )
-        state = TrainState.create(
-            apply_fn=model.apply,
-            params=init(
-                self.precomputed['keys']['init_mutables'],
-                model, flat_params.shape
-            ),
-            tx=adam(self.immutables['con_lr'])
-        )
-        return {
-            'minimum': tree.full_like(self.state.params, 0.0),
-            'con_state': state
+    def __init__(self, model, mspec, hparams):
+        """Initialize self."""
+        super().__init__(model, mspec, hparams)
+        self.hparams |= {
+            'minimum': tree.full_like(self.hparams['param_example'], 0.0),
+            'con_state': None
         }
 
     def update_loss(self, xs, ys):
         """Update the loss function."""
         if self.loss is None:
             self.loss = jit(
-                l2_reg(self.immutables['precision'], self.precomputed['nll'])
+                l2_reg(self.hparams['precision'], self.hparams['nll'])
             )
         else:
             self.loss = jit(
-                neu_con(self.mutables['con_state'], self.precomputed['nll'])
+                neu_con(self.hparams['con_state'], self.hparams['nll'])
             )
+
+    def _make_con_lr_schedule(self):
+        """Return the consolidator learning rate schedule."""
+        match self.hparams['con_lr_schedule']:
+            case 'constant':
+                return constant_schedule(self.hparams['con_base_lr'])
+            case 'onecycle':
+                return cosine_onecycle_schedule(
+                    transition_steps=(self.hparams['con_n_steps']),
+                    peak_value=self.hparams['con_base_lr']
+                )
 
     def _make_con_data(self, key, xs, ys):
         """Generate data for training the consolidator."""
         flat_params, unflatten = flatten_util.ravel_pytree(
-            self.mutables['minimum']
+            self.hparams['minimum']
         )
         flat_params = (
-            flat_params + self.immutables['con_radius'] * random.ball(
+            flat_params + self.hparams['con_radius'] * random.ball(
                 key, len(flat_params),
-                shape=(self.immutables['con_sample_size'],)
+                shape=(self.hparams['con_sample_size'],)
             )
         )
         params = vmap(unflatten)(flat_params)
@@ -298,24 +297,40 @@ class NeuralConsolidation(RegularTrainer):
                 self.loss, in_axes=(0, None, None)
             )(params, xs[indices], ys[indices])
             for indices in batch(
-                self.precomputed['pass_size'], jnp.arange(len(ys))
+                self.hparams['pass_size'], jnp.arange(len(ys))
             )
         )
         return flat_params, loss_vals
 
-    def update_mutables(self, xs, ys):
+    def update_hparams(self, xs, ys):
         """Update hyperparameters."""
-        self.mutables['minimum'] = self.state.params
-        state = self.mutables['con_state']
+        self.hparams['minimum'] = self.state.params
+        flat_params, unflatten = flatten_util.ravel_pytree(
+            self.hparams['param_example']
+        )
+        model = FCNN3(
+            dense0=self.hparams['con_dense0'],
+            dense1=self.hparams['con_dense1'],
+            dense2=1
+        )
         loss = l2_reg(
-            self.immutables['con_precision'],
-            huber(self.mutables['con_state'].apply_fn)
+            self.hparams['con_precision'],
+            huber(model.apply)
         )
         step = make_step(loss)
+        state = TrainState.create(
+            apply_fn=model.apply,
+            params=init(
+                self.hparams['keys']['update_hparams'],
+                model, flat_params.shape
+            ) if self.hparams['con_state'] is None
+            else self.hparams['con_state'].params,
+            tx=adam(self._make_con_lr_schedule())
+        )
         for key in random.split(
-            self.precomputed['keys']['update_mutables'],
-            num=self.immutables['con_n_steps']
+            self.hparams['keys']['update_hparams'],
+            num=self.hparams['con_n_steps']
         ):
             flat_params, loss_values = self._make_con_data(key, xs, ys)
             state = step(state, flat_params, loss_values)
-        self.mutables['con_state'] = state
+        self.hparams['con_state'] = state

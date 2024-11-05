@@ -20,356 +20,385 @@ out_shape = [ 3 ]
 id = "joint"
 name = "Joint"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.01
 batch_size = 8
-lr = 0.01
+lr_schedule = "constant"
 n_epochs = 100
 precision = 0.1
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 
 [[trainers]]
 id = "finetuning"
 name = "Finetuning"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.01
 batch_size = 8
-lr = 0.01
+lr_schedule = "constant"
 n_epochs = 100
 precision = 0.1
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 
 [[trainers]]
 id = "ewc1"
 name = "ElasticWeightConsolidation"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.01
 batch_size = 8
 lambda = 0.01
-lr = 0.01
+lr_schedule = "constant"
 n_epochs = 100
 precision = 0.1
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 
 [[trainers]]
 id = "ewc2"
 name = "ElasticWeightConsolidation"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.01
 batch_size = 8
 lambda = 0.1
-lr = 0.01
+lr_schedule = "constant"
 n_epochs = 100
 precision = 0.1
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 
 [[trainers]]
 id = "ewc3"
 name = "ElasticWeightConsolidation"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.01
 batch_size = 8
 lambda = 1.0
-lr = 0.01
+lr_schedule = "constant"
 n_epochs = 100
 precision = 0.1
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 
 [[trainers]]
 id = "ewc4"
 name = "ElasticWeightConsolidation"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.01
 batch_size = 8
 lambda = 10.0
-lr = 0.01
+lr_schedule = "constant"
 n_epochs = 100
 precision = 0.1
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 
 [[trainers]]
 id = "ewc5"
 name = "ElasticWeightConsolidation"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.01
 batch_size = 8
 lambda = 100.0
-lr = 0.01
+lr_schedule = "constant"
 n_epochs = 100
 precision = 0.1
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 
 [[trainers]]
 id = "si1"
 name = "SynapticIntelligence"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.01
 batch_size = 8
 lambda = 0.01
-lr = 0.01
+lr_schedule = "constant"
 n_epochs = 100
 precision = 0.1
 seed = 1337
 xi = 1.0
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 
 [[trainers]]
 id = "si2"
 name = "SynapticIntelligence"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.01
 batch_size = 8
 lambda = 0.1
-lr = 0.01
+lr_schedule = "constant"
 n_epochs = 100
 precision = 0.1
 seed = 1337
 xi = 1.0
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 
 [[trainers]]
 id = "si3"
 name = "SynapticIntelligence"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.01
 batch_size = 8
 lambda = 1.0
-lr = 0.01
+lr_schedule = "constant"
 n_epochs = 100
 precision = 0.1
 seed = 1337
 xi = 1.0
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 
 [[trainers]]
 id = "si4"
 name = "SynapticIntelligence"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.01
 batch_size = 8
 lambda = 10.0
-lr = 0.01
+lr_schedule = "constant"
 n_epochs = 100
 precision = 0.1
 seed = 1337
 xi = 1.0
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 
 [[trainers]]
 id = "si5"
 name = "SynapticIntelligence"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.01
 batch_size = 8
 lambda = 100.0
-lr = 0.01
+lr_schedule = "constant"
 n_epochs = 100
 precision = 0.1
 seed = 1337
 xi = 1.0
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 
 [[trainers]]
 id = "aqc1"
 name = "AutodiffQuadraticConsolidation"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.01
 batch_size = 8
 lambda = 0.01
-lr = 0.01
+lr_schedule = "constant"
 n_epochs = 100
 precision = 0.1
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 
 [[trainers]]
 id = "aqc2"
 name = "AutodiffQuadraticConsolidation"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.01
 batch_size = 8
 lambda = 0.1
-lr = 0.01
+lr_schedule = "constant"
 n_epochs = 100
 precision = 0.1
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 
 [[trainers]]
 id = "aqc3"
 name = "AutodiffQuadraticConsolidation"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.01
 batch_size = 8
 lambda = 1.0
-lr = 0.01
+lr_schedule = "constant"
 n_epochs = 100
 precision = 0.1
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 
 [[trainers]]
 id = "aqc4"
 name = "AutodiffQuadraticConsolidation"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.01
 batch_size = 8
 lambda = 10.0
-lr = 0.01
+lr_schedule = "constant"
 n_epochs = 100
 precision = 0.1
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 
 [[trainers]]
 id = "aqc5"
 name = "AutodiffQuadraticConsolidation"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.01
 batch_size = 8
 lambda = 100.0
-lr = 0.01
+lr_schedule = "constant"
 n_epochs = 100
 precision = 0.1
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 
 [[trainers]]
 id = "nc1"
 name = "NeuralConsolidation"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.01
 batch_size = 8
 con_dense0 = 256
 con_dense1 = 256
-con_lr = 0.01
+con_base_lr = 0.01
+con_lr_schedule = "constant"
 con_n_steps = 1000
 con_precision = 0.1
 con_radius = 0.01
 con_sample_size = 64
-lr = 0.01
+lr_schedule = "constant"
 n_epochs = 100
 precision = 0.1
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 
 [[trainers]]
 id = "nc2"
 name = "NeuralConsolidation"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.01
 batch_size = 8
 con_dense0 = 256
 con_dense1 = 256
-con_lr = 0.01
+con_base_lr = 0.01
+con_lr_schedule = "constant"
 con_n_steps = 1000
 con_precision = 0.1
 con_radius = 0.1
 con_sample_size = 64
-lr = 0.01
+lr_schedule = "constant"
 n_epochs = 100
 precision = 0.1
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 
 [[trainers]]
 id = "nc3"
 name = "NeuralConsolidation"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.01
 batch_size = 8
 con_dense0 = 256
 con_dense1 = 256
-con_lr = 0.01
+con_base_lr = 0.01
+con_lr_schedule = "constant"
 con_n_steps = 1000
 con_precision = 0.1
 con_radius = 1.0
 con_sample_size = 64
-lr = 0.01
+lr_schedule = "constant"
 n_epochs = 100
 precision = 0.1
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 
 [[trainers]]
 id = "nc4"
 name = "NeuralConsolidation"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.01
 batch_size = 8
 con_dense0 = 256
 con_dense1 = 256
-con_lr = 0.01
+con_base_lr = 0.01
+con_lr_schedule = "constant"
 con_n_steps = 1000
 con_precision = 0.1
 con_radius = 10.0
 con_sample_size = 64
-lr = 0.01
+lr_schedule = "constant"
 n_epochs = 100
 precision = 0.1
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 
 [[trainers]]
 id = "nc5"
 name = "NeuralConsolidation"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.01
 batch_size = 8
 con_dense0 = 256
 con_dense1 = 256
-con_lr = 0.01
+con_base_lr = 0.01
+con_lr_schedule = "constant"
 con_n_steps = 1000
 con_precision = 0.1
 con_radius = 100.0
 con_sample_size = 64
-lr = 0.01
+lr_schedule = "constant"
 n_epochs = 100
 precision = 0.1
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 
 [[trainers]]
 id = "gvcl"
 name = "GVCL"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.01
 batch_size = 8
-lr = 0.01
+lr_schedule = "constant"
+mc = true
 n_epochs = 100
-precision = 0.1
+precision = 1.0
 sample_size = 10
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 sample_size = 100
 seed = 1337
 
@@ -377,17 +406,18 @@ seed = 1337
 id = "gmvcl"
 name = "GMVCL"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.01
 batch_size = 8
-lr = 0.01
-mc_kldiv = false
+lr_schedule = "constant"
+mc = true
 n_comp = 3
 n_epochs = 100
-precision = 0.1
+precision = 1.0
 sample_size = 10
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 n_comp = 3
 sample_size = 100
 seed = 1337
@@ -396,18 +426,20 @@ seed = 1337
 id = "gsfsvi"
 name = "SimpleGSFSVI"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.01
 batch_size = 8
-lr = 0.01
+lr_schedule = "constant"
+mc = true
 noise_batch_size = 8
 noise_maxval = [ 7.7, 4.4, 6.7, 2.4 ]
 noise_minval = [ 4.3, 2.0, 1.0, 0.1 ]
 n_epochs = 100
-precision = 0.1
+precision = 1.0
 sample_size = 10
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 sample_size = 100
 seed = 1337
 
@@ -415,20 +447,21 @@ seed = 1337
 id = "gmsfsvi"
 name = "SimpleGMSFSVI"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.01
 batch_size = 8
-lr = 0.01
-mc_kldiv = false
+lr_schedule = "constant"
+mc = true
 noise_batch_size = 8
 noise_maxval = [ 7.7, 4.4, 6.7, 2.4 ]
 noise_minval = [ 4.3, 2.0, 1.0, 0.1 ]
 n_comp = 3
 n_epochs = 100
-precision = 0.1
+precision = 1.0
 sample_size = 10
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 n_comp = 3
 sample_size = 100
 seed = 1337

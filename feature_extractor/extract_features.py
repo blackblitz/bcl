@@ -13,6 +13,7 @@ from tqdm import tqdm
 from dataops.array import batch, get_pass_size
 from dataops.io import get_filenames, read_task, read_toml, write_toml
 from models import ModelSpec, module_map, NLL
+from train.training import init
 
 
 def main():
@@ -40,20 +41,16 @@ def main():
         import_module(module_map[exp['feature_extractor']['name']]),
         exp['feature_extractor']['name']
     )(**exp['feature_extractor']['args'])
-    model_spec = ModelSpec(
+    mspec = ModelSpec(
         nll=NLL[exp['feature_extractor']['spec']['nll']],
         in_shape=exp['feature_extractor']['spec']['in_shape'],
         out_shape=exp['feature_extractor']['spec']['out_shape']
     )
     path = ckpt_path / 'feature_extractor'
     with ocp.StandardCheckpointer() as ckpter:
-        var = ckpter.restore(
+        params = ckpter.restore(
             path,
-            target=model.init(
-                random.key(1337),
-                jnp.zeros((1, *model_spec.in_shape)),
-                train=False
-            )
+            target=init(random.key(1337), model, mspec.in_shape)
         )
 
     # extract features
@@ -82,8 +79,8 @@ def main():
             )
             for indices in batch(pass_size, np.arange(len(ys))):
                 fe_xs[indices] = np.asarray(model.apply(
-                    var, xs[indices],
-                    method=lambda module, xs: module.tail(xs, train=False)
+                    {'params': params}, xs[indices],
+                    method=lambda module, xs: module.tail(xs)
                 ))
                 fe_ys[indices] = ys[indices]
     write_toml(

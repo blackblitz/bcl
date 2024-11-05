@@ -21,9 +21,9 @@ class FECNN4(nn.Module):
         )
         self.head = nn.Dense(self.dense1)
 
-    def __call__(self, xs, train: bool):
+    def __call__(self, xs):
         """Apply module."""
-        xs = self.tail(xs, train=train)
+        xs = self.tail(xs)
         xs = self.head(xs)
         return xs
 
@@ -48,9 +48,9 @@ class FECNN7(nn.Module):
         )
         self.head = nn.Dense(self.dense2)
 
-    def __call__(self, xs, train: bool):
+    def __call__(self, xs):
         """Apply module."""
-        xs = self.tail(xs, train=train)
+        xs = self.tail(xs)
         xs = self.head(xs)
         return xs
 
@@ -74,9 +74,9 @@ class FEResNet18(nn.Module):
         )
         self.head = nn.Dense(self.dense)
 
-    def __call__(self, xs, train: bool):
+    def __call__(self, xs):
         """Apply module."""
-        xs = self.tail(xs, train=train)
+        xs = self.tail(xs)
         xs = self.head(xs)
         return xs
 
@@ -89,19 +89,18 @@ class FE3(nn.Module):
     dense: int
 
     @nn.compact
-    def __call__(self, xs, train: bool):
+    def __call__(self, xs):
         """Apply module."""
         xs = nn.Conv(self.conv0, (3, 3))(xs)
-        xs = nn.BatchNorm(use_running_average=not train)(xs)
+        xs = nn.GroupNorm()(xs)
         xs = nn.swish(xs)
         xs = nn.avg_pool(xs, window_shape=(2, 2), strides=(2, 2))
         xs = nn.Conv(self.conv1, (3, 3))(xs)
-        xs = nn.BatchNorm(use_running_average=not train)(xs)
+        xs = nn.GroupNorm()(xs)
         xs = nn.swish(xs)
         xs = nn.avg_pool(xs, window_shape=(2, 2), strides=(2, 2))
         xs = jnp.reshape(xs, shape=(xs.shape[0], -1))
         xs = nn.Dense(self.dense)(xs)
-        xs = nn.BatchNorm(use_running_average=not train)(xs)
         xs = nn.swish(xs)
         return xs
 
@@ -117,28 +116,27 @@ class FE6(nn.Module):
     dense1: int
 
     @nn.compact
-    def __call__(self, xs, train: bool):
+    def __call__(self, xs):
         """Apply module."""
         xs = nn.Conv(self.conv0, (3, 3))(xs)
-        xs = nn.BatchNorm(use_running_average=not train)(xs)
+        xs = nn.GroupNorm()(xs)
         xs = nn.swish(xs)
         xs = nn.Conv(self.conv1, (3, 3))(xs)
-        xs = nn.BatchNorm(use_running_average=not train)(xs)
+        xs = nn.GroupNorm()(xs)
         xs = nn.swish(xs)
         xs = nn.avg_pool(xs, window_shape=(2, 2), strides=(2, 2))
         xs = nn.Conv(self.conv2, (3, 3))(xs)
-        xs = nn.BatchNorm(use_running_average=not train)(xs)
+        xs = nn.GroupNorm()(xs)
         xs = nn.swish(xs)
         xs = nn.Conv(self.conv3, (3, 3))(xs)
-        xs = nn.BatchNorm(use_running_average=not train)(xs)
+        xs = nn.GroupNorm()(xs)
         xs = nn.swish(xs)
         xs = nn.avg_pool(xs, window_shape=(2, 2), strides=(2, 2))
         xs = jnp.reshape(xs, shape=(xs.shape[0], -1))
         xs = nn.Dense(self.dense0)(xs)
-        xs = nn.BatchNorm(use_running_average=not train)(xs)
+        xs = nn.GroupNorm(num_groups=1)(xs)
         xs = nn.swish(xs)
         xs = nn.Dense(self.dense1)(xs)
-        xs = nn.BatchNorm(use_running_average=not train)(xs)
         xs = nn.swish(xs)
         return xs
 
@@ -153,22 +151,22 @@ class FERes17(nn.Module):
     conv4: int
 
     @nn.compact
-    def __call__(self, xs, train: bool):
+    def __call__(self, xs):
         """Apply module."""
         xs = nn.Conv(self.conv0, (3, 3))(xs)
-        xs = nn.BatchNorm(use_running_average=not train)(xs)
+        xs = nn.GroupNorm()(xs)
         xs = nn.swish(xs)
-        xs = ResidualBlock(self.conv1)(xs, train=train)
-        xs = ResidualBlock(self.conv1)(xs, train=train)
+        xs = ResidualBlock(self.conv1)(xs)
+        xs = ResidualBlock(self.conv1)(xs)
         xs = nn.avg_pool(xs, window_shape=(2, 2), strides=(2, 2))
-        xs = ResidualBlock(self.conv2)(xs, train=train)
-        xs = ResidualBlock(self.conv2)(xs, train=train)
+        xs = ResidualBlock(self.conv2)(xs)
+        xs = ResidualBlock(self.conv2)(xs)
         xs = nn.avg_pool(xs, window_shape=(2, 2), strides=(2, 2))
-        xs = ResidualBlock(self.conv3)(xs, train=train)
-        xs = ResidualBlock(self.conv3)(xs, train=train)
+        xs = ResidualBlock(self.conv3)(xs)
+        xs = ResidualBlock(self.conv3)(xs)
         xs = nn.avg_pool(xs, window_shape=(2, 2), strides=(2, 2))
-        xs = ResidualBlock(self.conv4)(xs, train=train)
-        xs = ResidualBlock(self.conv4)(xs, train=train)
+        xs = ResidualBlock(self.conv4)(xs)
+        xs = ResidualBlock(self.conv4)(xs)
         xs = jnp.mean(xs, axis=(1, 2))
         return xs
 
@@ -179,16 +177,16 @@ class ResidualBlock(nn.Module):
     conv: int
 
     @nn.compact
-    def __call__(self, xs, train: bool):
+    def __call__(self, xs):
         """Apply module."""
         res = nn.Conv(self.conv, (3, 3))(xs)
-        res = nn.BatchNorm(use_running_average=not train)(res)
+        res = nn.GroupNorm()(res)
         res = nn.swish(res)
         res = nn.Conv(self.conv, (3, 3))(res)
-        res = nn.BatchNorm(use_running_average=not train)(res)
+        res = nn.GroupNorm()(res)
         if xs.shape != res.shape:
             xs = nn.Conv(self.conv, (1, 1))(xs)
-            xs = nn.BatchNorm(use_running_average=not train)(xs)
+            xs = nn.GroupNorm()(xs)
         xs = xs + res
         xs = nn.swish(xs)
         return xs
@@ -200,16 +198,16 @@ class DownsamplingResidualBlock(nn.Module):
     conv: int
 
     @nn.compact
-    def __call__(self, xs, train: bool):
+    def __call__(self, xs):
         """Apply module."""
         res = nn.Conv(self.conv, (3, 3))(xs)
-        res = nn.BatchNorm(use_running_average=not train)(res)
+        res = nn.GroupNorm()(res)
         res = nn.swish(res)
         res = nn.Conv(self.conv, (3, 3), strides=(2, 2))(res)
-        res = nn.BatchNorm(use_running_average=not train)(res)
+        res = nn.GroupNorm()(res)
         if xs.shape != res.shape:
             xs = nn.Conv(self.conv, (1, 1), strides=(2, 2))(xs)
-            xs = nn.BatchNorm(use_running_average=not train)(xs)
+            xs = nn.GroupNorm()(xs)
         xs = xs + res
         xs = nn.swish(xs)
         return xs

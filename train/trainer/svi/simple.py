@@ -5,63 +5,50 @@ import jax.numpy as jnp
 
 from dataops.array import batch, get_n_batches, shuffle
 
-from ..base import ContinualTrainer, GaussMixin, GSGaussMixin, TMixin
-from ...training.loss.stateless import (
+from . import GaussMixin, GaussmixMixin, SVI, TMixin
+from ...training.loss import (
     gpvfe_cf, gpvfe_mc, gfvfe_cf, gfvfe_mc, tpvfe_mc, tfvfe_mc,
     gmpvfe_ub, gmpvfe_mc, gmfvfe_ub, gmfvfe_mc,
 )
-from ...training.stateless import make_step
-from ...training.vi import gauss, gaussmix, t
+from ...training import make_step
 
 
-class VCL(ContinualTrainer):
+class VCL(SVI):
     """Variational continual learning."""
 
     def update_state(self, xs, ys):
         """Update the training state."""
+        key1, key2 = random.split(self.hparams['keys']['update_state'])
         step = make_step(self.loss)
-        for key in random.split(
-            self.precomputed['keys']['update_state'],
-            num=self.immutables['n_epochs']
-        ):
-            key1, key2 = random.split(key)
-            n_batches = get_n_batches(len(ys), self.immutables['batch_size'])
-            for key3, indices in zip(
-                random.split(key1, num=n_batches),
+        self.state = self._init_state(key1, len(ys))
+        for key in random.split(key2, num=self.hparams['n_epochs']):
+            n_batches = get_n_batches(len(ys), self.hparams['batch_size'])
+            keys = random.split(key, num=n_batches + 1)
+            for subkey, indices in zip(
+                keys[: n_batches],
                 batch(
-                    self.immutables['batch_size'], shuffle(key2, len(ys))
+                    self.hparams['batch_size'],
+                    shuffle(keys[n_batches], len(ys))
                 )
             ):
                 self.state = step(
-                    self.state, self.sample(key3),
+                    self.state, self._sample(subkey),
                     xs[indices], ys[indices]
                 )
             yield self.state
-
-    def update_mutables(self, xs, ys):
-        """Update the hyperparameters."""
-        self.mutables['prior'] = self.state.params
 
 
 class GVCL(GaussMixin, VCL):
     """Gaussian variational continual learning."""
 
-    def init_mutables(self):
-        """Initialize the mutable hyperparameters."""
-        return {
-            'prior': gauss.get_prior(
-                self.immutables['precision'], self.state.params
-            )
-        }
-
     def update_loss(self, xs, ys):
         """Update the loss function."""
-        n_batches = -(len(ys) // -self.immutables['batch_size'])
+        n_batches = -(len(ys) // -self.hparams['batch_size'])
         self.loss = jit(
-            (gpvfe_mc if self.immutables['mc'] else gpvfe_cf)(
-                self.precomputed['nll'],
-                self.immutables.get('beta', 1 / n_batches),
-                self.mutables['prior']
+            (gpvfe_mc if self.hparams['mc'] else gpvfe_cf)(
+                self.hparams['nll'],
+                self.hparams.get('beta', 1 / n_batches),
+                self.hparams['prior']
             )
         )
 
@@ -69,111 +56,82 @@ class GVCL(GaussMixin, VCL):
 class TVCL(TMixin, VCL):
     """t variational continual learning."""
 
-    def init_mutables(self):
-        """Initialize the mutable hyperparameters."""
-        return {
-            'prior': t.get_prior(
-                self.immutables['invscale'], self.state.params
-            )
-        }
-
     def update_loss(self, xs, ys):
         """Update the loss function."""
-        n_batches = -(len(ys) // -self.immutables['batch_size'])
+        n_batches = -(len(ys) // -self.hparams['batch_size'])
         self.loss = jit(
             tpvfe_mc(
-                self.precomputed['nll'],
-                self.immutables.get('beta', 1 / n_batches),
-                self.mutables['prior'],
-                self.immutables['df']
+                self.hparams['nll'],
+                self.hparams.get('beta', 1 / n_batches),
+                self.hparams['prior'],
+                self.hparams['df']
             )
         )
 
 
-class GMVCL(GSGaussMixin, VCL):
+class GMVCL(GaussmixMixin, VCL):
     """Gaussian-mixture variational continual learning."""
-
-    def init_mutables(self):
-        """Initialize the mutable hyperparameters."""
-        return {
-            'prior': gaussmix.get_prior(
-                self.immutables['precision'], self.state.params
-            )
-        }
 
     def update_loss(self, xs, ys):
         """Update the loss function."""
-        n_batches = -(len(ys) // -self.immutables['batch_size'])
+        n_batches = -(len(ys) // -self.hparams['batch_size'])
         self.loss = jit(
-            (gmpvfe_mc if self.immutables['mc'] else gmpvfe_ub)(
-                self.precomputed['nll'],
-                self.immutables.get('beta', 1 / n_batches),
-                self.mutables['prior']
+            (gmpvfe_mc if self.hparams['mc'] else gmpvfe_ub)(
+                self.hparams['nll'],
+                self.hparams.get('beta', 1 / n_batches),
+                self.hparams['prior']
             )
         )
 
 
-class SimpleSFSVI(ContinualTrainer):
+class SimpleSFSVI(SVI):
     """Simple S-FSVI."""
 
     def update_state(self, xs, ys):
         """Update the training state."""
+        key1, key2 = random.split(self.hparams['keys']['update_state'])
         step = make_step(self.loss)
-        for epoch_key in random.split(
-            self.precomputed['keys']['update_state'],
-            num=self.immutables['n_epochs']
-        ):
-            n_batches = get_n_batches(len(ys), self.immutables['batch_size'])
-            epoch_key, shuffle_key = random.split(epoch_key)
-            for key, indices in zip(
-                random.split(epoch_key, num=n_batches),
+        self.state = self._init_state(key1, len(ys))
+        for key in random.split(key2, num=self.hparams['n_epochs']):
+            n_batches = get_n_batches(len(ys), self.hparams['batch_size'])
+            keys = random.split(key, num=n_batches + 1)
+            for subkey, indices in zip(
+                keys[: n_batches],
                 batch(
-                    self.immutables['batch_size'],
-                    shuffle(shuffle_key, len(ys))
+                    self.hparams['batch_size'],
+                    shuffle(keys[n_batches], len(ys))
                 )
             ):
-                key1, key2, key3 = random.split(key, num=3)
-                param_sample = self.sample(key1)
+                subkeys = random.split(subkey, num=3)
+                param_sample = self._sample(subkeys[0])
                 ind_xs = random.uniform(
-                    key2,
+                    subkeys[1],
                     shape=(
-                        self.immutables['noise_batch_size'],
-                        *self.model_spec.in_shape
+                        self.hparams['noise_batch_size'],
+                        *self.mspec.in_shape
                     ),
-                    minval=jnp.array(self.immutables['noise_minval']),
-                    maxval=jnp.array(self.immutables['noise_maxval']),
+                    minval=jnp.array(self.hparams['noise_minval']),
+                    maxval=jnp.array(self.hparams['noise_maxval']),
                 )
+                output_sample = self._sample(subkeys[2], xs=ind_xs)
                 self.state = step(
                     self.state, param_sample, output_sample,
                     xs[indices], ys[indices], ind_xs
                 )
-                output_sample = self.sample(key3, xs=ind_xs)
             yield self.state
-
-    def update_mutables(self, xs, ys):
-        """Update the hyperparameters."""
-        self.mutables['prior'] = self.state.params
 
 
 class SimpleGSFSVI(GaussMixin, SimpleSFSVI):
     """Simple Gaussian S-FSVI."""
 
-    def init_mutables(self):
-        """Initialize the mutable hyperparameters."""
-        return {
-            'prior': gauss.get_prior(
-                self.immutables['precision'], self.state.params
-            )
-        }
-
     def update_loss(self, xs, ys):
         """Update the loss function."""
-        n_batches = -(len(ys) // -self.immutables['batch_size'])
+        n_batches = -(len(ys) // -self.hparams['batch_size'])
         self.loss = jit(
-            (gfvfe_mc if self.immutables['mc'] else gfvfe_cf)(
-                self.precomputed['nll'],
-                self.immutables.get('beta', 1 / n_batches),
-                self.mutables['prior'],
+            (gfvfe_mc if self.hparams['mc'] else gfvfe_cf)(
+                self.hparams['nll'],
+                self.hparams.get('beta', 1 / n_batches),
+                self.hparams['prior'],
                 self.model.apply
             )
         )
@@ -182,47 +140,31 @@ class SimpleGSFSVI(GaussMixin, SimpleSFSVI):
 class SimpleTSFSVI(TMixin, SimpleSFSVI):
     """Simple t S-FSVI."""
 
-    def init_mutables(self):
-        """Initialize the mutable hyperparameters."""
-        return {
-            'prior': t.get_prior(
-                self.immutables['invscale'], self.state.params
-            )
-        }
-
     def update_loss(self, xs, ys):
         """Update the loss function."""
-        n_batches = -(len(ys) // -self.immutables['batch_size'])
+        n_batches = -(len(ys) // -self.hparams['batch_size'])
         self.loss = jit(
             tfvfe_mc(
-                self.precomputed['nll'],
-                self.immutables.get('beta', 1 / n_batches),
-                self.mutables['prior'],
+                self.hparams['nll'],
+                self.hparams.get('beta', 1 / n_batches),
+                self.hparams['prior'],
                 self.model.apply,
-                self.immutables['df']
+                self.hparams['df']
             )
         )
 
 
-class SimpleGMSFSVI(GSGaussMixin, SimpleSFSVI):
+class SimpleGMSFSVI(GaussmixMixin, SimpleSFSVI):
     """Simple Gaussian-mixture S-FSVI."""
-
-    def init_mutables(self):
-        """Initialize the mutable hyperparameters."""
-        return {
-            'prior': gaussmix.get_prior(
-                self.immutables['precision'], self.state.params
-            )
-        }
 
     def update_loss(self, xs, ys):
         """Update the loss function."""
-        n_batches = -(len(ys) // -self.immutables['batch_size'])
+        n_batches = -(len(ys) // -self.hparams['batch_size'])
         self.loss = jit(
-            (gmfvfe_mc if self.immutables['mc'] else gmfvfe_ub)(
-                self.precomputed['nll'],
-                self.immutables.get('beta', 1 / n_batches),
-                self.mutables['prior'],
+            (gmfvfe_mc if self.hparams['mc'] else gmfvfe_ub)(
+                self.hparams['nll'],
+                self.hparams.get('beta', 1 / n_batches),
+                self.hparams['prior'],
                 self.model.apply
             )
         )

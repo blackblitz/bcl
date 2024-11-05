@@ -70,10 +70,10 @@ def main():
                     import_module(trainer_module_map[trainer_spec['name']]),
                     trainer_spec['name']
                 )
-                immutables = trainer_spec['immutables']['predict']
+                hparams = trainer_spec['hparams']['predict']
                 task_id = metadata['length']
                 predictor = trainer_class.predictor_class.from_checkpoint(
-                    model, model_spec, immutables,
+                    model, model_spec, hparams,
                     results_path / f'ckpt/{trainer_id}_{task_id}'
                 )
                 metric = getattr(
@@ -96,12 +96,12 @@ def main():
             import_module(trainer_module_map[trainer_spec['name']]),
             trainer_spec['name']
         )
-        immutables = trainer_spec['immutables']['predict']
+        hparams = trainer_spec['hparams']['predict']
 
         for task_id in range(1, metadata['length'] + 1):
             path = results_path / f'ckpt/{trainer_id}_{task_id}'
             predictor = trainer_class.predictor_class.from_checkpoint(
-                model, model_spec, immutables, path
+                model, model_spec, hparams, path
             )
             result = {'trainer_id': trainer_id, 'task_id': task_id}
             for metric in exp['evaluation']['metrics']:

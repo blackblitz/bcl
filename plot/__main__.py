@@ -102,14 +102,14 @@ def main():
             import_module(trainer_module_map[trainer_spec['name']]),
             trainer_spec['name']
         )
-        immutables = trainer_spec['immutables']['predict']
+        hparams = trainer_spec['hparams']['predict']
 
         for j in range(metadata['length']):
             task_id = j + 1
             xs, ys = read_task(ts_path, 'training', task_id)
             path = results_path / f'ckpt/{trainer_id}_{task_id}'
             predictor = trainer_class.predictor_class.from_checkpoint(
-                model, model_spec, immutables, path
+                model, model_spec, hparams, path
             )
             plotter.plot_pred(axes[j, i], predictor)
             plotter.plot_dataset(axes[j, i], xs, ys)

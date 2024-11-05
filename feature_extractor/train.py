@@ -15,9 +15,9 @@ from dataops.io import read_task, read_toml
 from evaluate import metrics
 from models import ModelSpec, module_map, NLL
 
-from train.predictor.stateful import MAPPredictor
+from train.predictor import MAPPredictor
 
-from .trainer import Trainer
+from train.trainer.smi.simple import Finetuning
 
 
 def main():
@@ -56,8 +56,7 @@ def main():
     print(
         model.tabulate(
             random.key(1337),
-            jnp.zeros((1, 32, 32, 3)),
-            train=False
+            jnp.zeros((1, 32, 32, 3))
         )
     )
     model_spec = ModelSpec(
@@ -65,22 +64,21 @@ def main():
         in_shape=exp['feature_extractor']['spec']['in_shape'],
         out_shape=exp['feature_extractor']['spec']['out_shape']
     )
-    trainer = Trainer(
+    trainer = Finetuning(
         model, model_spec,
-        exp['feature_extractor']['immutables']['train'], len(train_ys)
+        exp['feature_extractor']['hparams']['train']
     )
-    for epoch_num, (state, var) in enumerate(tqdm(
+    for epoch_num, state in enumerate(tqdm(
         trainer.train(train_xs, train_ys),
-        total=exp['feature_extractor']['immutables']['train']['n_epochs'],
+        total=exp['feature_extractor']['hparams']['train']['n_epochs'],
         leave=False, unit='epoch'
     ), start=1):
         pass
         predictor = MAPPredictor(
             model,
             model_spec,
-            exp['feature_extractor']['immutables']['predict'],
-            state.params,
-            var
+            exp['feature_extractor']['hparams']['predict'],
+            state.params
         )
         result = {'epoch_num': epoch_num}
         for metric in exp['evaluation']['metrics']:
@@ -93,7 +91,7 @@ def main():
     ocp.test_utils.erase_and_create_empty(path)
     path.rmdir()
     with ocp.StandardCheckpointer() as ckpter:
-        ckpter.save(path, {'params': state.params} | var)
+        ckpter.save(path, trainer.state.params)
 
 
 if __name__ == '__main__':
