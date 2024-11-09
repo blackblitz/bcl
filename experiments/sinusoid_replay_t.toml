@@ -29,23 +29,24 @@ id = "tsfsvi8"
 name = "PriorExactTSFSVI"
 label = "t S-FSVI\n($\\nu=8$)"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.001
 batch_size = 64
 beta = 1.0
 coreset_batch_size_per_task = 16
 coreset_prob = 0.5
 coreset_size_per_task = 32
 df = 8
-lr = 0.001
+lr_schedule = "constant"
 noise_init = true
-noise_maxval = 4.0
-noise_minval = -4.0
+noise_maxval = [ 3.0, 1.5 ]
+noise_minval = [ -0.5, -1.0]
 n_epochs = 100
 invscale = 1.0
 sample_size = 10
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 df = 8
 sample_size = 100
 seed = 1337
@@ -55,23 +56,24 @@ id = "tsfsvi7"
 name = "PriorExactTSFSVI"
 label = "t S-FSVI\n($\\nu=7$)"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.001
 batch_size = 64
 beta = 1.0
 coreset_batch_size_per_task = 16
 coreset_prob = 0.5
 coreset_size_per_task = 32
 df = 7
-lr = 0.001
+lr_schedule = "constant"
 noise_init = true
-noise_maxval = 4.0
-noise_minval = -4.0
+noise_maxval = [ 3.0, 1.5 ]
+noise_minval = [ -0.5, -1.0]
 n_epochs = 100
 invscale = 1.0
 sample_size = 10
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 df = 7
 sample_size = 100
 seed = 1337
@@ -81,23 +83,24 @@ id = "tsfsvi6"
 name = "PriorExactTSFSVI"
 label = "t S-FSVI\n($\\nu=6$)"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.001
 batch_size = 64
 beta = 1.0
 coreset_batch_size_per_task = 16
 coreset_prob = 0.5
 coreset_size_per_task = 32
 df = 6
-lr = 0.001
+lr_schedule = "constant"
 noise_init = true
-noise_maxval = 4.0
-noise_minval = -4.0
+noise_maxval = [ 3.0, 1.5 ]
+noise_minval = [ -0.5, -1.0]
 n_epochs = 100
 invscale = 1.0
 sample_size = 10
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 df = 6
 sample_size = 100
 seed = 1337
@@ -107,23 +110,24 @@ id = "tsfsvi5"
 name = "PriorExactTSFSVI"
 label = "t S-FSVI\n($\\nu=5$)"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.001
 batch_size = 64
 beta = 1.0
 coreset_batch_size_per_task = 16
 coreset_prob = 0.5
 coreset_size_per_task = 32
 df = 5
-lr = 0.001
+lr_schedule = "constant"
 noise_init = true
-noise_maxval = 4.0
-noise_minval = -4.0
+noise_maxval = [ 3.0, 1.5 ]
+noise_minval = [ -0.5, -1.0]
 n_epochs = 100
 invscale = 1.0
 sample_size = 10
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 df = 5
 sample_size = 100
 seed = 1337
@@ -133,23 +137,24 @@ id = "tsfsvi4"
 name = "PriorExactTSFSVI"
 label = "t S-FSVI\n($\\nu=4$)"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.001
 batch_size = 64
 beta = 1.0
 coreset_batch_size_per_task = 16
 coreset_prob = 0.5
 coreset_size_per_task = 32
 df = 4
-lr = 0.001
+lr_schedule = "constant"
 noise_init = true
-noise_maxval = 4.0
-noise_minval = -4.0
+noise_maxval = [ 3.0, 1.5 ]
+noise_minval = [ -0.5, -1.0]
 n_epochs = 100
 invscale = 1.0
 sample_size = 10
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 df = 4
 sample_size = 100
 seed = 1337
@@ -159,23 +164,24 @@ id = "tsfsvi3"
 name = "PriorExactTSFSVI"
 label = "t S-FSVI\n($\\nu=3$)"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.001
 batch_size = 64
 beta = 1.0
 coreset_batch_size_per_task = 16
 coreset_prob = 0.5
 coreset_size_per_task = 32
 df = 3
-lr = 0.001
+lr_schedule = "constant"
 noise_init = true
-noise_maxval = 4.0
-noise_minval = -4.0
+noise_maxval = [ 3.0, 1.5 ]
+noise_minval = [ -0.5, -1.0]
 n_epochs = 100
 invscale = 1.0
 sample_size = 10
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 df = 3
 sample_size = 100
 seed = 1337
@@ -185,23 +191,24 @@ id = "tsfsvi2"
 name = "PriorExactTSFSVI"
 label = "t S-FSVI\n($\\nu=2$)"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.001
 batch_size = 64
 beta = 1.0
 coreset_batch_size_per_task = 16
 coreset_prob = 0.5
 coreset_size_per_task = 32
 df = 2
-lr = 0.001
+lr_schedule = "constant"
 noise_init = true
-noise_maxval = 4.0
-noise_minval = -4.0
+noise_maxval = [ 3.0, 1.5 ]
+noise_minval = [ -0.5, -1.0]
 n_epochs = 100
 invscale = 1.0
 sample_size = 10
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 df = 2
 sample_size = 100
 seed = 1337
@@ -211,23 +218,24 @@ id = "tsfsvi1"
 name = "PriorExactTSFSVI"
 label = "t S-FSVI\n($\\nu=1$)"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
+base_lr = 0.001
 batch_size = 64
 beta = 1.0
 coreset_batch_size_per_task = 16
 coreset_prob = 0.5
 coreset_size_per_task = 32
 df = 1
-lr = 0.001
+lr_schedule = "constant"
 noise_init = true
-noise_maxval = 4.0
-noise_minval = -4.0
+noise_maxval = [ 3.0, 1.5 ]
+noise_minval = [ -0.5, -1.0]
 n_epochs = 100
 invscale = 1.0
 sample_size = 10
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 df = 1
 sample_size = 100
 seed = 1337

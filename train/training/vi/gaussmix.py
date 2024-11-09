@@ -55,6 +55,23 @@ def get_param(params):
     }
 
 
+def get_output(params, apply, xs):
+    """
+    Compute the parameters of the outputs by approximating conditionally.
+
+    Affine approximation is done by using the Jacobian matrix of the neural
+    network with respect to the parameters at the mean of the corresponding
+    Gaussian component.
+    """
+    param = get_param(params)
+    mean = vmap(lambda m: apply({'params': m}, xs))(param['mean'])
+    var = vmap(
+        empirical_ntk(apply, (), (0, 1), 0),
+        in_axes=(None, None, 0, 0)
+    )(xs, None, {'params': param['mean']}, {'params': param['var']})
+    return {'logit': params['logit'], 'mean': mean, 'var': var}
+
+
 def get_output_mean(params, apply, xs):
     """
     Compute the parameters of the outputs by approximating at the mean.

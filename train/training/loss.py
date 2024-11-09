@@ -237,8 +237,8 @@ def gmfvfe_ub(nll, beta, prior, apply):
         param_sample = gaussmix.transform(
             gaussmix.get_param(params), param_sample
         )
-        q = gaussmix.get_output_avg(params, apply, ind_xs)
-        p = gaussmix.get_output_avg(prior, apply, ind_xs)
+        q = gaussmix.get_output(params, apply, ind_xs)
+        p = gaussmix.get_output(prior, apply, ind_xs)
         output_sample = gaussmix.transform(q, output_sample)
         return (
             vmap(nll, in_axes=(0, None, None))(param_sample, xs, ys).mean()
@@ -254,8 +254,8 @@ def gmfvfe_mc(nll, beta, prior, apply):
         param_sample = gaussmix.transform(
             gaussmix.get_param(params), param_sample
         )
-        q = gaussmix.get_output_avg(params, apply, ind_xs)
-        p = gaussmix.get_output_avg(prior, apply, ind_xs)
+        q = gaussmix.get_output(params, apply, ind_xs)
+        p = gaussmix.get_output(prior, apply, ind_xs)
         output_sample = gaussmix.transform(q, output_sample)
         return (
             vmap(nll, in_axes=(0, None, None))(param_sample, xs, ys).mean()

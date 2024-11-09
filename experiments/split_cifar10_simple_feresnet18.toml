@@ -23,7 +23,7 @@ in_shape = [ 32, 32, 3 ]
 out_shape = [ 100 ]
 
 [feature_extractor.hparams.train]
-base_lr = 0.01
+base_lr = 0.001
 batch_size = 32
 lr_schedule = "onecycle"
 n_epochs = 20
@@ -48,7 +48,7 @@ id = "joint"
 name = "Joint"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.001
 batch_size = 32
 lr_schedule = "constant"
 n_epochs = 10
@@ -62,7 +62,7 @@ id = "finetuning"
 name = "Finetuning"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.001
 batch_size = 32
 lr_schedule = "constant"
 n_epochs = 10
@@ -76,7 +76,7 @@ id = "ewc1"
 name = "ElasticWeightConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.001
 batch_size = 32
 lambda = 0.01
 lr_schedule = "constant"
@@ -91,7 +91,7 @@ id = "ewc2"
 name = "ElasticWeightConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.001
 batch_size = 32
 lambda = 0.1
 lr_schedule = "constant"
@@ -106,7 +106,7 @@ id = "ewc3"
 name = "ElasticWeightConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.001
 batch_size = 32
 lambda = 1.0
 lr_schedule = "constant"
@@ -121,7 +121,7 @@ id = "ewc4"
 name = "ElasticWeightConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.001
 batch_size = 32
 lambda = 10.0
 lr_schedule = "constant"
@@ -136,7 +136,7 @@ id = "ewc5"
 name = "ElasticWeightConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.001
 batch_size = 32
 lambda = 100.0
 lr_schedule = "constant"
@@ -151,7 +151,7 @@ id = "si1"
 name = "SynapticIntelligence"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.001
 batch_size = 32
 lambda = 0.01
 lr_schedule = "constant"
@@ -167,7 +167,7 @@ id = "si2"
 name = "SynapticIntelligence"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.001
 batch_size = 32
 lambda = 0.1
 lr_schedule = "constant"
@@ -183,7 +183,7 @@ id = "si3"
 name = "SynapticIntelligence"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.001
 batch_size = 32
 lambda = 1.0
 lr_schedule = "constant"
@@ -199,7 +199,7 @@ id = "si4"
 name = "SynapticIntelligence"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.001
 batch_size = 32
 lambda = 10.0
 lr_schedule = "constant"
@@ -215,7 +215,7 @@ id = "si5"
 name = "SynapticIntelligence"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.001
 batch_size = 32
 lambda = 100.0
 lr_schedule = "constant"
@@ -231,7 +231,7 @@ id = "aqc1"
 name = "AutodiffQuadraticConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.001
 batch_size = 32
 lambda = 0.01
 lr_schedule = "constant"
@@ -246,7 +246,7 @@ id = "aqc2"
 name = "AutodiffQuadraticConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.001
 batch_size = 32
 lambda = 0.1
 lr_schedule = "constant"
@@ -261,7 +261,7 @@ id = "aqc3"
 name = "AutodiffQuadraticConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.001
 batch_size = 32
 lambda = 1.0
 lr_schedule = "constant"
@@ -276,7 +276,7 @@ id = "aqc4"
 name = "AutodiffQuadraticConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.001
 batch_size = 32
 lambda = 10.0
 lr_schedule = "constant"
@@ -291,7 +291,7 @@ id = "aqc5"
 name = "AutodiffQuadraticConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.001
 batch_size = 32
 lambda = 100.0
 lr_schedule = "constant"
@@ -306,11 +306,11 @@ id = "nc1"
 name = "NeuralConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.001
 batch_size = 32
 con_dense0 = 256
 con_dense1 = 256
-con_base_lr = 0.01
+con_base_lr = 0.001
 con_lr_schedule = "constant"
 con_n_steps = 1000
 con_precision = 0.1
@@ -328,11 +328,11 @@ id = "nc2"
 name = "NeuralConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.001
 batch_size = 32
 con_dense0 = 256
 con_dense1 = 256
-con_base_lr = 0.01
+con_base_lr = 0.001
 con_lr_schedule = "constant"
 con_n_steps = 1000
 con_precision = 0.1
@@ -350,11 +350,11 @@ id = "nc3"
 name = "NeuralConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.001
 batch_size = 32
 con_dense0 = 256
 con_dense1 = 256
-con_base_lr = 0.01
+con_base_lr = 0.001
 con_lr_schedule = "constant"
 con_n_steps = 1000
 con_precision = 0.1
@@ -372,11 +372,11 @@ id = "nc4"
 name = "NeuralConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.001
 batch_size = 32
 con_dense0 = 256
 con_dense1 = 256
-con_base_lr = 0.01
+con_base_lr = 0.001
 con_lr_schedule = "constant"
 con_n_steps = 1000
 con_precision = 0.1
@@ -394,11 +394,11 @@ id = "nc5"
 name = "NeuralConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.001
 batch_size = 32
 con_dense0 = 256
 con_dense1 = 256
-con_base_lr = 0.01
+con_base_lr = 0.001
 con_lr_schedule = "constant"
 con_n_steps = 1000
 con_precision = 0.1
@@ -416,7 +416,7 @@ id = "gvcl"
 name = "GVCL"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.001
 batch_size = 32
 lr_schedule = "constant"
 mc = true
@@ -434,7 +434,7 @@ id = "gmvcl"
 name = "GMVCL"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.001
 batch_size = 32
 lr_schedule = "constant"
 mc = true
@@ -454,7 +454,7 @@ id = "gsfsvi"
 name = "SimpleGSFSVI"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.001
 batch_size = 32
 lr_schedule = "constant"
 mc = true
@@ -475,7 +475,7 @@ id = "gmsfsvi"
 name = "SimpleGMSFSVI"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.001
 batch_size = 32
 mc = true
 lr_schedule = "constant"

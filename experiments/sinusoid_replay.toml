@@ -29,54 +29,37 @@ id = "joint"
 name = "Joint"
 label = "Joint training"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
 base_lr = 0.001
 batch_size = 64
 lr_schedule = "constant"
 n_epochs = 100
-precision = 1.0
+precision = 0.1
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 
 [[trainers]]
 id = "finetuning"
 name = "Finetuning"
 label = "Finetuning"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
 base_lr = 0.001
 batch_size = 64
 lr_schedule = "constant"
 n_epochs = 100
-precision = 1.0
+precision = 0.1
 seed = 1337
 
-[trainers.immutables.predict]
-
-[[trainers]]
-id = "gdumb"
-name = "GDumb"
-label = "GDumb"
-
-[trainers.immutables.train]
-base_lr = 0.001
-batch_size = 64
-coreset_batch_size = 16
-coreset_size = 32
-lr_schedule = "constant"
-n_epochs = 100
-precision = 1.0
-seed = 1337
-
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 
 [[trainers]]
 id = "gvcl"
 name = "GVCL"
 label = "G VCL"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
 base_lr = 0.001
 batch_size = 64
 lr_schedule = "constant"
@@ -86,7 +69,7 @@ precision = 1.0
 sample_size = 10
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 sample_size = 100
 seed = 1337
 
@@ -95,18 +78,18 @@ id = "tvcl"
 name = "TVCL"
 label = "t VCL"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
 base_lr = 0.001
 batch_size = 64
-df = 10
+df = 8
 lr_schedule = "constant"
 n_epochs = 100
 invscale = 1.0
 sample_size = 10
 seed = 1337
 
-[trainers.immutables.predict]
-df = 10
+[trainers.hparams.predict]
+df = 8
 sample_size = 100
 seed = 1337
 
@@ -115,7 +98,7 @@ id = "gmvcl"
 name = "GMVCL"
 label = "GM VCL"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
 base_lr = 0.001
 batch_size = 64
 lr_schedule = "constant"
@@ -126,7 +109,7 @@ precision = 1.0
 sample_size = 10
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 n_comp = 3
 sample_size = 100
 seed = 1337
@@ -136,7 +119,7 @@ id = "gsfsvi"
 name = "PriorExactGSFSVI"
 label = "G S-FSVI"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
 base_lr = 0.001
 batch_size = 64
 beta = 1.0
@@ -153,7 +136,7 @@ precision = 1.0
 sample_size = 10
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 sample_size = 100
 seed = 1337
 
@@ -162,25 +145,25 @@ id = "tsfsvi"
 name = "PriorExactTSFSVI"
 label = "t S-FSVI"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
 base_lr = 0.001
 batch_size = 64
 beta = 1.0
 coreset_batch_size_per_task = 16
 coreset_prob = 0.5
 coreset_size_per_task = 32
-df = 10
+df = 8
 lr_schedule = "constant"
 noise_init = true
-noise_maxval = 4.0
-noise_minval = -4.0
+noise_maxval = [ 3.0, 1.5 ]
+noise_minval = [ -0.5, -1.0]
 n_epochs = 100
 invscale = 1.0
 sample_size = 10
 seed = 1337
 
-[trainers.immutables.predict]
-df = 10
+[trainers.hparams.predict]
+df = 8
 sample_size = 100
 seed = 1337
 
@@ -189,7 +172,7 @@ id = "gmsfsvi"
 name = "PriorExactGMSFSVI"
 label = "GM S-FSVI"
 
-[trainers.immutables.train]
+[trainers.hparams.train]
 base_lr = 0.001
 batch_size = 64
 beta = 1.0
@@ -199,15 +182,15 @@ coreset_size_per_task = 32
 lr_schedule = "constant"
 mc = true
 noise_init = true
-noise_maxval = 4.0
-noise_minval = -4.0
+noise_maxval = [ 3.0, 1.5 ]
+noise_minval = [ -0.5, -1.0]
 n_comp = 3
 n_epochs = 100
 precision = 1.0
 sample_size = 10
 seed = 1337
 
-[trainers.immutables.predict]
+[trainers.hparams.predict]
 n_comp = 3
 sample_size = 100
 seed = 1337
