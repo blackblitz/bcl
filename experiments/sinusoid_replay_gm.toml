@@ -30,13 +30,12 @@ name = "PriorExactGMSFSVI"
 label = "GM S-FSVI\n($m=1$)"
 
 [trainers.hparams.train]
-base_lr = 0.001
+base_lr = 0.01
 batch_size = 64
-beta = 1.0
 coreset_batch_size_per_task = 16
 coreset_prob = 0.5
 coreset_size_per_task = 32
-lr_schedule = "constant"
+lr_schedule = "onecycle"
 mc = true
 noise_init = true
 noise_maxval = [ 3.0, 1.5 ]
@@ -58,13 +57,12 @@ name = "PriorExactGMSFSVI"
 label = "GM S-FSVI\n($m=2$)"
 
 [trainers.hparams.train]
-base_lr = 0.001
+base_lr = 0.01
 batch_size = 64
-beta = 1.0
 coreset_batch_size_per_task = 16
 coreset_prob = 0.5
 coreset_size_per_task = 32
-lr_schedule = "constant"
+lr_schedule = "onecycle"
 mc = true
 noise_init = true
 noise_maxval = [ 3.0, 1.5 ]
@@ -86,13 +84,12 @@ name = "PriorExactGMSFSVI"
 label = "GM S-FSVI\n($m=3$)"
 
 [trainers.hparams.train]
-base_lr = 0.001
+base_lr = 0.01
 batch_size = 64
-beta = 1.0
 coreset_batch_size_per_task = 16
 coreset_prob = 0.5
 coreset_size_per_task = 32
-lr_schedule = "constant"
+lr_schedule = "onecycle"
 mc = true
 noise_init = true
 noise_maxval = [ 3.0, 1.5 ]
@@ -114,13 +111,12 @@ name = "PriorExactGMSFSVI"
 label = "GM S-FSVI\n($m=4$)"
 
 [trainers.hparams.train]
-base_lr = 0.001
+base_lr = 0.01
 batch_size = 64
-beta = 1.0
 coreset_batch_size_per_task = 16
 coreset_prob = 0.5
 coreset_size_per_task = 32
-lr_schedule = "constant"
+lr_schedule = "onecycle"
 mc = true
 noise_init = true
 noise_maxval = [ 3.0, 1.5 ]
@@ -142,13 +138,12 @@ name = "PriorExactGMSFSVI"
 label = "GM S-FSVI\n($m=5$)"
 
 [trainers.hparams.train]
-base_lr = 0.001
+base_lr = 0.01
 batch_size = 64
-beta = 1.0
 coreset_batch_size_per_task = 16
 coreset_prob = 0.5
 coreset_size_per_task = 32
-lr_schedule = "constant"
+lr_schedule = "onecycle"
 mc = true
 noise_init = true
 noise_maxval = [ 3.0, 1.5 ]
@@ -170,13 +165,12 @@ name = "PriorExactGMSFSVI"
 label = "GM S-FSVI\n($m=6$)"
 
 [trainers.hparams.train]
-base_lr = 0.001
+base_lr = 0.01
 batch_size = 64
-beta = 1.0
 coreset_batch_size_per_task = 16
 coreset_prob = 0.5
 coreset_size_per_task = 32
-lr_schedule = "constant"
+lr_schedule = "onecycle"
 mc = true
 noise_init = true
 noise_maxval = [ 3.0, 1.5 ]
@@ -198,13 +192,12 @@ name = "PriorExactGMSFSVI"
 label = "GM S-FSVI\n($m=7$)"
 
 [trainers.hparams.train]
-base_lr = 0.001
+base_lr = 0.01
 batch_size = 64
-beta = 1.0
 coreset_batch_size_per_task = 16
 coreset_prob = 0.5
 coreset_size_per_task = 32
-lr_schedule = "constant"
+lr_schedule = "onecycle"
 mc = true
 noise_init = true
 noise_maxval = [ 3.0, 1.5 ]
@@ -226,13 +219,12 @@ name = "PriorExactGMSFSVI"
 label = "GM S-FSVI\n($m=8$)"
 
 [trainers.hparams.train]
-base_lr = 0.001
+base_lr = 0.01
 batch_size = 64
-beta = 1.0
 coreset_batch_size_per_task = 16
 coreset_prob = 0.5
 coreset_size_per_task = 32
-lr_schedule = "constant"
+lr_schedule = "onecycle"
 mc = true
 noise_init = true
 noise_maxval = [ 3.0, 1.5 ]

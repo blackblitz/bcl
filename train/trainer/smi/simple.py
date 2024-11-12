@@ -13,7 +13,7 @@ from models import NLL
 from models.fcnn import FCNN3
 
 from . import MAPMixin
-from .. import ContinualTrainer
+from .. import OptimizingTrainer
 from ..coreset import JointCoreset
 from ...training import init, make_step
 from ...training.loss import (
@@ -21,7 +21,7 @@ from ...training.loss import (
 )
 
 
-class Joint(MAPMixin, ContinualTrainer):
+class Joint(MAPMixin, OptimizingTrainer):
     """Joint training."""
 
     def __init__(self, model, mspec, hparams):
@@ -60,7 +60,7 @@ class Joint(MAPMixin, ContinualTrainer):
         """Update mutables."""
 
 
-class RegularTrainer(MAPMixin, ContinualTrainer):
+class RegularTrainer(MAPMixin, OptimizingTrainer):
     """Mixin for regular SGD."""
 
     def update_state(self, xs, ys):

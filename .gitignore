@@ -2,6 +2,7 @@
 ckpt/
 coreset.zarr/
 data/
+experiments/test.toml
 features/
 logs/
 plots/

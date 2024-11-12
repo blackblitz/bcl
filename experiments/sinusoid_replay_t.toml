@@ -25,19 +25,122 @@ in_shape = [ 2 ]
 out_shape = [ 1 ]
 
 [[trainers]]
+id = "tsfsvi1024"
+name = "PriorExactTSFSVI"
+label = "t S-FSVI\n($\\nu=1024$)"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+coreset_batch_size_per_task = 16
+coreset_prob = 0.5
+coreset_size_per_task = 32
+df = 1024
+lr_schedule = "onecycle"
+noise_init = true
+noise_maxval = [ 3.0, 1.5 ]
+noise_minval = [ -0.5, -1.0]
+n_epochs = 100
+invscale = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+df = 1024
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "tsfsvi256"
+name = "PriorExactTSFSVI"
+label = "t S-FSVI\n($\\nu=256$)"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+coreset_batch_size_per_task = 16
+coreset_prob = 0.5
+coreset_size_per_task = 32
+df = 256
+lr_schedule = "onecycle"
+noise_init = true
+noise_maxval = [ 3.0, 1.5 ]
+noise_minval = [ -0.5, -1.0]
+n_epochs = 100
+invscale = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+df = 256
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "tsfsvi64"
+name = "PriorExactTSFSVI"
+label = "t S-FSVI\n($\\nu=64$)"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+coreset_batch_size_per_task = 16
+coreset_prob = 0.5
+coreset_size_per_task = 32
+df = 64
+lr_schedule = "onecycle"
+noise_init = true
+noise_maxval = [ 3.0, 1.5 ]
+noise_minval = [ -0.5, -1.0]
+n_epochs = 100
+invscale = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+df = 64
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "tsfsvi16"
+name = "PriorExactTSFSVI"
+label = "t S-FSVI\n($\\nu=16$)"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+coreset_batch_size_per_task = 16
+coreset_prob = 0.5
+coreset_size_per_task = 32
+df = 16
+lr_schedule = "onecycle"
+noise_init = true
+noise_maxval = [ 3.0, 1.5 ]
+noise_minval = [ -0.5, -1.0]
+n_epochs = 100
+invscale = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+df = 16
+sample_size = 100
+seed = 1337
+
+[[trainers]]
 id = "tsfsvi8"
 name = "PriorExactTSFSVI"
 label = "t S-FSVI\n($\\nu=8$)"
 
 [trainers.hparams.train]
-base_lr = 0.001
+base_lr = 0.01
 batch_size = 64
-beta = 1.0
 coreset_batch_size_per_task = 16
 coreset_prob = 0.5
 coreset_size_per_task = 32
 df = 8
-lr_schedule = "constant"
+lr_schedule = "onecycle"
 noise_init = true
 noise_maxval = [ 3.0, 1.5 ]
 noise_minval = [ -0.5, -1.0]
@@ -48,87 +151,6 @@ seed = 1337
 
 [trainers.hparams.predict]
 df = 8
-sample_size = 100
-seed = 1337
-
-[[trainers]]
-id = "tsfsvi7"
-name = "PriorExactTSFSVI"
-label = "t S-FSVI\n($\\nu=7$)"
-
-[trainers.hparams.train]
-base_lr = 0.001
-batch_size = 64
-beta = 1.0
-coreset_batch_size_per_task = 16
-coreset_prob = 0.5
-coreset_size_per_task = 32
-df = 7
-lr_schedule = "constant"
-noise_init = true
-noise_maxval = [ 3.0, 1.5 ]
-noise_minval = [ -0.5, -1.0]
-n_epochs = 100
-invscale = 1.0
-sample_size = 10
-seed = 1337
-
-[trainers.hparams.predict]
-df = 7
-sample_size = 100
-seed = 1337
-
-[[trainers]]
-id = "tsfsvi6"
-name = "PriorExactTSFSVI"
-label = "t S-FSVI\n($\\nu=6$)"
-
-[trainers.hparams.train]
-base_lr = 0.001
-batch_size = 64
-beta = 1.0
-coreset_batch_size_per_task = 16
-coreset_prob = 0.5
-coreset_size_per_task = 32
-df = 6
-lr_schedule = "constant"
-noise_init = true
-noise_maxval = [ 3.0, 1.5 ]
-noise_minval = [ -0.5, -1.0]
-n_epochs = 100
-invscale = 1.0
-sample_size = 10
-seed = 1337
-
-[trainers.hparams.predict]
-df = 6
-sample_size = 100
-seed = 1337
-
-[[trainers]]
-id = "tsfsvi5"
-name = "PriorExactTSFSVI"
-label = "t S-FSVI\n($\\nu=5$)"
-
-[trainers.hparams.train]
-base_lr = 0.001
-batch_size = 64
-beta = 1.0
-coreset_batch_size_per_task = 16
-coreset_prob = 0.5
-coreset_size_per_task = 32
-df = 5
-lr_schedule = "constant"
-noise_init = true
-noise_maxval = [ 3.0, 1.5 ]
-noise_minval = [ -0.5, -1.0]
-n_epochs = 100
-invscale = 1.0
-sample_size = 10
-seed = 1337
-
-[trainers.hparams.predict]
-df = 5
 sample_size = 100
 seed = 1337
 
@@ -138,14 +160,13 @@ name = "PriorExactTSFSVI"
 label = "t S-FSVI\n($\\nu=4$)"
 
 [trainers.hparams.train]
-base_lr = 0.001
+base_lr = 0.01
 batch_size = 64
-beta = 1.0
 coreset_batch_size_per_task = 16
 coreset_prob = 0.5
 coreset_size_per_task = 32
 df = 4
-lr_schedule = "constant"
+lr_schedule = "onecycle"
 noise_init = true
 noise_maxval = [ 3.0, 1.5 ]
 noise_minval = [ -0.5, -1.0]
@@ -156,33 +177,6 @@ seed = 1337
 
 [trainers.hparams.predict]
 df = 4
-sample_size = 100
-seed = 1337
-
-[[trainers]]
-id = "tsfsvi3"
-name = "PriorExactTSFSVI"
-label = "t S-FSVI\n($\\nu=3$)"
-
-[trainers.hparams.train]
-base_lr = 0.001
-batch_size = 64
-beta = 1.0
-coreset_batch_size_per_task = 16
-coreset_prob = 0.5
-coreset_size_per_task = 32
-df = 3
-lr_schedule = "constant"
-noise_init = true
-noise_maxval = [ 3.0, 1.5 ]
-noise_minval = [ -0.5, -1.0]
-n_epochs = 100
-invscale = 1.0
-sample_size = 10
-seed = 1337
-
-[trainers.hparams.predict]
-df = 3
 sample_size = 100
 seed = 1337
 
@@ -192,14 +186,13 @@ name = "PriorExactTSFSVI"
 label = "t S-FSVI\n($\\nu=2$)"
 
 [trainers.hparams.train]
-base_lr = 0.001
+base_lr = 0.01
 batch_size = 64
-beta = 1.0
 coreset_batch_size_per_task = 16
 coreset_prob = 0.5
 coreset_size_per_task = 32
 df = 2
-lr_schedule = "constant"
+lr_schedule = "onecycle"
 noise_init = true
 noise_maxval = [ 3.0, 1.5 ]
 noise_minval = [ -0.5, -1.0]
@@ -219,14 +212,13 @@ name = "PriorExactTSFSVI"
 label = "t S-FSVI\n($\\nu=1$)"
 
 [trainers.hparams.train]
-base_lr = 0.001
+base_lr = 0.01
 batch_size = 64
-beta = 1.0
 coreset_batch_size_per_task = 16
 coreset_prob = 0.5
 coreset_size_per_task = 32
 df = 1
-lr_schedule = "constant"
+lr_schedule = "onecycle"
 noise_init = true
 noise_maxval = [ 3.0, 1.5 ]
 noise_minval = [ -0.5, -1.0]

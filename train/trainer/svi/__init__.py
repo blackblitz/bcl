@@ -2,13 +2,13 @@
 
 from jax import random
 
-from .. import ContinualTrainer
+from .. import OptimizingTrainer
 from ...predictor import GaussPredictor, GaussmixPredictor, TPredictor
 from ...training import gauss_init, gaussmix_init, t_init
 from ...training.vi import gauss, gaussmix, t
 
 
-class SVI(ContinualTrainer):
+class SVI(OptimizingTrainer):
     """Sequential variational inference."""
 
     def __init__(self, model, mspec, hparams):

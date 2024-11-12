@@ -5,13 +5,13 @@ from jax import jit, random
 from dataops.array import batch, shuffle
 
 from . import MAPMixin
-from .. import ContinualTrainer
+from .. import OptimizingTrainer
 from ..coreset import GDumbCoreset
 from ...training import make_step
 from ...training.loss import concat, l2_reg
 
 
-class ExactReplay(MAPMixin, ContinualTrainer):
+class ExactReplay(MAPMixin, OptimizingTrainer):
     """Abstract class for exact replay."""
 
     def update_loss(self, xs, ys):

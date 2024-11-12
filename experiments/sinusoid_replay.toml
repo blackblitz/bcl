@@ -30,9 +30,9 @@ name = "Joint"
 label = "Joint training"
 
 [trainers.hparams.train]
-base_lr = 0.001
+base_lr = 0.01
 batch_size = 64
-lr_schedule = "constant"
+lr_schedule = "onecycle"
 n_epochs = 100
 precision = 0.1
 seed = 1337
@@ -45,9 +45,9 @@ name = "Finetuning"
 label = "Finetuning"
 
 [trainers.hparams.train]
-base_lr = 0.001
+base_lr = 0.01
 batch_size = 64
-lr_schedule = "constant"
+lr_schedule = "onecycle"
 n_epochs = 100
 precision = 0.1
 seed = 1337
@@ -60,9 +60,9 @@ name = "GVCL"
 label = "G VCL"
 
 [trainers.hparams.train]
-base_lr = 0.001
+base_lr = 0.01
 batch_size = 64
-lr_schedule = "constant"
+lr_schedule = "onecycle"
 mc = true
 n_epochs = 100
 precision = 1.0
@@ -79,10 +79,10 @@ name = "TVCL"
 label = "t VCL"
 
 [trainers.hparams.train]
-base_lr = 0.001
+base_lr = 0.01
 batch_size = 64
 df = 8
-lr_schedule = "constant"
+lr_schedule = "onecycle"
 n_epochs = 100
 invscale = 1.0
 sample_size = 10
@@ -99,9 +99,9 @@ name = "GMVCL"
 label = "GM VCL"
 
 [trainers.hparams.train]
-base_lr = 0.001
+base_lr = 0.01
 batch_size = 64
-lr_schedule = "constant"
+lr_schedule = "onecycle"
 mc = true
 n_comp = 3
 n_epochs = 100
@@ -113,24 +113,23 @@ seed = 1337
 n_comp = 3
 sample_size = 100
 seed = 1337
-
+ 
 [[trainers]]
 id = "gsfsvi"
 name = "PriorExactGSFSVI"
 label = "G S-FSVI"
 
 [trainers.hparams.train]
-base_lr = 0.001
+base_lr = 0.01
 batch_size = 64
-beta = 1.0
 coreset_batch_size_per_task = 16
 coreset_prob = 0.5
 coreset_size_per_task = 32
-lr_schedule = "constant"
+lr_schedule = "onecycle"
 mc = true
 noise_init = true
-noise_maxval = 4.0
-noise_minval = -4.0
+noise_maxval = [ 3.0, 1.5 ]
+noise_minval = [ -0.5, -1.0 ]
 n_epochs = 100
 precision = 1.0
 sample_size = 10
@@ -146,17 +145,16 @@ name = "PriorExactTSFSVI"
 label = "t S-FSVI"
 
 [trainers.hparams.train]
-base_lr = 0.001
+base_lr = 0.01
 batch_size = 64
-beta = 1.0
 coreset_batch_size_per_task = 16
 coreset_prob = 0.5
 coreset_size_per_task = 32
 df = 8
-lr_schedule = "constant"
+lr_schedule = "onecycle"
 noise_init = true
 noise_maxval = [ 3.0, 1.5 ]
-noise_minval = [ -0.5, -1.0]
+noise_minval = [ -0.5, -1.0 ]
 n_epochs = 100
 invscale = 1.0
 sample_size = 10
@@ -173,17 +171,16 @@ name = "PriorExactGMSFSVI"
 label = "GM S-FSVI"
 
 [trainers.hparams.train]
-base_lr = 0.001
+base_lr = 0.01
 batch_size = 64
-beta = 1.0
 coreset_batch_size_per_task = 16
 coreset_prob = 0.5
 coreset_size_per_task = 32
-lr_schedule = "constant"
+lr_schedule = "onecycle"
 mc = true
 noise_init = true
 noise_maxval = [ 3.0, 1.5 ]
-noise_minval = [ -0.5, -1.0]
+noise_minval = [ -0.5, -1.0 ]
 n_comp = 3
 n_epochs = 100
 precision = 1.0

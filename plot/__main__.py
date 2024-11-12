@@ -2,6 +2,7 @@
 
 import argparse
 from importlib import import_module
+from multiprocessing import cpu_count
 from pathlib import Path
 
 import matplotlib.pyplot as plt
@@ -81,13 +82,20 @@ def main():
         import_module(models_module_map[exp['model']['name']]),
         exp['model']['name']
     )(**exp['model']['args'])
-    model_spec = ModelSpec(
+    mpsec = ModelSpec(
         nll=NLL[exp['model']['spec']['nll']],
         in_shape=exp['model']['spec']['in_shape'],
         out_shape=exp['model']['spec']['out_shape']
     )
 
     # restore checkpoint, predict and plot
+    if (results_path / f'ckpt/hmcnuts_1').exists():
+        exp['trainers'].append({
+            'id': 'hmcnuts',
+            'label': 'HMC-NUTS',
+            'name': 'HMCNUTS',
+            'hparams': {'predict': {'sample_size': cpu_count()}}
+        })
     fig, axes = plt.subplots(
         metadata['length'], len(exp['trainers']),
         figsize=(12, 6.75), sharex=True, sharey=True,
@@ -108,8 +116,10 @@ def main():
             task_id = j + 1
             xs, ys = read_task(ts_path, 'training', task_id)
             path = results_path / f'ckpt/{trainer_id}_{task_id}'
+            if not path.exists():
+                continue
             predictor = trainer_class.predictor_class.from_checkpoint(
-                model, model_spec, hparams, path
+                model, mpsec, hparams, path
             )
             plotter.plot_pred(axes[j, i], predictor)
             plotter.plot_dataset(axes[j, i], xs, ys)
