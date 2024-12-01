@@ -29,11 +29,11 @@ name = "Joint"
 label = "Joint training"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 8
-lr_schedule = "constant"
+base_lr = 0.1
+batch_size = 16
+lr_schedule = "onecycle"
 n_epochs = 100
-precision = 0.1
+precision = 1.0
 seed = 1337
 
 [trainers.hparams.predict]
@@ -44,11 +44,11 @@ name = "Finetuning"
 label = "Fine-tuning"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 8
-lr_schedule = "constant"
+base_lr = 0.1
+batch_size = 16
+lr_schedule = "onecycle"
 n_epochs = 100
-precision = 0.1
+precision = 1.0
 seed = 1337
 
 [trainers.hparams.predict]
@@ -59,12 +59,12 @@ name = "ElasticWeightConsolidation"
 label = "EWC"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 8
+base_lr = 0.1
+batch_size = 16
 lambda = 1.0
-lr_schedule = "constant"
+lr_schedule = "onecycle"
 n_epochs = 100
-precision = 0.1
+precision = 1.0
 seed = 1337
 
 [trainers.hparams.predict]
@@ -72,15 +72,15 @@ seed = 1337
 [[trainers]]
 id = "si"
 name = "SynapticIntelligence"
-label="SI"
+label = "SI"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 8
+base_lr = 0.1
+batch_size = 16
 lambda = 1.0
-lr_schedule = "constant"
+lr_schedule = "onecycle"
 n_epochs = 100
-precision = 0.1
+precision = 1.0
 seed = 1337
 xi = 1.0
 
@@ -92,12 +92,12 @@ name = "AutodiffQuadraticConsolidation"
 label = "AQC"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 8
+base_lr = 0.1
+batch_size = 16
 lambda = 1.0
-lr_schedule = "constant"
+lr_schedule = "onecycle"
 n_epochs = 100
-precision = 0.1
+precision = 1.0
 seed = 1337
 
 [trainers.hparams.predict]
@@ -108,105 +108,19 @@ name = "NeuralConsolidation"
 label = "NC"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 8
+base_lr = 0.1
+batch_size = 16
 con_base_lr = 0.01
 con_dense0 = 256
 con_dense1 = 256
-con_lr_schedule = "constant"
+con_lr_schedule = "onecycle"
 con_n_steps = 1000
-con_precision = 0.1
 con_radius = 10.0
 con_sample_size = 64
-lr_schedule = "constant"
-n_epochs = 100
-precision = 0.1
-seed = 1337
-
-[trainers.hparams.predict]
-
-[[trainers]]
-id = "gvcl"
-name = "GVCL"
-label = "G VCL"
-
-[trainers.hparams.train]
-base_lr = 0.01
-batch_size = 8
-lr_schedule = "constant"
-mc = true
+lambda = 1.0
+lr_schedule = "onecycle"
 n_epochs = 100
 precision = 1.0
-sample_size = 10
 seed = 1337
 
 [trainers.hparams.predict]
-sample_size = 100
-seed = 1337
-
-[[trainers]]
-id = "gmvcl"
-name = "GMVCL"
-label = "GM VCL"
-
-[trainers.hparams.train]
-base_lr = 0.01
-batch_size = 8
-lr_schedule = "constant"
-mc = true
-n_comp = 3
-n_epochs = 100
-precision = 1.0
-sample_size = 10
-seed = 1337
-
-[trainers.hparams.predict]
-n_comp = 3
-sample_size = 100
-seed = 1337
-
-[[trainers]]
-id = "gsfsvi"
-name = "SimpleGSFSVI"
-label = "G S-FSVI"
-
-[trainers.hparams.train]
-base_lr = 0.01
-batch_size = 8
-lr_schedule = "constant"
-mc = true
-noise_batch_size = 8
-noise_maxval = [ 6.7, 2.4 ]
-noise_minval = [ 1.0, 0.1 ]
-n_epochs = 100
-precision = 1.0
-sample_size = 10
-seed = 1337
-
-[trainers.hparams.predict]
-sample_size = 100
-seed = 1337
-
-[[trainers]]
-id = "gmsfsvi"
-name = "SimpleGMSFSVI"
-label = "GM S-FSVI"
-
-[trainers.hparams.train]
-base_lr = 0.01
-batch_size = 8
-lr_schedule = "constant"
-mc = true
-noise_batch_size = 8
-noise_maxval = [ 6.7, 2.4 ]
-noise_minval = [ 1.0, 0.1 ]
-n_comp = 3
-n_epochs = 100
-precision = 1.0
-sample_size = 10
-seed = 1337
-
-[trainers.hparams.predict]
-n_comp = 3
-sample_size = 100
-seed = 1337

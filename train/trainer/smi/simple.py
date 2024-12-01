@@ -8,7 +8,7 @@ import jax.numpy as jnp
 from optax import adam, constant_schedule, cosine_onecycle_schedule
 
 from dataops import tree
-from dataops.array import batch, shuffle
+from dataops.array import batch, get_n_batches, shuffle
 from models import NLL
 from models.fcnn import FCNN3
 
@@ -33,20 +33,30 @@ class Joint(MAPMixin, OptimizingTrainer):
 
     def update_loss(self, xs, ys):
         """Update the loss function."""
+        n_batches = get_n_batches(
+            len(self.hparams['coreset'].zarr['ys']) + len(ys),
+            self.hparams['batch_size']
+        )
         self.loss = jit(
-            l2_reg(self.hparams['precision'], self.hparams['nll'])
+            l2_reg(
+                1 / n_batches,
+                self.hparams['precision'],
+                self.hparams['nll']
+            )
         )
 
     def update_state(self, xs, ys):
         """Update the training state."""
-        key1, key2, key3 = random.split(
-            self.hparams['keys']['update_state'], num=3
+        key1, key2 = random.split(
+            self.hparams['keys']['update_state']
         )
-        self.hparams['coreset'].update(key1, xs, ys)
+        self.hparams['coreset'].update(xs, ys)
         self.hparams['coreset'].create_memmap()
         step = make_step(self.loss)
-        self.state = self._init_state(key2, len(ys))
-        for key in random.split(key3, num=self.hparams['n_epochs']):
+        self.state = self._init_state(
+            key1, len(self.hparams['coreset'].memmap['ys'])
+        )
+        for key in random.split(key2, num=self.hparams['n_epochs']):
             for xs_batch, ys_batch in (
                 self.hparams['coreset'].shuffle_batch(
                     key, self.hparams['batch_size']
@@ -81,8 +91,13 @@ class Finetuning(RegularTrainer):
 
     def update_loss(self, xs, ys):
         """Update the loss function."""
+        n_batches = get_n_batches(len(ys), self.hparams['batch_size'])
         self.loss = jit(
-            l2_reg(self.hparams['precision'], self.hparams['nll'])
+            l2_reg(
+                1 / n_batches,
+                self.hparams['precision'],
+                self.hparams['nll']
+            )
         )
 
     def update_hparams(self, xs, ys):
@@ -104,14 +119,19 @@ class QuadraticConsolidation(RegularTrainer):
 
     def update_loss(self, xs, ys):
         """Update the loss function."""
+        n_batches = get_n_batches(len(ys), self.hparams['batch_size'])
         if self.loss is None:
             self.loss = jit(
-                l2_reg(self.hparams['precision'], self.hparams['nll'])
+                l2_reg(
+                    1 / n_batches,
+                    self.hparams['precision'],
+                    self.hparams['nll']
+                )
             )
         else:
             self.loss = jit(
                 diag_quad_con(
-                    self.hparams['lambda'],
+                    self.hparams.get('lambda', 1.0) / n_batches,
                     self.hparams['minimum'],
                     self.hparams['hessian'],
                     self.hparams['nll']
@@ -216,14 +236,19 @@ class AutodiffQuadraticConsolidation(RegularTrainer):
 
     def update_loss(self, xs, ys):
         """Update the loss function."""
+        n_batches = get_n_batches(len(ys), self.hparams['batch_size'])
         if self.loss is None:
             self.loss = jit(
-                l2_reg(self.hparams['precision'], self.hparams['nll'])
+                l2_reg(
+                    1 / n_batches,
+                    self.hparams['precision'],
+                    self.hparams['nll']
+                )
             )
         else:
             self.loss = jit(
                 flat_quad_con(
-                    self.hparams['lambda'],
+                    self.hparams.get('lambda', 1.0) / n_batches,
                     self.hparams['flat_minimum'],
                     self.hparams['flat_hessian'],
                     self.hparams['nll']
@@ -260,13 +285,22 @@ class NeuralConsolidation(RegularTrainer):
 
     def update_loss(self, xs, ys):
         """Update the loss function."""
+        n_batches = get_n_batches(len(ys), self.hparams['batch_size'])
         if self.loss is None:
             self.loss = jit(
-                l2_reg(self.hparams['precision'], self.hparams['nll'])
+                l2_reg(
+                    1 / n_batches,
+                    self.hparams['precision'],
+                    self.hparams['nll']
+                )
             )
         else:
             self.loss = jit(
-                neu_con(self.hparams['con_state'], self.hparams['nll'])
+                neu_con(
+                    self.hparams.get('lambda', 1.0) / n_batches,
+                    self.hparams['con_state'],
+                    self.hparams['nll']
+                )
             )
 
     def _make_con_lr_schedule(self):
@@ -313,10 +347,7 @@ class NeuralConsolidation(RegularTrainer):
             dense1=self.hparams['con_dense1'],
             dense2=1
         )
-        loss = l2_reg(
-            self.hparams['con_precision'],
-            huber(model.apply)
-        )
+        loss = l2_reg(1.0, 1.0, huber(model.apply))
         step = make_step(loss)
         state = TrainState.create(
             apply_fn=model.apply,

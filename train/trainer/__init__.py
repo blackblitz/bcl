@@ -22,7 +22,11 @@ svi_simple = [
     'GMVCL', 'GVCL', 'SimpleGMSFSVI',
     'SimpleGSFSVI', 'SimpleTSFSVI', 'TVCL'
 ]
-svi_replay = ['PriorExactGMSFSVI', 'PriorExactGSFSVI', 'PriorExactTSFSVI']
+svi_replay = [
+    'PriorExactGMSFSVI', 'PriorExactGSFSVI', 'PriorExactTSFSVI',
+    'LikelihoodExactGMSFSVI', 'LikelihoodExactGSFSVI', 'LikelihoodExactTSFSVI',
+    'GVER', 'TVER', 'GMVER'
+]
 
 module_map = (
     dict.fromkeys(sampling, 'train.trainer.sampling')

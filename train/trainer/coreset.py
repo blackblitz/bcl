@@ -78,7 +78,7 @@ class JointCoreset(Coreset):
         super().__init__(zarr_path, memmap_path, model_spec)
         self.zarr['xs'], self.zarr['ys'] = self.empty()
 
-    def update(self, key, xs, ys):
+    def update(self, xs, ys):
         """Update self."""
         pass_size = get_pass_size(self.model_spec.in_shape)
         for indices in batch(pass_size, np.arange(len(ys))):
@@ -158,12 +158,20 @@ class TaskIncrementalCoreset(Coreset):
         """Draw a batch by random choice."""
         if self.task_count == 0:
             return self.empty()
+        key1, key2 = random.split(key)
         indices = random.choice(
-            key, len(self.memmap['task1/ys']),
+            key1, len(self.memmap['task1/ys']),
             shape=(batch_size_per_task,),
             replace=False
         )
         tree_batch = tree_util.tree_map(lambda x: x[indices], self.memmap)
+        task_id = random.randint(
+            key2, (), minval=1, maxval=self.task_count + 1
+        )
+        return (
+            tree_batch[f'task{task_id}/xs'],
+            tree_batch[f'task{task_id}/ys']
+        )
         return tuple(
             np.concatenate([
                 array for path, array in tree_batch.items()

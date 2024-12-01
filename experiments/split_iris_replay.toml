@@ -1,15 +1,8 @@
 [task_sequence]
-name = "split_iris_2"
+name = "split_iris"
 
 [evaluation]
 metrics = ["accuracy"]
-
-[plot]
-n_classes = 3
-x1_max = 7.0
-x1_min = 0.0
-x2_max = 3.0
-x2_min = 0.0
 
 [model]
 name = "FCNN3"
@@ -21,17 +14,16 @@ dense2 = 3
 
 [model.spec]
 nll = "SOFTMAX_CROSS_ENTROPY"
-in_shape = [ 2 ]
+in_shape = [ 4 ]
 out_shape = [ 3 ]
 
 [[trainers]]
 id = "joint"
 name = "Joint"
-label = "Joint training"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 8
+batch_size = 4
 lr_schedule = "onecycle"
 n_epochs = 100
 precision = 1.0
@@ -42,11 +34,10 @@ seed = 1337
 [[trainers]]
 id = "finetuning"
 name = "Finetuning"
-label = "Finetuning"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 8
+batch_size = 4
 lr_schedule = "onecycle"
 n_epochs = 100
 precision = 1.0
@@ -57,32 +48,49 @@ seed = 1337
 [[trainers]]
 id = "gvcl"
 name = "GVCL"
-label = "G VCL"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 8
+batch_size = 4
 lr_schedule = "onecycle"
-mc = true
+mc = false
 n_epochs = 100
 precision = 1.0
 sample_size = 10
 seed = 1337
 
 [trainers.hparams.predict]
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "tvcl"
+name = "TVCL"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 4
+df = 8
+lr_schedule = "onecycle"
+n_epochs = 100
+invscale = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+df = 8
 sample_size = 100
 seed = 1337
 
 [[trainers]]
 id = "gmvcl"
 name = "GMVCL"
-label = "GM VCL"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 8
+batch_size = 4
 lr_schedule = "onecycle"
-mc = true
+mc = false
 n_comp = 3
 n_epochs = 100
 precision = 1.0
@@ -95,20 +103,19 @@ sample_size = 100
 seed = 1337
 
 [[trainers]]
-id = "gsfsvi"
+id = "prior_exact_gsfsvi"
 name = "PriorExactGSFSVI"
-label = "G S-FSVI"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 8
-coreset_batch_size = 8
-coreset_prob = 0.5
+batch_size = 4
+coreset_batch_size = 4
+coreset_prob = 0.9
 coreset_size_per_task = 16
 lr_schedule = "onecycle"
-mc = true
-noise_maxval = [ 6.7, 2.4 ]
-noise_minval = [ 1.0, 0.1 ]
+mc = false
+noise_maxval = [ 7.7, 4.4, 6.7, 2.4 ]
+noise_minval = [ 4.3, 2.0, 1.0, 0.1 ]
 n_epochs = 100
 precision = 1.0
 sample_size = 10
@@ -118,46 +125,44 @@ seed = 1337
 sample_size = 100
 seed = 1337
 
-# [[trainers]]
-# id = "tsfsvi"
-# name = "PriorExactTSFSVI"
-# label = "t S-FSVI"
-# 
-# [trainers.hparams.train]
-# base_lr = 0.01
-# batch_size = 8
-# coreset_batch_size = 8
-# coreset_prob = 0.5
-# coreset_size_per_task = 16
-# df = 8
-# lr_schedule = "onecycle"
-# noise_maxval = [ 6.7, 2.4 ]
-# noise_minval = [ 1.0, 0.1 ]
-# n_epochs = 100
-# invscale = 1.0
-# sample_size = 10
-# seed = 1337
-# 
-# [trainers.hparams.predict]
-# df = 8
-# sample_size = 100
-# seed = 1337
-
 [[trainers]]
-id = "gmsfsvi"
-name = "PriorExactGMSFSVI"
-label = "GM S-FSVI"
+id = "prior_exact_tsfsvi"
+name = "PriorExactTSFSVI"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 8
-coreset_batch_size = 8
-coreset_prob = 0.5
+batch_size = 4
+coreset_batch_size = 4
+coreset_prob = 0.9
+coreset_size_per_task = 16
+df = 8
+lr_schedule = "onecycle"
+noise_maxval = [ 7.7, 4.4, 6.7, 2.4 ]
+noise_minval = [ 4.3, 2.0, 1.0, 0.1 ]
+n_epochs = 100
+invscale = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+df = 8
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "prior_exact_gmsfsvi"
+name = "PriorExactGMSFSVI"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 4
+coreset_batch_size = 4
+coreset_prob = 0.9
 coreset_size_per_task = 16
 lr_schedule = "onecycle"
-mc = true
-noise_maxval = [ 6.7, 2.4 ]
-noise_minval = [ 1.0, 0.1 ]
+mc = false
+noise_maxval = [ 7.7, 4.4, 6.7, 2.4 ]
+noise_minval = [ 4.3, 2.0, 1.0, 0.1 ]
 n_comp = 3
 n_epochs = 100
 precision = 1.0
@@ -172,36 +177,55 @@ seed = 1337
 [[trainers]]
 id = "gver"
 name = "GVER"
-label = "G VER"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 8
-coreset_batch_size = 8
+batch_size = 4
+coreset_batch_size = 4
 coreset_size_per_task = 16
 lr_schedule = "onecycle"
-mc = true
+mc = false
 n_epochs = 100
 precision = 1.0
 sample_size = 10
 seed = 1337
 
 [trainers.hparams.predict]
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "tver"
+name = "TVER"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 4
+coreset_batch_size = 4
+coreset_size_per_task = 16
+df = 8
+lr_schedule = "onecycle"
+n_epochs = 100
+invscale = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+df = 8
 sample_size = 100
 seed = 1337
 
 [[trainers]]
 id = "gmver"
 name = "GMVER"
-label = "GM VER"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 8
-coreset_batch_size = 8
+batch_size = 4
+coreset_batch_size = 4
 coreset_size_per_task = 16
 lr_schedule = "onecycle"
-mc = true
+mc = false
 n_comp = 3
 n_epochs = 100
 precision = 1.0
@@ -214,20 +238,19 @@ sample_size = 100
 seed = 1337
 
 [[trainers]]
-id = "gsfsvi"
+id = "likelihood_exact_gsfsvi"
 name = "LikelihoodExactGSFSVI"
-label = "G S-FSVI"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 8
-coreset_batch_size = 8
-coreset_prob = 0.5
+batch_size = 4
+coreset_batch_size = 4
+coreset_prob = 0.9
 coreset_size_per_task = 16
 lr_schedule = "onecycle"
-mc = true
-noise_maxval = [ 6.7, 2.4 ]
-noise_minval = [ 1.0, 0.1 ]
+mc = false
+noise_maxval = [ 7.7, 4.4, 6.7, 2.4 ]
+noise_minval = [ 4.3, 2.0, 1.0, 0.1 ]
 n_epochs = 100
 precision = 1.0
 sample_size = 10
@@ -237,46 +260,44 @@ seed = 1337
 sample_size = 100
 seed = 1337
 
-# [[trainers]]
-# id = "tsfsvi"
-# name = "LikelihoodExactTSFSVI"
-# label = "t S-FSVI"
-# 
-# [trainers.hparams.train]
-# base_lr = 0.01
-# batch_size = 8
-# coreset_batch_size = 8
-# coreset_prob = 0.5
-# coreset_size_per_task = 16
-# df = 8
-# lr_schedule = "onecycle"
-# noise_maxval = [ 6.7, 2.4 ]
-# noise_minval = [ 1.0, 0.1 ]
-# n_epochs = 100
-# invscale = 1.0
-# sample_size = 10
-# seed = 1337
-# 
-# [trainers.hparams.predict]
-# df = 8
-# sample_size = 100
-# seed = 1337
-
 [[trainers]]
-id = "gmsfsvi"
-name = "LikelihoodExactGMSFSVI"
-label = "GM S-FSVI"
+id = "likelihood_exact_tsfsvi"
+name = "LikelihoodExactTSFSVI"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 8
-coreset_batch_size = 8
-coreset_prob = 0.5
+batch_size = 4
+coreset_batch_size = 4
+coreset_prob = 0.9
+coreset_size_per_task = 16
+df = 8
+lr_schedule = "onecycle"
+noise_maxval = [ 7.7, 4.4, 6.7, 2.4 ]
+noise_minval = [ 4.3, 2.0, 1.0, 0.1 ]
+n_epochs = 100
+invscale = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+df = 8
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "likelihood_exact_gmsfsvi"
+name = "LikelihoodExactGMSFSVI"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 4
+coreset_batch_size = 4
+coreset_prob = 0.9
 coreset_size_per_task = 16
 lr_schedule = "onecycle"
-mc = true
-noise_maxval = [ 6.7, 2.4 ]
-noise_minval = [ 1.0, 0.1 ]
+mc = false
+noise_maxval = [ 7.7, 4.4, 6.7, 2.4 ]
+noise_minval = [ 4.3, 2.0, 1.0, 0.1 ]
 n_comp = 3
 n_epochs = 100
 precision = 1.0

@@ -43,11 +43,11 @@ class GVCL(GaussMixin, VCL):
 
     def update_loss(self, xs, ys):
         """Update the loss function."""
-        n_batches = -(len(ys) // -self.hparams['batch_size'])
+        n_batches = get_n_batches(len(ys), self.hparams['batch_size'])
         self.loss = jit(
             (gpvfe_mc if self.hparams['mc'] else gpvfe_cf)(
                 self.hparams['nll'],
-                self.hparams.get('beta', 1 / n_batches),
+                self.hparams.get('beta', 1.0) / n_batches,
                 self.hparams['prior']
             )
         )
@@ -58,11 +58,11 @@ class TVCL(TMixin, VCL):
 
     def update_loss(self, xs, ys):
         """Update the loss function."""
-        n_batches = -(len(ys) // -self.hparams['batch_size'])
+        n_batches = get_n_batches(len(ys), self.hparams['batch_size'])
         self.loss = jit(
             tpvfe_mc(
                 self.hparams['nll'],
-                self.hparams.get('beta', 1 / n_batches),
+                self.hparams.get('beta', 1.0) / n_batches,
                 self.hparams['prior'],
                 self.hparams['df']
             )
@@ -74,11 +74,11 @@ class GMVCL(GaussmixMixin, VCL):
 
     def update_loss(self, xs, ys):
         """Update the loss function."""
-        n_batches = -(len(ys) // -self.hparams['batch_size'])
+        n_batches = get_n_batches(len(ys), self.hparams['batch_size'])
         self.loss = jit(
             (gmpvfe_mc if self.hparams['mc'] else gmpvfe_ub)(
                 self.hparams['nll'],
-                self.hparams.get('beta', 1 / n_batches),
+                self.hparams.get('beta', 1.0) / n_batches,
                 self.hparams['prior']
             )
         )
@@ -130,7 +130,9 @@ class SimpleGSFSVI(GaussMixin, SimpleSFSVI):
         self.loss = jit(
             (gfvfe_mc if self.hparams['mc'] else gfvfe_cf)(
                 self.hparams['nll'],
-                self.hparams.get('beta', 1 / n_batches),
+                self.hparams['batch_size'] / self.hparams['noise_batch_size']
+                if self.hparams['equal_weight']
+                else self.hparams.get('beta', 1.0) / n_batches,
                 self.hparams['prior'],
                 self.model.apply
             )
@@ -146,7 +148,9 @@ class SimpleTSFSVI(TMixin, SimpleSFSVI):
         self.loss = jit(
             tfvfe_mc(
                 self.hparams['nll'],
-                self.hparams.get('beta', 1 / n_batches),
+                self.hparams['batch_size'] / self.hparams['noise_batch_size']
+                if self.hparams['equal_weight']
+                else self.hparams.get('beta', 1.0) / n_batches,
                 self.hparams['prior'],
                 self.model.apply,
                 self.hparams['df']
@@ -163,7 +167,9 @@ class SimpleGMSFSVI(GaussmixMixin, SimpleSFSVI):
         self.loss = jit(
             (gmfvfe_mc if self.hparams['mc'] else gmfvfe_ub)(
                 self.hparams['nll'],
-                self.hparams.get('beta', 1 / n_batches),
+                self.hparams['batch_size'] / self.hparams['noise_batch_size']
+                if self.hparams['equal_weight']
+                else self.hparams.get('beta', 1.0) / n_batches,
                 self.hparams['prior'],
                 self.model.apply
             )

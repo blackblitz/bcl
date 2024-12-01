@@ -49,7 +49,7 @@ def main():
         import_module(models_module_map[exp['model']['name']]),
         exp['model']['name']
     )(**exp['model']['args'])
-    model_spec = ModelSpec(
+    mspec = ModelSpec(
         nll=NLL[exp['model']['spec']['nll']],
         in_shape=exp['model']['spec']['in_shape'],
         out_shape=exp['model']['spec']['out_shape']
@@ -73,7 +73,7 @@ def main():
                 hparams = trainer_spec['hparams']['predict']
                 task_id = metadata['length']
                 predictor = trainer_class.predictor_class.from_checkpoint(
-                    model, model_spec, hparams,
+                    model, mspec, hparams,
                     results_path / f'ckpt/{trainer_id}_{task_id}'
                 )
                 metric = getattr(
@@ -101,7 +101,7 @@ def main():
         for task_id in range(1, metadata['length'] + 1):
             path = results_path / f'ckpt/{trainer_id}_{task_id}'
             predictor = trainer_class.predictor_class.from_checkpoint(
-                model, model_spec, hparams, path
+                model, mspec, hparams, path
             )
             result = {'trainer_id': trainer_id, 'task_id': task_id}
             for metric in exp['evaluation']['metrics']:

@@ -32,23 +32,22 @@ label = "GM S-FSVI\n($m=1$)"
 [trainers.hparams.train]
 base_lr = 0.01
 batch_size = 64
-coreset_batch_size_per_task = 16
+coreset_batch_size = 32
 coreset_prob = 0.5
-coreset_size_per_task = 32
+coreset_size_per_task = 64
 lr_schedule = "onecycle"
-mc = true
-noise_init = true
+mc = false
 noise_maxval = [ 3.0, 1.5 ]
-noise_minval = [ -0.5, -1.0]
+noise_minval = [ -0.5, -1.0 ]
 n_comp = 1
 n_epochs = 100
 precision = 1.0
-sample_size = 1
+sample_size = 10
 seed = 1337
 
 [trainers.hparams.predict]
 n_comp = 1
-sample_size = 10
+sample_size = 100
 seed = 1337
 
 [[trainers]]
@@ -59,23 +58,22 @@ label = "GM S-FSVI\n($m=2$)"
 [trainers.hparams.train]
 base_lr = 0.01
 batch_size = 64
-coreset_batch_size_per_task = 16
+coreset_batch_size = 32
 coreset_prob = 0.5
-coreset_size_per_task = 32
+coreset_size_per_task = 64
 lr_schedule = "onecycle"
-mc = true
-noise_init = true
+mc = false
 noise_maxval = [ 3.0, 1.5 ]
-noise_minval = [ -0.5, -1.0]
+noise_minval = [ -0.5, -1.0 ]
 n_comp = 2
 n_epochs = 100
 precision = 1.0
-sample_size = 1
+sample_size = 10
 seed = 1337
 
 [trainers.hparams.predict]
 n_comp = 2
-sample_size = 10
+sample_size = 100
 seed = 1337
 
 [[trainers]]
@@ -86,23 +84,22 @@ label = "GM S-FSVI\n($m=3$)"
 [trainers.hparams.train]
 base_lr = 0.01
 batch_size = 64
-coreset_batch_size_per_task = 16
+coreset_batch_size = 32
 coreset_prob = 0.5
-coreset_size_per_task = 32
+coreset_size_per_task = 64
 lr_schedule = "onecycle"
-mc = true
-noise_init = true
+mc = false
 noise_maxval = [ 3.0, 1.5 ]
-noise_minval = [ -0.5, -1.0]
+noise_minval = [ -0.5, -1.0 ]
 n_comp = 3
 n_epochs = 100
 precision = 1.0
-sample_size = 1
+sample_size = 10
 seed = 1337
 
 [trainers.hparams.predict]
 n_comp = 3
-sample_size = 10
+sample_size = 100
 seed = 1337
 
 [[trainers]]
@@ -113,23 +110,22 @@ label = "GM S-FSVI\n($m=4$)"
 [trainers.hparams.train]
 base_lr = 0.01
 batch_size = 64
-coreset_batch_size_per_task = 16
+coreset_batch_size = 32
 coreset_prob = 0.5
-coreset_size_per_task = 32
+coreset_size_per_task = 64
 lr_schedule = "onecycle"
-mc = true
-noise_init = true
+mc = false
 noise_maxval = [ 3.0, 1.5 ]
-noise_minval = [ -0.5, -1.0]
+noise_minval = [ -0.5, -1.0 ]
 n_comp = 4
 n_epochs = 100
 precision = 1.0
-sample_size = 1
+sample_size = 10
 seed = 1337
 
 [trainers.hparams.predict]
 n_comp = 4
-sample_size = 10
+sample_size = 100
 seed = 1337
 
 [[trainers]]
@@ -140,23 +136,22 @@ label = "GM S-FSVI\n($m=5$)"
 [trainers.hparams.train]
 base_lr = 0.01
 batch_size = 64
-coreset_batch_size_per_task = 16
+coreset_batch_size = 32
 coreset_prob = 0.5
-coreset_size_per_task = 32
+coreset_size_per_task = 64
 lr_schedule = "onecycle"
-mc = true
-noise_init = true
+mc = false
 noise_maxval = [ 3.0, 1.5 ]
-noise_minval = [ -0.5, -1.0]
+noise_minval = [ -0.5, -1.0 ]
 n_comp = 5
 n_epochs = 100
 precision = 1.0
-sample_size = 1
+sample_size = 10
 seed = 1337
 
 [trainers.hparams.predict]
 n_comp = 5
-sample_size = 10
+sample_size = 100
 seed = 1337
 
 [[trainers]]
@@ -167,23 +162,22 @@ label = "GM S-FSVI\n($m=6$)"
 [trainers.hparams.train]
 base_lr = 0.01
 batch_size = 64
-coreset_batch_size_per_task = 16
+coreset_batch_size = 32
 coreset_prob = 0.5
-coreset_size_per_task = 32
+coreset_size_per_task = 64
 lr_schedule = "onecycle"
-mc = true
-noise_init = true
+mc = false
 noise_maxval = [ 3.0, 1.5 ]
-noise_minval = [ -0.5, -1.0]
+noise_minval = [ -0.5, -1.0 ]
 n_comp = 6
 n_epochs = 100
 precision = 1.0
-sample_size = 1
+sample_size = 10
 seed = 1337
 
 [trainers.hparams.predict]
 n_comp = 6
-sample_size = 10
+sample_size = 100
 seed = 1337
 
 [[trainers]]
@@ -194,23 +188,22 @@ label = "GM S-FSVI\n($m=7$)"
 [trainers.hparams.train]
 base_lr = 0.01
 batch_size = 64
-coreset_batch_size_per_task = 16
+coreset_batch_size = 32
 coreset_prob = 0.5
-coreset_size_per_task = 32
+coreset_size_per_task = 64
 lr_schedule = "onecycle"
-mc = true
-noise_init = true
+mc = false
 noise_maxval = [ 3.0, 1.5 ]
-noise_minval = [ -0.5, -1.0]
+noise_minval = [ -0.5, -1.0 ]
 n_comp = 7
 n_epochs = 100
 precision = 1.0
-sample_size = 1
+sample_size = 10
 seed = 1337
 
 [trainers.hparams.predict]
 n_comp = 7
-sample_size = 10
+sample_size = 100
 seed = 1337
 
 [[trainers]]
@@ -221,21 +214,228 @@ label = "GM S-FSVI\n($m=8$)"
 [trainers.hparams.train]
 base_lr = 0.01
 batch_size = 64
-coreset_batch_size_per_task = 16
+coreset_batch_size = 32
 coreset_prob = 0.5
-coreset_size_per_task = 32
+coreset_size_per_task = 64
 lr_schedule = "onecycle"
-mc = true
-noise_init = true
+mc = false
 noise_maxval = [ 3.0, 1.5 ]
-noise_minval = [ -0.5, -1.0]
+noise_minval = [ -0.5, -1.0 ]
 n_comp = 8
 n_epochs = 100
 precision = 1.0
-sample_size = 1
+sample_size = 10
 seed = 1337
 
 [trainers.hparams.predict]
 n_comp = 8
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "gmsfsvi1"
+name = "LikelihoodExactGMSFSVI"
+label = "GM S-FSVI\n($m=1$)"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+coreset_batch_size = 32
+coreset_prob = 0.5
+coreset_size_per_task = 64
+lr_schedule = "onecycle"
+mc = false
+noise_maxval = [ 3.0, 1.5 ]
+noise_minval = [ -0.5, -1.0 ]
+n_comp = 1
+n_epochs = 100
+precision = 1.0
 sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+n_comp = 1
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "gmsfsvi2"
+name = "LikelihoodExactGMSFSVI"
+label = "GM S-FSVI\n($m=2$)"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+coreset_batch_size = 32
+coreset_prob = 0.5
+coreset_size_per_task = 64
+lr_schedule = "onecycle"
+mc = false
+noise_maxval = [ 3.0, 1.5 ]
+noise_minval = [ -0.5, -1.0 ]
+n_comp = 2
+n_epochs = 100
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+n_comp = 2
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "gmsfsvi3"
+name = "LikelihoodExactGMSFSVI"
+label = "GM S-FSVI\n($m=3$)"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+coreset_batch_size = 32
+coreset_prob = 0.5
+coreset_size_per_task = 64
+lr_schedule = "onecycle"
+mc = false
+noise_maxval = [ 3.0, 1.5 ]
+noise_minval = [ -0.5, -1.0 ]
+n_comp = 3
+n_epochs = 100
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+n_comp = 3
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "gmsfsvi4"
+name = "LikelihoodExactGMSFSVI"
+label = "GM S-FSVI\n($m=4$)"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+coreset_batch_size = 32
+coreset_prob = 0.5
+coreset_size_per_task = 64
+lr_schedule = "onecycle"
+mc = false
+noise_maxval = [ 3.0, 1.5 ]
+noise_minval = [ -0.5, -1.0 ]
+n_comp = 4
+n_epochs = 100
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+n_comp = 4
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "gmsfsvi5"
+name = "LikelihoodExactGMSFSVI"
+label = "GM S-FSVI\n($m=5$)"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+coreset_batch_size = 32
+coreset_prob = 0.5
+coreset_size_per_task = 64
+lr_schedule = "onecycle"
+mc = false
+noise_maxval = [ 3.0, 1.5 ]
+noise_minval = [ -0.5, -1.0 ]
+n_comp = 5
+n_epochs = 100
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+n_comp = 5
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "gmsfsvi6"
+name = "LikelihoodExactGMSFSVI"
+label = "GM S-FSVI\n($m=6$)"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+coreset_batch_size = 32
+coreset_prob = 0.5
+coreset_size_per_task = 64
+lr_schedule = "onecycle"
+mc = false
+noise_maxval = [ 3.0, 1.5 ]
+noise_minval = [ -0.5, -1.0 ]
+n_comp = 6
+n_epochs = 100
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+n_comp = 6
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "gmsfsvi7"
+name = "LikelihoodExactGMSFSVI"
+label = "GM S-FSVI\n($m=7$)"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+coreset_batch_size = 32
+coreset_prob = 0.5
+coreset_size_per_task = 64
+lr_schedule = "onecycle"
+mc = false
+noise_maxval = [ 3.0, 1.5 ]
+noise_minval = [ -0.5, -1.0 ]
+n_comp = 7
+n_epochs = 100
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+n_comp = 7
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "gmsfsvi8"
+name = "LikelihoodExactGMSFSVI"
+label = "GM S-FSVI\n($m=8$)"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+coreset_batch_size = 32
+coreset_prob = 0.5
+coreset_size_per_task = 64
+lr_schedule = "onecycle"
+mc = false
+noise_maxval = [ 3.0, 1.5 ]
+noise_minval = [ -0.5, -1.0 ]
+n_comp = 8
+n_epochs = 100
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+n_comp = 8
+sample_size = 100
 seed = 1337

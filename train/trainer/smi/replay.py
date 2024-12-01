@@ -2,7 +2,7 @@
 
 from jax import jit, random
 
-from dataops.array import batch, shuffle
+from dataops.array import batch, get_n_batches, shuffle
 
 from . import MAPMixin
 from .. import OptimizingTrainer
@@ -16,9 +16,16 @@ class ExactReplay(MAPMixin, OptimizingTrainer):
 
     def update_loss(self, xs, ys):
         """Update the loss function."""
-        self.loss = jit(concat(l2_reg(
-            self.hparams['precision'], self.hparams['nll']
-        )))
+        n_batches = get_n_batches(len(ys), self.hparams['batch_size'])
+        self.loss = jit(
+            concat(
+                l2_reg(
+                    1 / n_batches,
+                    self.hparams['precision'],
+                    self.hparams['nll']
+                )
+            )
+        )
 
     def update_hparams(self, xs, ys):
         """Update the coreset."""

@@ -134,7 +134,6 @@ class FE6(nn.Module):
         xs = nn.avg_pool(xs, window_shape=(2, 2), strides=(2, 2))
         xs = jnp.reshape(xs, shape=(xs.shape[0], -1))
         xs = nn.Dense(self.dense0)(xs)
-        xs = nn.GroupNorm(num_groups=1)(xs)
         xs = nn.swish(xs)
         xs = nn.Dense(self.dense1)(xs)
         xs = nn.swish(xs)

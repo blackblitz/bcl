@@ -51,7 +51,7 @@ def ece(predictor, xs, ys, n_bins=100):
         np.asarray(predictor(xs[indices], decide=False))
         for indices in batch(pass_size, np.arange(len(ys)))
     ])
-    match predictor.model_spec.nll:
+    match predictor.mspec.nll:
         case NLL.SIGMOID_CROSS_ENTROPY:
             pred = proba >= 0.5
             pred_proba = np.maximum(proba, 1 - proba)

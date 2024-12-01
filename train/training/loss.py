@@ -59,11 +59,12 @@ def l2(apply):
     return loss
 
 
-def l2_reg(precision, nll):
+def l2_reg(weight, precision, nll):
     """Return an L2-regularized loss function."""
     def loss(params, xs, ys):
         return (
-            0.5 * precision * tree.dot(params, params) + nll(params, xs, ys)
+            weight * 0.5 * precision * tree.dot(params, params)
+            + nll(params, xs, ys)
         )
 
     return loss
@@ -79,11 +80,11 @@ def concat(base):
     return loss
 
 
-def diag_quad_con(lambda_, minimum, hessian, nll):
+def diag_quad_con(weight, minimum, hessian, nll):
     """Return a loss function for diagonal quadratic consolidation."""
     def loss(params, xs, ys):
         return (
-            0.5 * lambda_ * tree.sum(
+            weight * 0.5 * tree.sum(
                 tree_util.tree_map(
                     lambda h, p, m: h * (p - m) ** 2,
                     hessian, params, minimum
@@ -94,21 +95,21 @@ def diag_quad_con(lambda_, minimum, hessian, nll):
     return loss
 
 
-def flat_quad_con(lambda_, flat_minimum, flat_hessian, nll):
+def flat_quad_con(weight, flat_minimum, flat_hessian, nll):
     """Return a loss function for flattened quadratic consolidation."""
     def loss(params, xs, ys):
         diff = flatten_util.ravel_pytree(params)[0] - flat_minimum
         return (
-            0.5 * lambda_ * diff @ flat_hessian @ diff + nll(params, xs, ys)
+            weight * 0.5 * diff @ flat_hessian @ diff + nll(params, xs, ys)
         )
 
     return loss
 
 
-def neu_con(con_state, nll):
+def neu_con(weight, con_state, nll):
     """Return a loss function for neural consolidation."""
     def loss(params, xs, ys):
-        return con_state.apply_fn(
+        return weight * con_state.apply_fn(
             {'params': con_state.params},
             jnp.expand_dims(flatten_util.ravel_pytree(params)[0], 0)
         )[0, 0] + nll(params, xs, ys)
@@ -116,7 +117,7 @@ def neu_con(con_state, nll):
     return loss
 
 
-def gpvfe_cf(nll, beta, prior):
+def gpvfe_cf(nll, weight, prior):
     """Return the closed-form Gaussian parameter-space VFE."""
     def loss(params, sample, xs, ys):
         q = gauss.get_param(params)
@@ -124,13 +125,13 @@ def gpvfe_cf(nll, beta, prior):
         param_sample = gauss.transform(q, sample)
         return (
             vmap(nll, in_axes=(0, None, None))(param_sample, xs, ys).mean()
-            + beta * gauss.kldiv_cf(q, p)
+            + weight * gauss.kldiv_cf(q, p)
         )
 
     return loss
 
 
-def gpvfe_mc(nll, beta, prior):
+def gpvfe_mc(nll, weight, prior):
     """Return the Monte Carlo Gaussian parameter-space VFE."""
     def loss(params, sample, xs, ys):
         q = gauss.get_param(params)
@@ -138,13 +139,13 @@ def gpvfe_mc(nll, beta, prior):
         param_sample = gauss.transform(q, sample)
         return (
             vmap(nll, in_axes=(0, None, None))(param_sample, xs, ys).mean()
-            + beta * gauss.kldiv_mc(param_sample, q, p)
+            + weight * gauss.kldiv_mc(param_sample, q, p)
         )
 
     return loss
 
 
-def gfvfe_cf(nll, beta, prior, apply):
+def gfvfe_cf(nll, weight, prior, apply):
     """Return the closed-form Gaussian function-space VFE."""
     def loss(params, param_sample, output_sample, xs, ys, ind_xs):
         param_sample = gauss.transform(gauss.get_param(params), param_sample)
@@ -153,13 +154,13 @@ def gfvfe_cf(nll, beta, prior, apply):
         output_sample = gauss.transform(q, output_sample)
         return (
             vmap(nll, in_axes=(0, None, None))(param_sample, xs, ys).mean()
-            + beta * gauss.kldiv_cf(q, p)
+            + weight * gauss.kldiv_cf(q, p)
         )
 
     return loss
 
 
-def gfvfe_mc(nll, beta, prior, apply):
+def gfvfe_mc(nll, weight, prior, apply):
     """Return the Monte Carlo Gaussian function-space VFE."""
     def loss(params, param_sample, output_sample, xs, ys, ind_xs):
         param_sample = gauss.transform(gauss.get_param(params), param_sample)
@@ -168,13 +169,13 @@ def gfvfe_mc(nll, beta, prior, apply):
         output_sample = gauss.transform(q, output_sample)
         return (
             vmap(nll, in_axes=(0, None, None))(param_sample, xs, ys).mean()
-            + beta * gauss.kldiv_mc(output_sample, q, p)
+            + weight * gauss.kldiv_mc(output_sample, q, p)
         )
 
     return loss
 
 
-def tpvfe_mc(nll, beta, prior, df):
+def tpvfe_mc(nll, weight, prior, df):
     """Return the Monte Carlo t parameter-space VFE."""
     def loss(params, sample, xs, ys):
         q = t.get_param(params, df)
@@ -182,13 +183,13 @@ def tpvfe_mc(nll, beta, prior, df):
         param_sample = t.transform(q, sample)
         return (
             vmap(nll, in_axes=(0, None, None))(param_sample, xs, ys).mean()
-            + beta * t.kldiv_mc(param_sample, q, p)
+            + weight * t.kldiv_mc(param_sample, q, p)
         )
 
     return loss
 
 
-def tfvfe_mc(nll, beta, prior, apply, df):
+def tfvfe_mc(nll, weight, prior, apply, df):
     """Return the Monte Carlo t function-space VFE."""
     def loss(params, param_sample, output_sample, xs, ys, ind_xs):
         param_sample = t.transform(t.get_param(params, df), param_sample)
@@ -197,13 +198,13 @@ def tfvfe_mc(nll, beta, prior, apply, df):
         output_sample = t.transform(q, output_sample)
         return (
             vmap(nll, in_axes=(0, None, None))(param_sample, xs, ys).mean()
-            + beta * t.kldiv_mc(output_sample, q, p)
+            + weight * t.kldiv_mc(output_sample, q, p)
         )
 
     return loss
 
 
-def gmpvfe_ub(nll, beta, prior):
+def gmpvfe_ub(nll, weight, prior):
     """Return the upper-bound Gaussian mixture parameter-space VFE."""
     def loss(params, sample, xs, ys):
         q = gaussmix.get_param(params)
@@ -211,13 +212,13 @@ def gmpvfe_ub(nll, beta, prior):
         param_sample = gaussmix.transform(q, sample)
         return (
             vmap(nll, in_axes=(0, None, None))(param_sample, xs, ys).mean()
-            + beta * gaussmix.kldiv_ub(q, p)
+            + weight * gaussmix.kldiv_ub(q, p)
         )
 
     return loss
 
 
-def gmpvfe_mc(nll, beta, prior):
+def gmpvfe_mc(nll, weight, prior):
     """Return the Monte Carlo Gaussian mixture parameter-space VFE."""
     def loss(params, sample, xs, ys):
         q = gaussmix.get_param(params)
@@ -225,13 +226,13 @@ def gmpvfe_mc(nll, beta, prior):
         param_sample = gaussmix.transform(q, sample)
         return (
             vmap(nll, in_axes=(0, None, None))(param_sample, xs, ys).mean()
-            + beta * gaussmix.kldiv_mc(param_sample, q, p)
+            + weight * gaussmix.kldiv_mc(param_sample, q, p)
         )
 
     return loss
 
 
-def gmfvfe_ub(nll, beta, prior, apply):
+def gmfvfe_ub(nll, weight, prior, apply):
     """Return the upper-bound Gaussian mixture function-space VFE."""
     def loss(params, param_sample, output_sample, xs, ys, ind_xs):
         param_sample = gaussmix.transform(
@@ -242,13 +243,13 @@ def gmfvfe_ub(nll, beta, prior, apply):
         output_sample = gaussmix.transform(q, output_sample)
         return (
             vmap(nll, in_axes=(0, None, None))(param_sample, xs, ys).mean()
-            + beta * gaussmix.kldiv_cf(q, p)
+            + weight * gaussmix.kldiv_ub(q, p)
         )
 
     return loss
 
 
-def gmfvfe_mc(nll, beta, prior, apply):
+def gmfvfe_mc(nll, weight, prior, apply):
     """Return the Monte Carlo Gaussian mixture function-space VFE."""
     def loss(params, param_sample, output_sample, xs, ys, ind_xs):
         param_sample = gaussmix.transform(
@@ -259,7 +260,29 @@ def gmfvfe_mc(nll, beta, prior, apply):
         output_sample = gaussmix.transform(q, output_sample)
         return (
             vmap(nll, in_axes=(0, None, None))(param_sample, xs, ys).mean()
-            + beta * gaussmix.kldiv_mc(output_sample, q, p)
+            + weight * gaussmix.kldiv_mc(output_sample, q, p)
+        )
+
+    return loss
+
+
+def concat_pvfe(base):
+    """Return the parameter-space VFE by concatenating batches."""
+    def loss(params, sample, xs1, ys1, xs2, ys2):
+        return base(
+            params, sample, 
+            jnp.concatenate([xs1, xs2]), jnp.concatenate([ys1, ys2])
+        )
+
+    return loss
+
+
+def concat_fvfe(base):
+    """Return the function-space VFE by concatenating batches."""
+    def loss(params, param_sample, output_sample, xs1, ys1, xs2, ys2, ind_xs):
+        return base(
+            params, param_sample, output_sample, 
+            jnp.concatenate([xs1, xs2]), jnp.concatenate([ys1, ys2]), ind_xs
         )
 
     return loss

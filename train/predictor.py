@@ -13,12 +13,12 @@ from .training.vi import gauss, gaussmix, t
 
 def bern_entr(p):
     """Calculate the entropy of Bernoulli random variables."""
-    return entr(p) + entr(1 - p)
+    return (entr(p) + entr(1 - p)) / jnp.log(2)
 
 
 def cat_entr(p):
     """Calculate the entropy of categorical random variables."""
-    return entr(p).sum(axis=-1)
+    return entr(p).sum(axis=-1) / jnp.log(p.shape[-1])
 
 
 class MAPPredictor:
