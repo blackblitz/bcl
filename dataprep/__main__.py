@@ -18,7 +18,7 @@ def main():
     parser.add_argument('name', help='name of the task sequence')
     args = parser.parse_args()
 
-    path = Path('data') / args.name
+    path = Path('data/prepped') / args.name
     path.mkdir(parents=True, exist_ok=True)
     ocp.test_utils.erase_and_create_empty(path)
     task_sequence, metadata = getattr(

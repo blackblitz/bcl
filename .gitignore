@@ -1,11 +1,8 @@
 .ipynb_checkpoints/
-ckpt/
 coreset.zarr/
 data/
 experiments/test.toml
 features/
 logs/
-plots/
-pytorch/
 results/
 __pycache__/

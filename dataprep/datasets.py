@@ -7,10 +7,11 @@ from torch.utils.data import Dataset
 class ArrayDataset(Dataset):
     """Array dataset."""
 
-    def __init__(self, xs, ys):
+    def __init__(self, xs, ys, transform=lambda x: x):
         """Initialize self."""
         self.xs = xs
         self.ys = ys
+        self.transform = transform
 
     def __len__(self):
         """Return the number of rows."""
@@ -18,7 +19,7 @@ class ArrayDataset(Dataset):
 
     def __getitem__(self, index):
         """Get row by index."""
-        return self.xs[index], self.ys[index]
+        return self.transform(self.xs[index]), self.ys[index]
 
 
 def write_npy(dataset, xs_path, ys_path):

@@ -182,24 +182,24 @@ class SynapticIntelligence(QuadraticConsolidation):
         )
 
         @jit
-        def step(state, loss_change, xs, ys):
+        def step(state, xs, ys):
             grads = grad(self.loss)(state.params, xs, ys)
             next_state = state.apply_gradients(grads=grads)
             diff = tree_util.tree_map(sub, next_state.params, state.params)
-            loss_change = tree_util.tree_map(
-                add, loss_change, tree_util.tree_map(mul, grads, diff)
-            )
-            return next_state, loss_change
+            return next_state, tree_util.tree_map(mul, grads, diff)
 
         self.state = self._init_state(key1, len(ys))
-        loss_change = tree.full_like(self.state.params, 0.0)
+        total_loss_change = tree.full_like(self.state.params, 0.0)
         start_params = self.state.params
         for key in random.split(key2, num=self.hparams['n_epochs']):
             for indices in batch(
                 self.hparams['batch_size'], shuffle(key, len(ys))
             ):
                 self.state, loss_change = step(
-                    self.state, loss_change, xs[indices], ys[indices]
+                    self.state, xs[indices], ys[indices]
+                )
+                total_loss_change = tree_util.tree_map(
+                    add, total_loss_change, loss_change
                 )
             yield self.state
 
@@ -209,7 +209,7 @@ class SynapticIntelligence(QuadraticConsolidation):
             self.hparams['hessian'],
             tree_util.tree_map(
                 lambda dl, dp: dl / (self.hparams['xi'] + dp ** 2),
-                loss_change,
+                total_loss_change,
                 tree_util.tree_map(sub, self.state.params, start_params)
             )
         )

@@ -26,10 +26,10 @@ class HMCNUTS(SamplingTrainer):
 
     def update_sample(self, xs, ys):
         """Update the sample."""
-        key1, key2, key3, key4 = random.split(
-            self.hparams['keys']['update_sample'], num=4
+        key1, key2, key3 = random.split(
+            self.hparams['keys']['update_sample'], num=3
         )
-        self.hparams['coreset'].update(key1, xs, ys)
+        self.hparams['coreset'].update(xs, ys)
         self.hparams['coreset'].create_memmap()
         xs, ys = (
             jnp.array(self.hparams['coreset'].memmap['xs']),
@@ -40,15 +40,15 @@ class HMCNUTS(SamplingTrainer):
         @jit
         def logpdf(params):
             return -l2_reg(
-                self.hparams['precision'], self.hparams['nll']
+                1.0, self.hparams['precision'], self.hparams['nll']
             )(params, xs, ys)
 
         (states, params), _ = pmap(
             blackjax.window_adaptation(blackjax.nuts, logpdf).run
         )(
-            random.split(key2, num=self.hparams['n_chains']),
+            random.split(key1, num=self.hparams['n_chains']),
             vmap(init, in_axes=(0, None, None))(
-                random.split(key3, num=self.hparams['n_chains']),
+                random.split(key2, num=self.hparams['n_chains']),
                 self.model, self.mspec.in_shape
             )
         )
@@ -63,7 +63,7 @@ class HMCNUTS(SamplingTrainer):
                 return state
 
             for key in random.split(
-                key4,
+                key3,
                 num=self.hparams['n_steps']
             ):
                 states = pmap(step)(

@@ -159,7 +159,7 @@ lr_schedule = "onecycle"
 n_epochs = 10
 precision = 1.0
 seed = 1337
-xi = 1.0
+xi = 0.1
 
 [trainers.hparams.predict]
 
@@ -175,7 +175,7 @@ lr_schedule = "onecycle"
 n_epochs = 10
 precision = 1.0
 seed = 1337
-xi = 1.0
+xi = 0.1
 
 [trainers.hparams.predict]
 
@@ -191,7 +191,7 @@ lr_schedule = "onecycle"
 n_epochs = 10
 precision = 1.0
 seed = 1337
-xi = 1.0
+xi = 0.1
 
 [trainers.hparams.predict]
 
@@ -207,7 +207,7 @@ lr_schedule = "onecycle"
 n_epochs = 10
 precision = 1.0
 seed = 1337
-xi = 1.0
+xi = 0.1
 
 [trainers.hparams.predict]
 
@@ -223,7 +223,167 @@ lr_schedule = "onecycle"
 n_epochs = 10
 precision = 1.0
 seed = 1337
+xi = 0.1
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si6"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 1.0
+lr_schedule = "onecycle"
+n_epochs = 10
+precision = 1.0
+seed = 1337
 xi = 1.0
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si7"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 10.0
+lr_schedule = "onecycle"
+n_epochs = 10
+precision = 1.0
+seed = 1337
+xi = 1.0
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si8"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 100.0
+lr_schedule = "onecycle"
+n_epochs = 10
+precision = 1.0
+seed = 1337
+xi = 1.0
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si9"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 1000.0
+lr_schedule = "onecycle"
+n_epochs = 10
+precision = 1.0
+seed = 1337
+xi = 1.0
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si10"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 10000.0
+lr_schedule = "onecycle"
+n_epochs = 10
+precision = 1.0
+seed = 1337
+xi = 1.0
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si11"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 1.0
+lr_schedule = "onecycle"
+n_epochs = 10
+precision = 1.0
+seed = 1337
+xi = 10.0
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si12"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 10.0
+lr_schedule = "onecycle"
+n_epochs = 10
+precision = 1.0
+seed = 1337
+xi = 10.0
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si13"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 100.0
+lr_schedule = "onecycle"
+n_epochs = 10
+precision = 1.0
+seed = 1337
+xi = 10.0
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si14"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 1000.0
+lr_schedule = "onecycle"
+n_epochs = 10
+precision = 1.0
+seed = 1337
+xi = 10.0
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si15"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 10000.0
+lr_schedule = "onecycle"
+n_epochs = 10
+precision = 1.0
+seed = 1337
+xi = 10.0
 
 [trainers.hparams.predict]
 
@@ -640,7 +800,7 @@ name = "GVCL"
 base_lr = 0.01
 batch_size = 64
 lr_schedule = "onecycle"
-mc = true
+mc = false
 n_epochs = 10
 precision = 1.0
 sample_size = 10
@@ -658,7 +818,7 @@ name = "GMVCL"
 base_lr = 0.01
 batch_size = 64
 lr_schedule = "onecycle"
-mc = true
+mc = false
 n_comp = 3
 n_epochs = 10
 precision = 1.0
@@ -677,8 +837,9 @@ name = "SimpleGSFSVI"
 [trainers.hparams.train]
 base_lr = 0.01
 batch_size = 64
+equal_weight = false
 lr_schedule = "onecycle"
-mc = true
+mc = false
 noise_batch_size = 64
 noise_maxval = 6.0
 noise_minval = -1.0
@@ -688,28 +849,5 @@ sample_size = 10
 seed = 1337
 
 [trainers.hparams.predict]
-sample_size = 100
-seed = 1337
-
-[[trainers]]
-id = "gmsfsvi"
-name = "SimpleGMSFSVI"
-
-[trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
-lr_schedule = "onecycle"
-mc = true
-noise_batch_size = 64
-noise_maxval = 6.0
-noise_minval = -1.0
-n_comp = 3
-n_epochs = 10
-precision = 1.0
-sample_size = 10
-seed = 1337
-
-[trainers.hparams.predict]
-n_comp = 3
 sample_size = 100
 seed = 1337
