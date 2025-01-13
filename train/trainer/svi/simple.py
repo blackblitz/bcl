@@ -13,8 +13,8 @@ from ...training.loss import (
 from ...training import make_step
 
 
-class VCL(SVI):
-    """Variational continual learning."""
+class SimpleVCL(SVI):
+    """Simple variational continual learning."""
 
     def update_state(self, xs, ys):
         """Update the training state."""
@@ -38,8 +38,8 @@ class VCL(SVI):
             yield self.state
 
 
-class GVCL(GaussMixin, VCL):
-    """Gaussian variational continual learning."""
+class SimpleGVCL(GaussMixin, SimpleVCL):
+    """Simple Gaussian variational continual learning."""
 
     def update_loss(self, xs, ys):
         """Update the loss function."""
@@ -53,8 +53,8 @@ class GVCL(GaussMixin, VCL):
         )
 
 
-class TVCL(TMixin, VCL):
-    """t variational continual learning."""
+class SimpleTVCL(TMixin, SimpleVCL):
+    """Simple t variational continual learning."""
 
     def update_loss(self, xs, ys):
         """Update the loss function."""
@@ -69,8 +69,8 @@ class TVCL(TMixin, VCL):
         )
 
 
-class GMVCL(GaussmixMixin, VCL):
-    """Gaussian-mixture variational continual learning."""
+class SimpleGMVCL(GaussmixMixin, SimpleVCL):
+    """Simple Gaussian-mixture variational continual learning."""
 
     def update_loss(self, xs, ys):
         """Update the loss function."""

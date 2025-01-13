@@ -1,28 +1,40 @@
 [task_sequence]
-name = "split_wine"
+name = "cisplitiris2"
 
 [evaluation]
 metrics = ["accuracy"]
 validation_metric = "accuracy"
 
+[plot]
+height = 4
+n_classes = 3
+width = 16
+x1_max = 7.0
+x1_min = 0.0
+x2_max = 3.0
+x2_min = 0.0
+
 [model]
 name = "FCNN2"
 
 [model.args]
-dense0 = 16
+dense0 = 4
 dense1 = 3
 
 [model.spec]
 nll = "SOFTMAX_CROSS_ENTROPY"
-in_shape = [ 13 ]
+in_shape = [ 2 ]
 out_shape = [ 3 ]
+cratio = [ 1, 1, 1 ]
+cscale = 1
 
 [[trainers]]
 id = "joint"
 name = "Joint"
+label = "Joint training"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 lr_schedule = "onecycle"
 n_epochs = 100
@@ -34,9 +46,10 @@ seed = 1337
 [[trainers]]
 id = "finetuning"
 name = "Finetuning"
+label = "Finetuning"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 lr_schedule = "onecycle"
 n_epochs = 100
@@ -46,11 +59,75 @@ seed = 1337
 [trainers.hparams.predict]
 
 [[trainers]]
-id = "ewc1"
-name = "ElasticWeightConsolidation"
+id = "simple_gvcl"
+name = "SimpleGVCL"
+label = "G-VCL"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
+batch_size = 16
+lr_schedule = "onecycle"
+mc = true
+n_epochs = 100
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "simple_gmvcl"
+name = "SimpleGMVCL"
+label = "GM-VCL"
+
+[trainers.hparams.train]
+base_lr = 0.1
+batch_size = 16
+lr_schedule = "onecycle"
+mc = true
+n_comp = 3
+n_epochs = 100
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+n_comp = 3
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "simple_gsfsvi"
+name = "SimpleGSFSVI"
+label = "G-S-FSVI"
+
+[trainers.hparams.train]
+base_lr = 0.1
+batch_size = 16
+equal_weight = false
+lr_schedule = "onecycle"
+mc = false
+noise_batch_size = 16
+noise_maxval = [ 6.7, 2.4 ]
+noise_minval = [ 1.0, 0.1 ]
+n_epochs = 100
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "ewc1"
+name = "ElasticWeightConsolidation"
+label = "EWC"
+
+[trainers.hparams.train]
+base_lr = 0.1
 batch_size = 16
 lambda = 1.0
 lr_schedule = "onecycle"
@@ -63,9 +140,10 @@ seed = 1337
 [[trainers]]
 id = "ewc2"
 name = "ElasticWeightConsolidation"
+label = "EWC"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 lambda = 10.0
 lr_schedule = "onecycle"
@@ -78,9 +156,10 @@ seed = 1337
 [[trainers]]
 id = "ewc3"
 name = "ElasticWeightConsolidation"
+label = "EWC"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 lambda = 100.0
 lr_schedule = "onecycle"
@@ -93,9 +172,10 @@ seed = 1337
 [[trainers]]
 id = "ewc4"
 name = "ElasticWeightConsolidation"
+label = "EWC"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 lambda = 1000.0
 lr_schedule = "onecycle"
@@ -108,9 +188,10 @@ seed = 1337
 [[trainers]]
 id = "ewc5"
 name = "ElasticWeightConsolidation"
+label = "EWC"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 lambda = 10000.0
 lr_schedule = "onecycle"
@@ -123,9 +204,10 @@ seed = 1337
 [[trainers]]
 id = "si1"
 name = "SynapticIntelligence"
+label = "SI"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 lambda = 1.0
 lr_schedule = "onecycle"
@@ -139,9 +221,10 @@ xi = 0.1
 [[trainers]]
 id = "si2"
 name = "SynapticIntelligence"
+label = "SI"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 lambda = 10.0
 lr_schedule = "onecycle"
@@ -155,9 +238,10 @@ xi = 0.1
 [[trainers]]
 id = "si3"
 name = "SynapticIntelligence"
+label = "SI"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 lambda = 100.0
 lr_schedule = "onecycle"
@@ -171,9 +255,10 @@ xi = 0.1
 [[trainers]]
 id = "si4"
 name = "SynapticIntelligence"
+label = "SI"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 lambda = 1000.0
 lr_schedule = "onecycle"
@@ -187,9 +272,10 @@ xi = 0.1
 [[trainers]]
 id = "si5"
 name = "SynapticIntelligence"
+label = "SI"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 lambda = 10000.0
 lr_schedule = "onecycle"
@@ -203,9 +289,10 @@ xi = 0.1
 [[trainers]]
 id = "si6"
 name = "SynapticIntelligence"
+label = "SI"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 lambda = 1.0
 lr_schedule = "onecycle"
@@ -219,9 +306,10 @@ xi = 1.0
 [[trainers]]
 id = "si7"
 name = "SynapticIntelligence"
+label = "SI"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 lambda = 10.0
 lr_schedule = "onecycle"
@@ -235,9 +323,10 @@ xi = 1.0
 [[trainers]]
 id = "si8"
 name = "SynapticIntelligence"
+label = "SI"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 lambda = 100.0
 lr_schedule = "onecycle"
@@ -251,9 +340,10 @@ xi = 1.0
 [[trainers]]
 id = "si9"
 name = "SynapticIntelligence"
+label = "SI"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 lambda = 1000.0
 lr_schedule = "onecycle"
@@ -267,9 +357,10 @@ xi = 1.0
 [[trainers]]
 id = "si10"
 name = "SynapticIntelligence"
+label = "SI"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 lambda = 10000.0
 lr_schedule = "onecycle"
@@ -283,9 +374,10 @@ xi = 1.0
 [[trainers]]
 id = "si11"
 name = "SynapticIntelligence"
+label = "SI"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 lambda = 1.0
 lr_schedule = "onecycle"
@@ -299,9 +391,10 @@ xi = 10.0
 [[trainers]]
 id = "si12"
 name = "SynapticIntelligence"
+label = "SI"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 lambda = 10.0
 lr_schedule = "onecycle"
@@ -315,9 +408,10 @@ xi = 10.0
 [[trainers]]
 id = "si13"
 name = "SynapticIntelligence"
+label = "SI"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 lambda = 100.0
 lr_schedule = "onecycle"
@@ -331,9 +425,10 @@ xi = 10.0
 [[trainers]]
 id = "si14"
 name = "SynapticIntelligence"
+label = "SI"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 lambda = 1000.0
 lr_schedule = "onecycle"
@@ -347,9 +442,10 @@ xi = 10.0
 [[trainers]]
 id = "si15"
 name = "SynapticIntelligence"
+label = "SI"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 lambda = 10000.0
 lr_schedule = "onecycle"
@@ -362,9 +458,10 @@ xi = 10.0
 [[trainers]]
 id = "aqc1"
 name = "AutodiffQuadraticConsolidation"
+label = "AQC"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 lambda = 1.0
 lr_schedule = "onecycle"
@@ -377,9 +474,10 @@ seed = 1337
 [[trainers]]
 id = "aqc2"
 name = "AutodiffQuadraticConsolidation"
+label = "AQC"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 lambda = 10.0
 lr_schedule = "onecycle"
@@ -392,9 +490,10 @@ seed = 1337
 [[trainers]]
 id = "aqc3"
 name = "AutodiffQuadraticConsolidation"
+label = "AQC"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 lambda = 100.0
 lr_schedule = "onecycle"
@@ -407,9 +506,10 @@ seed = 1337
 [[trainers]]
 id = "aqc4"
 name = "AutodiffQuadraticConsolidation"
+label = "AQC"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 lambda = 1000.0
 lr_schedule = "onecycle"
@@ -422,9 +522,10 @@ seed = 1337
 [[trainers]]
 id = "aqc5"
 name = "AutodiffQuadraticConsolidation"
+label = "AQC"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 lambda = 10000.0
 lr_schedule = "onecycle"
@@ -437,9 +538,10 @@ seed = 1337
 [[trainers]]
 id = "nc1"
 name = "NeuralConsolidation"
+label = "NC"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 con_dense0 = 256
 con_dense1 = 256
@@ -459,9 +561,10 @@ seed = 1337
 [[trainers]]
 id = "nc2"
 name = "NeuralConsolidation"
+label = "NC"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 con_dense0 = 256
 con_dense1 = 256
@@ -481,9 +584,10 @@ seed = 1337
 [[trainers]]
 id = "nc3"
 name = "NeuralConsolidation"
+label = "NC"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 con_dense0 = 256
 con_dense1 = 256
@@ -503,9 +607,10 @@ seed = 1337
 [[trainers]]
 id = "nc4"
 name = "NeuralConsolidation"
+label = "NC"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 con_dense0 = 256
 con_dense1 = 256
@@ -525,9 +630,10 @@ seed = 1337
 [[trainers]]
 id = "nc5"
 name = "NeuralConsolidation"
+label = "NC"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 con_dense0 = 256
 con_dense1 = 256
@@ -547,9 +653,10 @@ seed = 1337
 [[trainers]]
 id = "nc6"
 name = "NeuralConsolidation"
+label = "NC"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 con_dense0 = 256
 con_dense1 = 256
@@ -569,9 +676,10 @@ seed = 1337
 [[trainers]]
 id = "nc7"
 name = "NeuralConsolidation"
+label = "NC"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 con_dense0 = 256
 con_dense1 = 256
@@ -591,9 +699,10 @@ seed = 1337
 [[trainers]]
 id = "nc8"
 name = "NeuralConsolidation"
+label = "NC"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 con_dense0 = 256
 con_dense1 = 256
@@ -613,9 +722,10 @@ seed = 1337
 [[trainers]]
 id = "nc9"
 name = "NeuralConsolidation"
+label = "NC"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 con_dense0 = 256
 con_dense1 = 256
@@ -635,9 +745,10 @@ seed = 1337
 [[trainers]]
 id = "nc10"
 name = "NeuralConsolidation"
+label = "NC"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 con_dense0 = 256
 con_dense1 = 256
@@ -657,9 +768,10 @@ seed = 1337
 [[trainers]]
 id = "nc11"
 name = "NeuralConsolidation"
+label = "NC"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 con_dense0 = 256
 con_dense1 = 256
@@ -679,9 +791,10 @@ seed = 1337
 [[trainers]]
 id = "nc12"
 name = "NeuralConsolidation"
+label = "NC"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 con_dense0 = 256
 con_dense1 = 256
@@ -701,9 +814,10 @@ seed = 1337
 [[trainers]]
 id = "nc13"
 name = "NeuralConsolidation"
+label = "NC"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 con_dense0 = 256
 con_dense1 = 256
@@ -723,9 +837,10 @@ seed = 1337
 [[trainers]]
 id = "nc14"
 name = "NeuralConsolidation"
+label = "NC"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 con_dense0 = 256
 con_dense1 = 256
@@ -745,9 +860,10 @@ seed = 1337
 [[trainers]]
 id = "nc15"
 name = "NeuralConsolidation"
+label = "NC"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.1
 batch_size = 16
 con_dense0 = 256
 con_dense1 = 256
@@ -763,63 +879,3 @@ precision = 1.0
 seed = 1337
 
 [trainers.hparams.predict]
-
-[[trainers]]
-id = "gvcl"
-name = "GVCL"
-
-[trainers.hparams.train]
-base_lr = 0.01
-batch_size = 16
-lr_schedule = "onecycle"
-mc = true
-n_epochs = 100
-precision = 1.0
-sample_size = 10
-seed = 1337
-
-[trainers.hparams.predict]
-sample_size = 100
-seed = 1337
-
-[[trainers]]
-id = "gmvcl"
-name = "GMVCL"
-
-[trainers.hparams.train]
-base_lr = 0.01
-batch_size = 16
-lr_schedule = "onecycle"
-mc = true
-n_comp = 3
-n_epochs = 100
-precision = 1.0
-sample_size = 10
-seed = 1337
-
-[trainers.hparams.predict]
-n_comp = 3
-sample_size = 100
-seed = 1337
-
-[[trainers]]
-id = "gsfsvi"
-name = "SimpleGSFSVI"
-
-[trainers.hparams.train]
-base_lr = 0.01
-batch_size = 16
-equal_weight = false
-lr_schedule = "onecycle"
-mc = false
-noise_batch_size = 16
-noise_maxval = [ 14.39, 5.8, 2.92, 30.0, 162.0, 3.88, 3.93, 0.63, 3.58, 13.0, 1.45, 4.0, 1680.0 ]
-noise_minval = [ 11.41, 0.74, 1.7, 11.2, 70.0, 0.98, 0.34, 0.17, 0.41, 1.28, 0.54, 1.27, 278.0 ]
-n_epochs = 100
-precision = 1.0
-sample_size = 10
-seed = 1337
-
-[trainers.hparams.predict]
-sample_size = 100
-seed = 1337

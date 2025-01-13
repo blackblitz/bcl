@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 
 from flax.training.train_state import TrainState
 from jax import random
+import jax.numpy as jnp
 from optax import adam, constant_schedule, cosine_onecycle_schedule
 
 from dataops.array import get_n_batches, get_pass_size
@@ -19,13 +20,13 @@ smi_simple = [
 ]
 smi_replay = ['GDumb', 'TICReplay']
 svi_simple = [
-    'GMVCL', 'GVCL', 'SimpleGMSFSVI',
-    'SimpleGSFSVI', 'SimpleTSFSVI', 'TVCL'
+    'SimpleGMVCL', 'SimpleGVCL', 'SimpleGMSFSVI',
+    'SimpleGSFSVI', 'SimpleTSFSVI', 'SimpleTVCL'
 ]
 svi_replay = [
     'PriorExactGMSFSVI', 'PriorExactGSFSVI', 'PriorExactTSFSVI',
     'LikelihoodExactGMSFSVI', 'LikelihoodExactGSFSVI', 'LikelihoodExactTSFSVI',
-    'GVER', 'TVER', 'GMVER'
+    'LikelihoodExactGMVCL', 'LikelihoodExactGVCL', 'LikelihoodExactTVCL'
 ]
 
 module_map = (
@@ -60,7 +61,10 @@ class OptimizingTrainer(ABC):
             'param_example': init(
                 random.key(1337), self.model, self.mspec.in_shape
             ),
-            'nll': get_nll(self.mspec.nll)(self.model.apply)
+            'nll': get_nll(self.mspec.nll)(
+                self.model.apply,
+                self.mspec.cscale / jnp.array(self.mspec.cratio)
+            )
         }
 
     def _make_lr_schedule(self, size):

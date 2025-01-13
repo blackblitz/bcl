@@ -1,28 +1,25 @@
 """HMC-NUTS training script."""
 
+import argparse
+import datetime
+from importlib import import_module
+import json
 from multiprocessing import cpu_count
 from os import environ
+from pathlib import Path
+
+import orbax.checkpoint as ocp
+from tqdm import tqdm
 
 ncpus = cpu_count()
 environ['JAX_PLATFORM_NAME'] = 'cpu'
 environ['XLA_FLAGS'] = f'--xla_force_host_platform_device_count={ncpus}'
 
-import argparse
-import datetime
-from importlib import import_module
-import json
-from pathlib import Path
-
-from jax import tree_util
-import jax.numpy as jnp
-import orbax.checkpoint as ocp
-from tqdm import tqdm
-
-from dataops.io import read_task, read_toml
-from evaluate import metrics
-from models import ModelSpec, NLL
-from models import module_map as models_module_map
-from train.trainer.sampling import HMCNUTS
+from dataops.io import read_task, read_toml  # noqa: E402
+from evaluate import metrics  # noqa: E402
+from models import ModelSpec, NLL  # noqa: E402
+from models import module_map as models_module_map  # noqa: E402
+from train.trainer.sampling import HMCNUTS  # noqa: E402
 
 
 def main():

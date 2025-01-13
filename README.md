@@ -1,6 +1,6 @@
 # Bayesian Continual Learning
 
-This repository contains the official implementation of "On Sequential Loss Approximation for Continual Learning".
+This repository contains implementations of algorithms for Bayesian continual learning, including the official implementation of "On Sequential Maximum a Posteriori Inference for Continual Learning" [1].
 
 ## Setting up
 
@@ -10,13 +10,7 @@ Make sure that python is installed (tested with python 3.10) and use pip to inst
 pip install -r requirements.txt
 ```
 
-Then, create directories `plots` and `results`:
-
-```
-mkdir plots results
-```
-
-Finally, set deterministic GPU operations for reproducibility:
+Set deterministic GPU operations for reproducibility:
 
 ```
 export XLA_FLAGS=--xla_gpu_deterministic_ops=true
@@ -24,35 +18,27 @@ export XLA_FLAGS=--xla_gpu_deterministic_ops=true
 
 ## Running experiments
 
-Split Iris 1 and Split Iris 2 produce visualizations, which are stored as `png` images under `plots`.
+Before running experiments, data must be prepared by running the `dataprep` script:
 
 ```
-python -m experiments.splitiris1
-python -m experiments.splitiris1.radius
-python -m experiments.splitiris1.size
-python -m experiments.splitiris2
+python -m dataprep [task_sequence]
 ```
 
-Split Iris, Split Wine, Pre-trained Split MNIST and Pre-trained Split CIFAR-10 produce results of average accuracy as percentage, which are stored as `msgpack` data files under `results`:
+For the experiments in [1], the following tasks or task sequences are required: `cisplitiris2`, `cisplitiris`, `cisplitwine`, `cisplitmnist`, `cisplitcifar10`, `cisplitham8`, `displitmnist`, `displitcifar8`, `displitham6`, `emnistletters`, `cifar100` and `bcn12`. The `dataprep` prepares the data as `npy` files and store them under `data`. `HAM10000` images and metadata must be manually downloaded before preparing `cisplitham8` and `displitham6`. `BCN20000` images and metadata must be manually downloaded and stored under `data/BCN20000` before preparing `bcn12`. Both of these data collections can be downloaded via the CLI tool [`isic`](https://github.com/ImageMarkup/isic-cli).
+
+Experiments are specified in toml files under `experiments` with name `[project]_[dataset_sequence]_[variant]`. Use the `train` script to train with all the specified methods and use the `evaluate` script to evaluate them:
 
 ```
-python -m experiments.splitiris
-python -m experiments.splitwine
-python -m experiments.pretrained_splitmnist.pretrain
-python -m experiments.pretrained_splitmnist
-python -m experiments.pretrained_splitcifar10.pretrain
-python -m experiments.pretrained_splitcifar10
+python -m train [experiment_name]
+python -m evaluate [experiment_name]
 ```
 
-The results can be viewed by running `view.py`:
+For visualization experiments, the prediction plots can be produced by using the `plot` script:
 
 ```
-python view.py -a results/splitiris.dat
-python view.py -a results/splitwine.dat
-python view.py -a results/pretrained_splitmnist.dat
-python view.py -a results/pretrained_splitcifar10.dat
+python -m plot [experiment_name]
 ```
 
-`npy` files are produced during the experiments. They are used only for memory-mapped reading and can be deleted after the experiments are complete.
+The `train` script saves the model parameters under `results/ckpt`. The `evaluate` script saves the evaluation scores in `results/evaluation.jsonl`. The `plot` script saves the plots under `results/plots`.
 
-All experiments are reproducible if deterministic GPU operations are used (see above). Data shuffling, parameter initialization and sampling in neural consolidation all use `jax.random` with a fixed seed for pseudo-random-number generation.
+Hyperparameter tuning is done by specifying multiple trainers of the same type with different hyperparameters and the `evaluate` script chooses the one with the best validation final average accuracy.

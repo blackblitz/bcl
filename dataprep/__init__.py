@@ -2,23 +2,19 @@
 
 seed = 1337
 
-medmnist_src = 'data/medmnist'
-pytorch_src = 'data/pytorch'
-sd198_src = 'data/sd198'
-
-singleton = [
-    'cifar10', 'cifar100', 'emnist_letters', 'fashionmnist',
-    'iris', 'mnist', 'sd169', 'svhn', 'wine'
+isic = ['bcn12', 'cisplitham8', 'displitham6']
+pytorch = [
+    'cifar100',
+    'cisplitcifar10', 'cisplitmnist',
+    'displitcifar8', 'displitmnist',
+    'emnistletters'
 ]
-split = [
-    'split_cifar10', 'split_dermamnist',
-    'split_iris', 'split_iris_2',
-    'split_mnist', 'split_wine'
-]
-synthetic = ['santong', 'sinusoid', 'triangle']
+sklearn = ['cisplitiris', 'cisplitiris2', 'cisplitwine']
+synthetic = ['sinusoid', 'triangle']
 
 module_map = (
-    dict.fromkeys(singleton, 'dataprep.singleton')
-    | dict.fromkeys(split, 'dataprep.split')
+    dict.fromkeys(isic, 'dataprep.isic')
+    | dict.fromkeys(pytorch, 'dataprep.pytorch')
+    | dict.fromkeys(sklearn, 'dataprep.sklearn')
     | dict.fromkeys(synthetic, 'dataprep.synthetic')
 )

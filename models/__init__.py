@@ -31,3 +31,5 @@ class ModelSpec:
     nll: NLL
     in_shape: list[int]
     out_shape: list[int]
+    cratio: list[float]
+    cscale: float

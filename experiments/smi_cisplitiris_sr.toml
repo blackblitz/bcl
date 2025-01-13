@@ -1,58 +1,32 @@
 [task_sequence]
-name = "split_mnist"
+name = "cisplitiris"
 
 [evaluation]
 metrics = ["accuracy"]
 validation_metric = "accuracy"
 
-[feature_extractor]
-name = "FECNN4"
-task_sequence_name = "emnist_letters"
-
-[feature_extractor.evaluation]
-metrics = [ "accuracy" ]
-
-[feature_extractor.args]
-conv0 = 32
-conv1 = 32
-dense0 = 32
-dense1 = 26
-
-[feature_extractor.spec]
-nll = "SOFTMAX_CROSS_ENTROPY"
-in_shape = [ 28, 28, 1 ]
-out_shape = [ 10 ]
-
-[feature_extractor.hparams.train]
-base_lr = 0.01
-batch_size = 64
-lr_schedule = "onecycle"
-n_epochs = 10
-precision = 1.0
-seed = 1337
-
-[feature_extractor.hparams.predict]
-
 [model]
 name = "FCNN1"
 
 [model.args]
-dense = 10
+dense = 3
 
 [model.spec]
 nll = "SOFTMAX_CROSS_ENTROPY"
-in_shape = [ 32 ]
-out_shape = [ 10 ]
+in_shape = [ 4 ]
+out_shape = [ 3 ]
+cratio = [ 1, 1, 1 ]
+cscale = 1
 
 [[trainers]]
 id = "joint"
 name = "Joint"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 
@@ -63,25 +37,85 @@ id = "finetuning"
 name = "Finetuning"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 
 [trainers.hparams.predict]
 
 [[trainers]]
+id = "simple_gvcl"
+name = "SimpleGVCL"
+
+[trainers.hparams.train]
+base_lr = 0.1
+batch_size = 16
+lr_schedule = "onecycle"
+mc = true
+n_epochs = 100
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "simple_gmvcl"
+name = "SimpleGMVCL"
+
+[trainers.hparams.train]
+base_lr = 0.1
+batch_size = 16
+lr_schedule = "onecycle"
+mc = true
+n_comp = 3
+n_epochs = 100
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+n_comp = 3
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "simple_gsfsvi"
+name = "SimpleGSFSVI"
+
+[trainers.hparams.train]
+base_lr = 0.1
+batch_size = 16
+equal_weight = false
+lr_schedule = "onecycle"
+mc = false
+noise_batch_size = 16
+noise_maxval = [ 7.7, 4.4, 6.7, 2.4 ]
+noise_minval = [ 4.3, 2.0, 1.0, 0.1 ]
+n_epochs = 100
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+sample_size = 100
+seed = 1337
+
+[[trainers]]
 id = "ewc1"
 name = "ElasticWeightConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 lambda = 1.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 
@@ -92,11 +126,11 @@ id = "ewc2"
 name = "ElasticWeightConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 lambda = 10.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 
@@ -107,11 +141,11 @@ id = "ewc3"
 name = "ElasticWeightConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 lambda = 100.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 
@@ -122,11 +156,11 @@ id = "ewc4"
 name = "ElasticWeightConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 lambda = 1000.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 
@@ -137,11 +171,11 @@ id = "ewc5"
 name = "ElasticWeightConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 lambda = 10000.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 
@@ -152,11 +186,11 @@ id = "si1"
 name = "SynapticIntelligence"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 lambda = 1.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 xi = 0.1
@@ -168,11 +202,11 @@ id = "si2"
 name = "SynapticIntelligence"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 lambda = 10.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 xi = 0.1
@@ -184,11 +218,11 @@ id = "si3"
 name = "SynapticIntelligence"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 lambda = 100.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 xi = 0.1
@@ -200,11 +234,11 @@ id = "si4"
 name = "SynapticIntelligence"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 lambda = 1000.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 xi = 0.1
@@ -216,11 +250,11 @@ id = "si5"
 name = "SynapticIntelligence"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 lambda = 10000.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 xi = 0.1
@@ -232,11 +266,11 @@ id = "si6"
 name = "SynapticIntelligence"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 lambda = 1.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 xi = 1.0
@@ -248,11 +282,11 @@ id = "si7"
 name = "SynapticIntelligence"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 lambda = 10.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 xi = 1.0
@@ -264,11 +298,11 @@ id = "si8"
 name = "SynapticIntelligence"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 lambda = 100.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 xi = 1.0
@@ -280,11 +314,11 @@ id = "si9"
 name = "SynapticIntelligence"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 lambda = 1000.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 xi = 1.0
@@ -296,11 +330,11 @@ id = "si10"
 name = "SynapticIntelligence"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 lambda = 10000.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 xi = 1.0
@@ -312,11 +346,11 @@ id = "si11"
 name = "SynapticIntelligence"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 lambda = 1.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 xi = 10.0
@@ -328,11 +362,11 @@ id = "si12"
 name = "SynapticIntelligence"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 lambda = 10.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 xi = 10.0
@@ -344,11 +378,11 @@ id = "si13"
 name = "SynapticIntelligence"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 lambda = 100.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 xi = 10.0
@@ -360,11 +394,11 @@ id = "si14"
 name = "SynapticIntelligence"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 lambda = 1000.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 xi = 10.0
@@ -376,27 +410,26 @@ id = "si15"
 name = "SynapticIntelligence"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 lambda = 10000.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 xi = 10.0
 
 [trainers.hparams.predict]
-
 [[trainers]]
 id = "aqc1"
 name = "AutodiffQuadraticConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 lambda = 1.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 
@@ -407,11 +440,11 @@ id = "aqc2"
 name = "AutodiffQuadraticConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 lambda = 10.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 
@@ -422,11 +455,11 @@ id = "aqc3"
 name = "AutodiffQuadraticConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 lambda = 100.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 
@@ -437,11 +470,11 @@ id = "aqc4"
 name = "AutodiffQuadraticConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 lambda = 1000.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 
@@ -452,11 +485,11 @@ id = "aqc5"
 name = "AutodiffQuadraticConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 lambda = 10000.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 
@@ -467,8 +500,8 @@ id = "nc1"
 name = "NeuralConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 con_dense0 = 256
 con_dense1 = 256
 con_base_lr = 0.01
@@ -478,7 +511,7 @@ con_radius = 1.0
 con_sample_size = 64
 lambda = 1.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 
@@ -489,8 +522,8 @@ id = "nc2"
 name = "NeuralConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 con_dense0 = 256
 con_dense1 = 256
 con_base_lr = 0.01
@@ -500,7 +533,7 @@ con_radius = 1.0
 con_sample_size = 64
 lambda = 10.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 
@@ -511,8 +544,8 @@ id = "nc3"
 name = "NeuralConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 con_dense0 = 256
 con_dense1 = 256
 con_base_lr = 0.01
@@ -522,7 +555,7 @@ con_radius = 1.0
 con_sample_size = 64
 lambda = 100.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 
@@ -533,8 +566,8 @@ id = "nc4"
 name = "NeuralConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 con_dense0 = 256
 con_dense1 = 256
 con_base_lr = 0.01
@@ -544,7 +577,7 @@ con_radius = 1.0
 con_sample_size = 64
 lambda = 1000.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 
@@ -555,8 +588,8 @@ id = "nc5"
 name = "NeuralConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 con_dense0 = 256
 con_dense1 = 256
 con_base_lr = 0.01
@@ -566,7 +599,7 @@ con_radius = 1.0
 con_sample_size = 64
 lambda = 10000.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 
@@ -577,8 +610,8 @@ id = "nc6"
 name = "NeuralConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 con_dense0 = 256
 con_dense1 = 256
 con_base_lr = 0.01
@@ -588,7 +621,7 @@ con_radius = 10.0
 con_sample_size = 64
 lambda = 1.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 
@@ -599,8 +632,8 @@ id = "nc7"
 name = "NeuralConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 con_dense0 = 256
 con_dense1 = 256
 con_base_lr = 0.01
@@ -610,7 +643,7 @@ con_radius = 10.0
 con_sample_size = 64
 lambda = 10.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 
@@ -621,8 +654,8 @@ id = "nc8"
 name = "NeuralConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 con_dense0 = 256
 con_dense1 = 256
 con_base_lr = 0.01
@@ -632,7 +665,7 @@ con_radius = 10.0
 con_sample_size = 64
 lambda = 100.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 
@@ -643,8 +676,8 @@ id = "nc9"
 name = "NeuralConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 con_dense0 = 256
 con_dense1 = 256
 con_base_lr = 0.01
@@ -654,7 +687,7 @@ con_radius = 10.0
 con_sample_size = 64
 lambda = 1000.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 
@@ -665,8 +698,8 @@ id = "nc10"
 name = "NeuralConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 con_dense0 = 256
 con_dense1 = 256
 con_base_lr = 0.01
@@ -676,7 +709,7 @@ con_radius = 10.0
 con_sample_size = 64
 lambda = 10000.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 
@@ -687,8 +720,8 @@ id = "nc11"
 name = "NeuralConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 con_dense0 = 256
 con_dense1 = 256
 con_base_lr = 0.01
@@ -698,7 +731,7 @@ con_radius = 100.0
 con_sample_size = 64
 lambda = 1.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 
@@ -709,8 +742,8 @@ id = "nc12"
 name = "NeuralConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 con_dense0 = 256
 con_dense1 = 256
 con_base_lr = 0.01
@@ -720,7 +753,7 @@ con_radius = 100.0
 con_sample_size = 64
 lambda = 10.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 
@@ -731,8 +764,8 @@ id = "nc13"
 name = "NeuralConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 con_dense0 = 256
 con_dense1 = 256
 con_base_lr = 0.01
@@ -742,7 +775,7 @@ con_radius = 100.0
 con_sample_size = 64
 lambda = 100.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 
@@ -753,8 +786,8 @@ id = "nc14"
 name = "NeuralConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 con_dense0 = 256
 con_dense1 = 256
 con_base_lr = 0.01
@@ -764,7 +797,7 @@ con_radius = 100.0
 con_sample_size = 64
 lambda = 1000.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 
@@ -775,8 +808,8 @@ id = "nc15"
 name = "NeuralConsolidation"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
+base_lr = 0.1
+batch_size = 16
 con_dense0 = 256
 con_dense1 = 256
 con_base_lr = 0.01
@@ -786,68 +819,8 @@ con_radius = 100.0
 con_sample_size = 64
 lambda = 10000.0
 lr_schedule = "onecycle"
-n_epochs = 10
+n_epochs = 100
 precision = 1.0
 seed = 1337
 
 [trainers.hparams.predict]
-
-[[trainers]]
-id = "gvcl"
-name = "GVCL"
-
-[trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
-lr_schedule = "onecycle"
-mc = false
-n_epochs = 10
-precision = 1.0
-sample_size = 10
-seed = 1337
-
-[trainers.hparams.predict]
-sample_size = 100
-seed = 1337
-
-[[trainers]]
-id = "gmvcl"
-name = "GMVCL"
-
-[trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
-lr_schedule = "onecycle"
-mc = false
-n_comp = 3
-n_epochs = 10
-precision = 1.0
-sample_size = 10
-seed = 1337
-
-[trainers.hparams.predict]
-n_comp = 3
-sample_size = 100
-seed = 1337
-
-[[trainers]]
-id = "gsfsvi"
-name = "SimpleGSFSVI"
-
-[trainers.hparams.train]
-base_lr = 0.01
-batch_size = 64
-equal_weight = false
-lr_schedule = "onecycle"
-mc = false
-noise_batch_size = 64
-noise_maxval = 6.0
-noise_minval = -1.0
-n_epochs = 10
-precision = 1.0
-sample_size = 10
-seed = 1337
-
-[trainers.hparams.predict]
-sample_size = 100
-seed = 1337

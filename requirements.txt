@@ -5,6 +5,7 @@ jax[cuda12]==0.4.28
 matplotlib==3.9.0
 numpy==2.0.0
 orbax==0.1.9
+pandas==2.2.3
 scikit-learn==1.5.0
 tomli-w==1.0.0
 torch==2.3.1

@@ -14,9 +14,9 @@ def get_nll(nll_enum):
     """Return the negative log-likelihood function."""
     match nll_enum:
         case NLL.SIGMOID_CROSS_ENTROPY:
-            return sigmoid_cross_entropy
+            return weighted_sigmoid_cross_entropy
         case NLL.SOFTMAX_CROSS_ENTROPY:
-            return softmax_cross_entropy
+            return weighted_softmax_cross_entropy
 
 
 def sigmoid_cross_entropy(apply):
@@ -35,6 +35,36 @@ def softmax_cross_entropy(apply):
         return optax.softmax_cross_entropy_with_integer_labels(
             apply({'params': params}, xs), ys
         ).sum()
+
+    return loss
+
+
+def weighted_sigmoid_cross_entropy(apply, weight):
+    """Return a weighted sigmoid cross-entropy loss function."""
+    if len(weight) != 2:
+        raise ValueError('length of weight not equal to 2')
+
+    def loss(params, xs, ys):
+        out = apply({'params': params}, xs)[:, 0]
+        prob = jnp.concatenate(jnp.array([[jnp.zeros_like(out)], [out]])).T
+        return (
+            -optax.losses._classification.weighted_logsoftmax(
+                prob, jnp.eye(len(weight))[ys] * weight
+            ).sum()
+        )
+
+    return loss
+
+
+def weighted_softmax_cross_entropy(apply, weight):
+    """Return a weighted softmax cross-entropy loss function."""
+    def loss(params, xs, ys):
+        out = apply({'params': params}, xs)
+        return (
+            -optax.losses._classification.weighted_logsoftmax(
+                out, jnp.eye(len(weight))[ys] * weight
+            ).sum()
+        )
 
     return loss
 
@@ -270,7 +300,7 @@ def concat_pvfe(base):
     """Return the parameter-space VFE by concatenating batches."""
     def loss(params, sample, xs1, ys1, xs2, ys2):
         return base(
-            params, sample, 
+            params, sample,
             jnp.concatenate([xs1, xs2]), jnp.concatenate([ys1, ys2])
         )
 
@@ -281,7 +311,7 @@ def concat_fvfe(base):
     """Return the function-space VFE by concatenating batches."""
     def loss(params, param_sample, output_sample, xs1, ys1, xs2, ys2, ind_xs):
         return base(
-            params, param_sample, output_sample, 
+            params, param_sample, output_sample,
             jnp.concatenate([xs1, xs2]), jnp.concatenate([ys1, ys2]), ind_xs
         )
 

@@ -1,0 +1,860 @@
+[task_sequence]
+name = "displitmnist"
+
+[evaluation]
+metrics = ["accuracy"]
+validation_metric = "accuracy"
+
+[feature_extractor]
+name = "FECNN4"
+task_sequence_name = "emnistletters"
+
+[feature_extractor.evaluation]
+metrics = [ "accuracy" ]
+
+[feature_extractor.args]
+conv0 = 32
+conv1 = 32
+dense0 = 64
+dense1 = 26
+
+[feature_extractor.spec]
+nll = "SOFTMAX_CROSS_ENTROPY"
+in_shape = [ 28, 28, 1 ]
+out_shape = [ 26 ]
+cratio = [
+    3840, 3840, 3840, 3840, 3840, 3840, 3840, 3840, 3840, 3840, 3840, 3840, 3840,
+    3840, 3840, 3840, 3840, 3840, 3840, 3840, 3840, 3840, 3840, 3840, 3840, 3840
+]
+cscale = 3840
+
+[feature_extractor.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[feature_extractor.hparams.predict]
+
+[model]
+name = "FCNN1"
+
+[model.args]
+dense = 1
+
+[model.spec]
+nll = "SIGMOID_CROSS_ENTROPY"
+in_shape = [ 64 ]
+out_shape = [ 1 ]
+cratio = [ 1, 1 ]
+cscale = 1
+
+[[trainers]]
+id = "joint"
+name = "Joint"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "finetuning"
+name = "Finetuning"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "simple_gvcl"
+name = "SimpleGVCL"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lr_schedule = "onecycle"
+mc = false
+n_epochs = 20
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "simple_gmvcl"
+name = "SimpleGMVCL"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lr_schedule = "onecycle"
+mc = false
+n_comp = 3
+n_epochs = 20
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+n_comp = 3
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "simple_gsfsvi"
+name = "SimpleGSFSVI"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+equal_weight = false
+lr_schedule = "onecycle"
+mc = false
+noise_batch_size = 64
+noise_maxval = 6.0
+noise_minval = -1.0
+n_epochs = 20
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "ewc1"
+name = "ElasticWeightConsolidation"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 1.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "ewc2"
+name = "ElasticWeightConsolidation"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 10.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "ewc3"
+name = "ElasticWeightConsolidation"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 100.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "ewc4"
+name = "ElasticWeightConsolidation"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 1000.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "ewc5"
+name = "ElasticWeightConsolidation"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 10000.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si1"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 1.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+xi = 0.1
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si2"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 10.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+xi = 0.1
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si3"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 100.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+xi = 0.1
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si4"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 1000.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+xi = 0.1
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si5"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 10000.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+xi = 0.1
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si6"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 1.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+xi = 1.0
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si7"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 10.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+xi = 1.0
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si8"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 100.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+xi = 1.0
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si9"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 1000.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+xi = 1.0
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si10"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 10000.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+xi = 1.0
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si11"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 1.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+xi = 10.0
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si12"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 10.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+xi = 10.0
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si13"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 100.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+xi = 10.0
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si14"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 1000.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+xi = 10.0
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si15"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 10000.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+xi = 10.0
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "aqc1"
+name = "AutodiffQuadraticConsolidation"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 1.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "aqc2"
+name = "AutodiffQuadraticConsolidation"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 10.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "aqc3"
+name = "AutodiffQuadraticConsolidation"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 100.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "aqc4"
+name = "AutodiffQuadraticConsolidation"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 1000.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "aqc5"
+name = "AutodiffQuadraticConsolidation"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+lambda = 10000.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "nc1"
+name = "NeuralConsolidation"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+con_dense0 = 256
+con_dense1 = 256
+con_base_lr = 0.01
+con_lr_schedule = "onecycle"
+con_n_steps = 1000
+con_radius = 1.0
+con_sample_size = 64
+lambda = 1.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "nc2"
+name = "NeuralConsolidation"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+con_dense0 = 256
+con_dense1 = 256
+con_base_lr = 0.01
+con_lr_schedule = "onecycle"
+con_n_steps = 1000
+con_radius = 1.0
+con_sample_size = 64
+lambda = 10.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "nc3"
+name = "NeuralConsolidation"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+con_dense0 = 256
+con_dense1 = 256
+con_base_lr = 0.01
+con_lr_schedule = "onecycle"
+con_n_steps = 1000
+con_radius = 1.0
+con_sample_size = 64
+lambda = 100.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "nc4"
+name = "NeuralConsolidation"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+con_dense0 = 256
+con_dense1 = 256
+con_base_lr = 0.01
+con_lr_schedule = "onecycle"
+con_n_steps = 1000
+con_radius = 1.0
+con_sample_size = 64
+lambda = 1000.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "nc5"
+name = "NeuralConsolidation"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+con_dense0 = 256
+con_dense1 = 256
+con_base_lr = 0.01
+con_lr_schedule = "onecycle"
+con_n_steps = 1000
+con_radius = 1.0
+con_sample_size = 64
+lambda = 10000.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "nc6"
+name = "NeuralConsolidation"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+con_dense0 = 256
+con_dense1 = 256
+con_base_lr = 0.01
+con_lr_schedule = "onecycle"
+con_n_steps = 1000
+con_radius = 10.0
+con_sample_size = 64
+lambda = 1.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "nc7"
+name = "NeuralConsolidation"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+con_dense0 = 256
+con_dense1 = 256
+con_base_lr = 0.01
+con_lr_schedule = "onecycle"
+con_n_steps = 1000
+con_radius = 10.0
+con_sample_size = 64
+lambda = 10.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "nc8"
+name = "NeuralConsolidation"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+con_dense0 = 256
+con_dense1 = 256
+con_base_lr = 0.01
+con_lr_schedule = "onecycle"
+con_n_steps = 1000
+con_radius = 10.0
+con_sample_size = 64
+lambda = 100.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "nc9"
+name = "NeuralConsolidation"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+con_dense0 = 256
+con_dense1 = 256
+con_base_lr = 0.01
+con_lr_schedule = "onecycle"
+con_n_steps = 1000
+con_radius = 10.0
+con_sample_size = 64
+lambda = 1000.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "nc10"
+name = "NeuralConsolidation"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+con_dense0 = 256
+con_dense1 = 256
+con_base_lr = 0.01
+con_lr_schedule = "onecycle"
+con_n_steps = 1000
+con_radius = 10.0
+con_sample_size = 64
+lambda = 10000.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "nc11"
+name = "NeuralConsolidation"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+con_dense0 = 256
+con_dense1 = 256
+con_base_lr = 0.01
+con_lr_schedule = "onecycle"
+con_n_steps = 1000
+con_radius = 100.0
+con_sample_size = 64
+lambda = 1.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "nc12"
+name = "NeuralConsolidation"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+con_dense0 = 256
+con_dense1 = 256
+con_base_lr = 0.01
+con_lr_schedule = "onecycle"
+con_n_steps = 1000
+con_radius = 100.0
+con_sample_size = 64
+lambda = 10.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "nc13"
+name = "NeuralConsolidation"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+con_dense0 = 256
+con_dense1 = 256
+con_base_lr = 0.01
+con_lr_schedule = "onecycle"
+con_n_steps = 1000
+con_radius = 100.0
+con_sample_size = 64
+lambda = 100.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "nc14"
+name = "NeuralConsolidation"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+con_dense0 = 256
+con_dense1 = 256
+con_base_lr = 0.01
+con_lr_schedule = "onecycle"
+con_n_steps = 1000
+con_radius = 100.0
+con_sample_size = 64
+lambda = 1000.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "nc15"
+name = "NeuralConsolidation"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 64
+con_dense0 = 256
+con_dense1 = 256
+con_base_lr = 0.01
+con_lr_schedule = "onecycle"
+con_n_steps = 1000
+con_radius = 100.0
+con_sample_size = 64
+lambda = 10000.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]

@@ -145,8 +145,8 @@ class PriorExactGMSFSVI(GaussmixMixin, PriorExactSFSVI):
         )
 
 
-class VER(SVI):
-    """Variational exact replay."""
+class LikelihoodExactVCL(SVI):
+    """Likelihood-focused exact-replay VCL."""
 
     def __init__(self, model, mspec, hparams):
         """Initialize the mutable hyperparameters."""
@@ -191,8 +191,8 @@ class VER(SVI):
         )
 
 
-class GVER(GaussMixin, VER):
-    """Gaussian variational exact replay."""
+class LikelihoodExactGVCL(GaussMixin, LikelihoodExactVCL):
+    """Likelihood-focused exact-replay Gaussian VCL."""
 
     def update_loss(self, xs, ys):
         """Update the loss function."""
@@ -206,8 +206,8 @@ class GVER(GaussMixin, VER):
         ))
 
 
-class TVER(TMixin, VER):
-    """t variational exact replay."""
+class LikelihoodExactTVCL(TMixin, LikelihoodExactVCL):
+    """Likelihood-focused exact-replay t VCL."""
 
     def update_loss(self, xs, ys):
         """Update the loss function."""
@@ -222,8 +222,8 @@ class TVER(TMixin, VER):
         ))
 
 
-class GMVER(GaussmixMixin, VER):
-    """Gaussian-mixture variational exact replay."""
+class LikelihoodExactGMVCL(GaussmixMixin, LikelihoodExactVCL):
+    """Likelihood-focused exact-replay Gaussian mixture VCL."""
 
     def update_loss(self, xs, ys):
         """Update the loss function."""

@@ -23,7 +23,6 @@ class HMCNUTS(SamplingTrainer):
             'coreset.zarr', 'coreset.memmap', self.mspec
         )
 
-
     def update_sample(self, xs, ys):
         """Update the sample."""
         key1, key2, key3 = random.split(
@@ -89,7 +88,7 @@ class HMCNUTS(SamplingTrainer):
                     )[1]
                 )(
                     (states, params),
-                    random.split(key4, num=self.hparams['n_chains'])
+                    random.split(key3, num=self.hparams['n_chains'])
                 ).position
             )
 
