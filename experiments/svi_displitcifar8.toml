@@ -1,0 +1,547 @@
+[task_sequence]
+name = "displitcifar8"
+
+[evaluation]
+metrics = ["accuracy", "mne"]
+validation_metric = "accuracy"
+
+[model]
+name = "FEResNet18"
+
+[model.args]
+conv0 = 32
+conv1 = 64
+conv2 = 128
+conv3 = 256
+conv4 = 512
+dense = 1
+
+[model.spec]
+nll = "SIGMOID_CROSS_ENTROPY"
+in_shape = [ 32, 32, 3 ]
+out_shape = [ 1 ]
+cratio = [ 1, 1 ]
+cscale = 1
+
+[[trainers]]
+id = "joint"
+name = "Joint"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 16
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "finetuning"
+name = "Finetuning"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 16
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "ewc1"
+name = "ElasticWeightConsolidation"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 16
+lambda = 1.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "ewc2"
+name = "ElasticWeightConsolidation"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 16
+lambda = 10.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "ewc3"
+name = "ElasticWeightConsolidation"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 16
+lambda = 100.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "ewc4"
+name = "ElasticWeightConsolidation"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 16
+lambda = 1000.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "ewc5"
+name = "ElasticWeightConsolidation"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 16
+lambda = 10000.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si1"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 16
+lambda = 1.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+xi = 0.1
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si2"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 16
+lambda = 10.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+xi = 0.1
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si3"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 16
+lambda = 100.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+xi = 0.1
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si4"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 16
+lambda = 1000.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+xi = 0.1
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si5"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 16
+lambda = 10000.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+xi = 0.1
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si6"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 16
+lambda = 1.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+xi = 1.0
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si7"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 16
+lambda = 10.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+xi = 1.0
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si8"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 16
+lambda = 100.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+xi = 1.0
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si9"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 16
+lambda = 1000.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+xi = 1.0
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si10"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 16
+lambda = 10000.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+xi = 1.0
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si11"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 16
+lambda = 1.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+xi = 10.0
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si12"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 16
+lambda = 10.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+xi = 10.0
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si13"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 16
+lambda = 100.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+xi = 10.0
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si14"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 16
+lambda = 1000.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+xi = 10.0
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "si15"
+name = "SynapticIntelligence"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 16
+lambda = 10000.0
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+xi = 10.0
+
+[trainers.hparams.predict]
+
+[[trainers]]
+id = "simple_gvcl"
+name = "SimpleGVCL"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 16
+lr_schedule = "onecycle"
+mc = false
+n_epochs = 20
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+sample_size = 10
+seed = 1337
+
+[[trainers]]
+id = "simple_gmvcl"
+name = "SimpleGMVCL"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 16
+lr_schedule = "onecycle"
+mc = false
+n_comp = 3
+n_epochs = 20
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+n_comp = 3
+sample_size = 10
+seed = 1337
+
+[[trainers]]
+id = "prior_exact_gsfsvi"
+name = "PriorExactGSFSVI"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 16
+coreset_batch_size = 16
+coreset_prob = 1.0
+coreset_size_per_task = 256
+equal_weight = false
+lr_schedule = "onecycle"
+mc = false
+noise_maxval = 1.0
+noise_minval = 0.0
+n_epochs = 20
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+sample_size = 10
+seed = 1337
+
+[[trainers]]
+id = "prior_exact_gmsfsvi"
+name = "PriorExactGMSFSVI"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 16
+coreset_batch_size = 16
+coreset_prob = 1.0
+coreset_size_per_task = 256
+equal_weight = false
+lr_schedule = "onecycle"
+mc = false
+noise_maxval = 1.0
+noise_minval = 0.0
+n_comp = 3
+n_epochs = 20
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+n_comp = 3
+sample_size = 10
+seed = 1337
+
+[[trainers]]
+id = "likelihood_exact_gvcl"
+name = "LikelihoodExactGVCL"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 8
+coreset_batch_size = 8
+coreset_size_per_task = 256
+lr_schedule = "onecycle"
+mc = false
+n_epochs = 20
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+sample_size = 10
+seed = 1337
+
+[[trainers]]
+id = "likelihood_exact_gmvcl"
+name = "LikelihoodExactGMVCL"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 8
+coreset_batch_size = 8
+coreset_size_per_task = 256
+lr_schedule = "onecycle"
+mc = false
+n_comp = 3
+n_epochs = 20
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+n_comp = 3
+sample_size = 10
+seed = 1337
+
+[[trainers]]
+id = "likelihood_exact_gsfsvi"
+name = "LikelihoodExactGSFSVI"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 8
+coreset_batch_size = 8
+coreset_size_per_task = 256
+equal_weight = false
+lr_schedule = "onecycle"
+mc = false
+noise_batch_size = 16
+noise_maxval = 1.0
+noise_minval = 0.0
+n_epochs = 20
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+sample_size = 10
+seed = 1337
+
+[[trainers]]
+id = "likelihood_exact_gmsfsvi"
+name = "LikelihoodExactGMSFSVI"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 8
+coreset_batch_size = 8
+coreset_size_per_task = 256
+equal_weight = false
+lr_schedule = "onecycle"
+mc = false
+noise_batch_size = 16
+noise_maxval = 1.0
+noise_minval = 0.0
+n_comp = 3
+n_epochs = 20
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+n_comp = 3
+sample_size = 10
+seed = 1337

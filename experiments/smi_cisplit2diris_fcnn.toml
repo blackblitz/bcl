@@ -46,7 +46,7 @@ seed = 1337
 [[trainers]]
 id = "finetuning"
 name = "Finetuning"
-label = "Finetuning"
+label = "Fine-tuning"
 
 [trainers.hparams.train]
 base_lr = 0.1
@@ -455,6 +455,7 @@ seed = 1337
 xi = 10.0
 
 [trainers.hparams.predict]
+
 [[trainers]]
 id = "aqc1"
 name = "AutodiffQuadraticConsolidation"

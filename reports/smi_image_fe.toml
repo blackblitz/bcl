@@ -1,0 +1,13 @@
+exps = [
+    "smi_cisplitmnist_fe",
+    "smi_cisplitcifar10_fe",
+    "smi_cisplitham8_fe",
+    "smi_displitmnist_fe",
+    "smi_displitcifar8_fe",
+    "smi_displitham6_fe"
+]
+    
+[[metrics]]
+name = "Final average accuracy"
+metametric = "final_average"
+basemetric = "accuracy"

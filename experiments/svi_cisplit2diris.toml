@@ -1,0 +1,583 @@
+[task_sequence]
+name = "cisplit2diris"
+
+[evaluation]
+metrics = ["accuracy", "mne"]
+validation_metric = "accuracy"
+
+[plot]
+height = 4
+n_classes = 3
+width = 16
+x1_max = 7.0
+x1_min = 0.0
+x2_max = 3.0
+x2_min = 0.0
+
+[model]
+name = "FCNN3"
+
+[model.args]
+dense0 = 16
+dense1 = 16
+dense2 = 3
+
+[model.spec]
+nll = "SOFTMAX_CROSS_ENTROPY"
+in_shape = [ 2 ]
+out_shape = [ 3 ]
+cratio = [ 1, 1, 1 ]
+cscale = 1
+
+# [[trainers]]
+# id = "joint"
+# name = "Joint"
+# label = "Joint training"
+# 
+# [trainers.hparams.train]
+# base_lr = 0.1
+# batch_size = 8
+# lr_schedule = "onecycle"
+# n_epochs = 100
+# precision = 1.0
+# seed = 1337
+# 
+# [trainers.hparams.predict]
+# 
+# [[trainers]]
+# id = "finetuning"
+# name = "Finetuning"
+# label = "Fine-tuning"
+# 
+# [trainers.hparams.train]
+# base_lr = 0.1
+# batch_size = 8
+# lr_schedule = "onecycle"
+# n_epochs = 100
+# precision = 1.0
+# seed = 1337
+# 
+# [trainers.hparams.predict]
+# 
+# [[trainers]]
+# id = "ewc1"
+# name = "ElasticWeightConsolidation"
+# label = "EWC"
+# 
+# [trainers.hparams.train]
+# base_lr = 0.1
+# batch_size = 8
+# lambda = 1.0
+# lr_schedule = "onecycle"
+# n_epochs = 100
+# precision = 1.0
+# seed = 1337
+# 
+# [trainers.hparams.predict]
+# 
+# [[trainers]]
+# id = "ewc2"
+# name = "ElasticWeightConsolidation"
+# label = "EWC"
+# 
+# [trainers.hparams.train]
+# base_lr = 0.1
+# batch_size = 8
+# lambda = 10.0
+# lr_schedule = "onecycle"
+# n_epochs = 100
+# precision = 1.0
+# seed = 1337
+# 
+# [trainers.hparams.predict]
+# 
+# [[trainers]]
+# id = "ewc3"
+# name = "ElasticWeightConsolidation"
+# label = "EWC"
+# 
+# [trainers.hparams.train]
+# base_lr = 0.1
+# batch_size = 8
+# lambda = 100.0
+# lr_schedule = "onecycle"
+# n_epochs = 100
+# precision = 1.0
+# seed = 1337
+# 
+# [trainers.hparams.predict]
+# 
+# [[trainers]]
+# id = "ewc4"
+# name = "ElasticWeightConsolidation"
+# label = "EWC"
+# 
+# [trainers.hparams.train]
+# base_lr = 0.1
+# batch_size = 8
+# lambda = 1000.0
+# lr_schedule = "onecycle"
+# n_epochs = 100
+# precision = 1.0
+# seed = 1337
+# 
+# [trainers.hparams.predict]
+# 
+# [[trainers]]
+# id = "ewc5"
+# name = "ElasticWeightConsolidation"
+# label = "EWC"
+# 
+# [trainers.hparams.train]
+# base_lr = 0.1
+# batch_size = 8
+# lambda = 10000.0
+# lr_schedule = "onecycle"
+# n_epochs = 100
+# precision = 1.0
+# seed = 1337
+# 
+# [trainers.hparams.predict]
+# 
+# [[trainers]]
+# id = "si1"
+# name = "SynapticIntelligence"
+# label = "SI"
+# 
+# [trainers.hparams.train]
+# base_lr = 0.1
+# batch_size = 8
+# lambda = 1.0
+# lr_schedule = "onecycle"
+# n_epochs = 100
+# precision = 1.0
+# seed = 1337
+# xi = 0.1
+# 
+# [trainers.hparams.predict]
+# 
+# [[trainers]]
+# id = "si2"
+# name = "SynapticIntelligence"
+# label = "SI"
+# 
+# [trainers.hparams.train]
+# base_lr = 0.1
+# batch_size = 8
+# lambda = 10.0
+# lr_schedule = "onecycle"
+# n_epochs = 100
+# precision = 1.0
+# seed = 1337
+# xi = 0.1
+# 
+# [trainers.hparams.predict]
+# 
+# [[trainers]]
+# id = "si3"
+# name = "SynapticIntelligence"
+# label = "SI"
+# 
+# [trainers.hparams.train]
+# base_lr = 0.1
+# batch_size = 8
+# lambda = 100.0
+# lr_schedule = "onecycle"
+# n_epochs = 100
+# precision = 1.0
+# seed = 1337
+# xi = 0.1
+# 
+# [trainers.hparams.predict]
+# 
+# [[trainers]]
+# id = "si4"
+# name = "SynapticIntelligence"
+# label = "SI"
+# 
+# [trainers.hparams.train]
+# base_lr = 0.1
+# batch_size = 8
+# lambda = 1000.0
+# lr_schedule = "onecycle"
+# n_epochs = 100
+# precision = 1.0
+# seed = 1337
+# xi = 0.1
+# 
+# [trainers.hparams.predict]
+# 
+# [[trainers]]
+# id = "si5"
+# name = "SynapticIntelligence"
+# label = "SI"
+# 
+# [trainers.hparams.train]
+# base_lr = 0.1
+# batch_size = 8
+# lambda = 10000.0
+# lr_schedule = "onecycle"
+# n_epochs = 100
+# precision = 1.0
+# seed = 1337
+# xi = 0.1
+# 
+# [trainers.hparams.predict]
+# 
+# [[trainers]]
+# id = "si6"
+# name = "SynapticIntelligence"
+# label = "SI"
+# 
+# [trainers.hparams.train]
+# base_lr = 0.1
+# batch_size = 8
+# lambda = 1.0
+# lr_schedule = "onecycle"
+# n_epochs = 100
+# precision = 1.0
+# seed = 1337
+# xi = 1.0
+# 
+# [trainers.hparams.predict]
+# 
+# [[trainers]]
+# id = "si7"
+# name = "SynapticIntelligence"
+# label = "SI"
+# 
+# [trainers.hparams.train]
+# base_lr = 0.1
+# batch_size = 8
+# lambda = 10.0
+# lr_schedule = "onecycle"
+# n_epochs = 100
+# precision = 1.0
+# seed = 1337
+# xi = 1.0
+# 
+# [trainers.hparams.predict]
+# 
+# [[trainers]]
+# id = "si8"
+# name = "SynapticIntelligence"
+# label = "SI"
+# 
+# [trainers.hparams.train]
+# base_lr = 0.1
+# batch_size = 8
+# lambda = 100.0
+# lr_schedule = "onecycle"
+# n_epochs = 100
+# precision = 1.0
+# seed = 1337
+# xi = 1.0
+# 
+# [trainers.hparams.predict]
+# 
+# [[trainers]]
+# id = "si9"
+# name = "SynapticIntelligence"
+# label = "SI"
+# 
+# [trainers.hparams.train]
+# base_lr = 0.1
+# batch_size = 8
+# lambda = 1000.0
+# lr_schedule = "onecycle"
+# n_epochs = 100
+# precision = 1.0
+# seed = 1337
+# xi = 1.0
+# 
+# [trainers.hparams.predict]
+# 
+# [[trainers]]
+# id = "si10"
+# name = "SynapticIntelligence"
+# label = "SI"
+# 
+# [trainers.hparams.train]
+# base_lr = 0.1
+# batch_size = 8
+# lambda = 10000.0
+# lr_schedule = "onecycle"
+# n_epochs = 100
+# precision = 1.0
+# seed = 1337
+# xi = 1.0
+# 
+# [trainers.hparams.predict]
+# 
+# [[trainers]]
+# id = "si11"
+# name = "SynapticIntelligence"
+# label = "SI"
+# 
+# [trainers.hparams.train]
+# base_lr = 0.1
+# batch_size = 8
+# lambda = 1.0
+# lr_schedule = "onecycle"
+# n_epochs = 100
+# precision = 1.0
+# seed = 1337
+# xi = 10.0
+# 
+# [trainers.hparams.predict]
+# 
+# [[trainers]]
+# id = "si12"
+# name = "SynapticIntelligence"
+# label = "SI"
+# 
+# [trainers.hparams.train]
+# base_lr = 0.1
+# batch_size = 8
+# lambda = 10.0
+# lr_schedule = "onecycle"
+# n_epochs = 100
+# precision = 1.0
+# seed = 1337
+# xi = 10.0
+# 
+# [trainers.hparams.predict]
+# 
+# [[trainers]]
+# id = "si13"
+# name = "SynapticIntelligence"
+# label = "SI"
+# 
+# [trainers.hparams.train]
+# base_lr = 0.1
+# batch_size = 8
+# lambda = 100.0
+# lr_schedule = "onecycle"
+# n_epochs = 100
+# precision = 1.0
+# seed = 1337
+# xi = 10.0
+# 
+# [trainers.hparams.predict]
+# 
+# [[trainers]]
+# id = "si14"
+# name = "SynapticIntelligence"
+# label = "SI"
+# 
+# [trainers.hparams.train]
+# base_lr = 0.1
+# batch_size = 8
+# lambda = 1000.0
+# lr_schedule = "onecycle"
+# n_epochs = 100
+# precision = 1.0
+# seed = 1337
+# xi = 10.0
+# 
+# [trainers.hparams.predict]
+# 
+# [[trainers]]
+# id = "si15"
+# name = "SynapticIntelligence"
+# label = "SI"
+# 
+# [trainers.hparams.train]
+# base_lr = 0.1
+# batch_size = 8
+# lambda = 10000.0
+# lr_schedule = "onecycle"
+# n_epochs = 100
+# precision = 1.0
+# seed = 1337
+# xi = 10.0
+# 
+# [trainers.hparams.predict]
+# 
+# [[trainers]]
+# id = "simple_gvcl"
+# name = "SimpleGVCL"
+# label = "P-G-VCL"
+# 
+# [trainers.hparams.train]
+# base_lr = 0.01
+# batch_size = 8
+# lr_schedule = "onecycle"
+# mc = false
+# n_epochs = 100
+# precision = 1.0
+# sample_size = 10
+# seed = 1337
+# 
+# [trainers.hparams.predict]
+# sample_size = 100
+# seed = 1337
+# 
+# [[trainers]]
+# id = "simple_gmvcl"
+# name = "SimpleGMVCL"
+# label = "P-GM-VCL"
+# 
+# [trainers.hparams.train]
+# base_lr = 0.01
+# batch_size = 8
+# lr_schedule = "onecycle"
+# mc = false
+# n_comp = 3
+# n_epochs = 100
+# precision = 1.0
+# sample_size = 100
+# seed = 1337
+# 
+# [trainers.hparams.predict]
+# n_comp = 3
+# sample_size = 100
+# seed = 1337
+
+[[trainers]]
+id = "prior_exact_gsfsvi"
+name = "PriorExactGSFSVI"
+label = "P-G-S-FSVI"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 8
+coreset_batch_size = 8
+coreset_prob = 1.0
+coreset_size_per_task = 16
+equal_weight = false
+lr_schedule = "onecycle"
+mc = false
+noise_maxval = [ 6.9, 2.5 ]
+noise_minval = [ 1.1, 0.1 ]
+n_epochs = 100
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "prior_exact_gmsfsvi"
+name = "PriorExactGMSFSVI"
+label = "P-GM-S-FSVI\n(m=2)"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 8
+coreset_batch_size = 8
+coreset_prob = 1.0
+coreset_size_per_task = 16
+equal_weight = false
+lr_schedule = "onecycle"
+mc = false
+noise_maxval = [ 6.9, 2.5 ]
+noise_minval = [ 1.1, 0.1 ]
+n_comp = 3
+n_epochs = 100
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+n_comp = 3
+sample_size = 100
+seed = 1337
+
+# [[trainers]]
+# id = "likelihood_exact_gvcl"
+# name = "LikelihoodExactGVCL"
+# label = "L-G-VCL"
+# 
+# [trainers.hparams.train]
+# base_lr = 0.01
+# batch_size = 8
+# coreset_batch_size = 8
+# coreset_size_per_task = 16
+# lr_schedule = "onecycle"
+# mc = false
+# n_epochs = 100
+# precision = 1.0
+# sample_size = 10
+# seed = 1337
+# 
+# [trainers.hparams.predict]
+# sample_size = 100
+# seed = 1337
+# 
+# [[trainers]]
+# id = "likelihood_exact_gmvcl"
+# name = "LikelihoodExactGMVCL"
+# label = "L-GM-VCL\n(m=2)"
+# 
+# [trainers.hparams.train]
+# base_lr = 0.01
+# batch_size = 8
+# coreset_batch_size = 8
+# coreset_size_per_task = 16
+# lr_schedule = "onecycle"
+# mc = false
+# n_comp = 3
+# n_epochs = 100
+# precision = 1.0
+# sample_size = 100
+# seed = 1337
+# 
+# [trainers.hparams.predict]
+# n_comp = 3
+# sample_size = 100
+# seed = 1337
+
+[[trainers]]
+id = "likelihood_exact_gsfsvi"
+name = "LikelihoodExactGSFSVI"
+label = "L-G-S-FSVI"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 8
+coreset_batch_size = 8
+coreset_size_per_task = 16
+equal_weight = false
+lr_schedule = "onecycle"
+mc = false
+noise_batch_size = 8
+noise_maxval = [ 6.9, 2.5 ]
+noise_minval = [ 1.1, 0.1 ]
+n_epochs = 100
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+sample_size = 100
+seed = 1337
+
+[[trainers]]
+id = "likelihood_exact_gmsfsvi"
+name = "LikelihoodExactGMSFSVI"
+label = "L-GM-S-FSVI\n(m=2)"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 8
+coreset_batch_size = 8
+coreset_size_per_task = 16
+equal_weight = false
+lr_schedule = "onecycle"
+mc = false
+noise_batch_size = 8
+noise_maxval = [ 6.9, 2.5 ]
+noise_minval = [ 1.1, 0.1 ]
+n_comp = 3
+n_epochs = 100
+precision = 1.0
+sample_size = 10
+seed = 1337
+
+[trainers.hparams.predict]
+n_comp = 3
+sample_size = 100
+seed = 1337

@@ -13,7 +13,7 @@ from ..training.loss import get_nll
 
 from ...dataops.array import get_n_batches, get_pass_size
 
-coreset_memmap_path = Path('coreset.mammap').resolve()
+coreset_memmap_path = Path('coreset.memmap').resolve()
 coreset_zarr_path = Path('coreset.zarr').resolve()
 sampling = ['HMCNUTS']
 smi_simple = [

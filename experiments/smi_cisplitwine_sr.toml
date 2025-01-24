@@ -420,6 +420,7 @@ seed = 1337
 xi = 10.0
 
 [trainers.hparams.predict]
+
 [[trainers]]
 id = "aqc1"
 name = "AutodiffQuadraticConsolidation"

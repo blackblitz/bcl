@@ -6,12 +6,12 @@ import msgpack
 from pathlib import Path
 from pprint import pprint
 
-from dataops.io import read_task, read_toml
-from feature_extractor import extract_features
-from models import ModelSpec, NLL
-from models import module_map as models_module_map
-from train import select_trainers
-from train.trainer import module_map as trainer_module_map
+from ..dataops.io import read_task, read_toml
+from ..feature_extractor import extract_features
+from ..models import ModelSpec, NLL
+from ..models import module_map as models_module_map
+from ..train import select_trainers
+from ..train.trainer import module_map as trainer_module_map
 
 from . import metrics
 
@@ -57,7 +57,6 @@ def main():
     for metricname in exp_spec['evaluation']['metrics']:
         metricfn = getattr(metrics, metricname)
         result = {}
-        Path(results_path / 'evaluation.jsonl').write_bytes(b'')
         for trainer_spec in select_trainers(
             exp_spec, model, mspec, results_path, ts_path, metadata
         ).values():

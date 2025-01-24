@@ -14,7 +14,7 @@ from ..evaluate import metrics
 from ..feature_extractor import extract_features, train
 from ..models import ModelSpec, NLL
 from ..models import module_map as models_module_map
-from ..train.trainer import coreset_zarr_path
+from ..train.trainer import coreset_memmap_path, coreset_zarr_path
 from ..train.trainer import module_map as trainer_module_map
 
 
@@ -107,11 +107,8 @@ def main():
                             getattr(metrics, metric)(
                                 predictor,
                                 *read_task(ts_path, 'validation', i)
-                            ) for i in range(1, task_id + 1)
+                            ) for i in range(1, metadata['length'] + 1)
                         ]
-                        result[f'average_{metric}'] = (
-                            sum(result[metric]) / task_id
-                        )
                     with open(log_path, mode='a') as file:
                         print(json.dumps(result), file=file)
                 path = ckpt_path / f'{trainer_id}_{task_id}'
@@ -119,6 +116,8 @@ def main():
                 ocp.test_utils.erase_and_create_empty(path)
                 path.rmdir()
                 ckpter.save(path, trainer.state.params)
+    ocp.test_utils.erase_and_create_empty(coreset_memmap_path)
+    coreset_memmap_path.rmdir()
     ocp.test_utils.erase_and_create_empty(coreset_zarr_path)
     coreset_zarr_path.rmdir()
 

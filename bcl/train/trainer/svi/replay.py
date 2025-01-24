@@ -3,12 +3,10 @@
 from jax import jit, random
 import jax.numpy as jnp
 
-from dataops.array import batch, get_n_batches, shuffle
 
-from . import (
-    coreset_memmap_path, coreset_zarr_path,
-    GaussMixin, GaussmixMixin, SVI, TMixin
-)
+from . import GaussMixin, GaussmixMixin, SVI, TMixin
+
+from .. import coreset_memmap_path, coreset_zarr_path
 from ..coreset import TaskIncrementalCoreset
 from ...training.loss import (
     concat_fvfe, concat_pvfe, gfvfe_cf, gfvfe_mc,
@@ -16,6 +14,8 @@ from ...training.loss import (
     gpvfe_cf, gpvfe_mc, tfvfe_mc, tpvfe_mc
 )
 from ...training import make_step
+
+from ....dataops.array import batch, get_n_batches, shuffle
 
 
 class PriorExactSFSVI(SVI):
@@ -276,7 +276,7 @@ class LikelihoodExactSFSVI(SVI):
                 ind_xs = random.uniform(
                     subkeys[2],
                     shape=(
-                        self.hparams['noise_batch_size'],
+                        self.hparams['coreset_batch_size'],
                         *self.mspec.in_shape
                     ),
                     minval=jnp.array(self.hparams['noise_minval']),
