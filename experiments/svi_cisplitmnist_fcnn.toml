@@ -1,49 +1,9 @@
 [task_sequence]
-name = "displitcifar8"
+name = "cisplitmnist"
 
 [evaluation]
 metrics = ["accuracy", "mne"]
 validation_metric = "accuracy"
-
-[feature_extractor]
-name = "FEResNet18"
-task_sequence_name = "cifar100"
-
-[feature_extractor.args]
-conv0 = 32
-conv1 = 64
-conv2 = 128
-conv3 = 256
-conv4 = 512
-dense = 100
-
-[feature_extractor.spec]
-nll = "SOFTMAX_CROSS_ENTROPY"
-in_shape = [ 32, 32, 3 ]
-out_shape = [ 100 ]
-cratio = [
-    400, 400, 400, 400, 400, 400, 400, 400, 400, 400,
-    400, 400, 400, 400, 400, 400, 400, 400, 400, 400,
-    400, 400, 400, 400, 400, 400, 400, 400, 400, 400,
-    400, 400, 400, 400, 400, 400, 400, 400, 400, 400,
-    400, 400, 400, 400, 400, 400, 400, 400, 400, 400,
-    400, 400, 400, 400, 400, 400, 400, 400, 400, 400,
-    400, 400, 400, 400, 400, 400, 400, 400, 400, 400,
-    400, 400, 400, 400, 400, 400, 400, 400, 400, 400,
-    400, 400, 400, 400, 400, 400, 400, 400, 400, 400,
-    400, 400, 400, 400, 400, 400, 400, 400, 400, 400
-]
-cscale = 400
-
-[feature_extractor.hparams.train]
-base_lr = 0.001
-batch_size = 64
-lr_schedule = "onecycle"
-n_epochs = 20
-precision = 1.0
-seed = 1337
-
-[feature_extractor.hparams.predict]
 
 [model]
 name = "FCNN3"
@@ -51,13 +11,13 @@ name = "FCNN3"
 [model.args]
 dense0 = 256
 dense1 = 256
-dense2 = 1
+dense2 = 10
 
 [model.spec]
-nll = "SIGMOID_CROSS_ENTROPY"
-in_shape = [ 512 ]
-out_shape = [ 1 ]
-cratio = [ 1, 1 ]
+nll = "SOFTMAX_CROSS_ENTROPY"
+in_shape = [ 28, 28, 1 ]
+out_shape = [ 10 ]
+cratio = [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ]
 cscale = 1
 
 [[trainers]]
@@ -66,7 +26,7 @@ name = "Joint"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 16
+batch_size = 64
 lr_schedule = "onecycle"
 n_epochs = 20
 precision = 1.0
@@ -80,7 +40,7 @@ name = "Finetuning"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 16
+batch_size = 64
 lr_schedule = "onecycle"
 n_epochs = 20
 precision = 1.0
@@ -94,7 +54,7 @@ name = "ElasticWeightConsolidation"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 16
+batch_size = 64
 lambda = 1.0
 lr_schedule = "onecycle"
 n_epochs = 20
@@ -109,7 +69,7 @@ name = "ElasticWeightConsolidation"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 16
+batch_size = 64
 lambda = 10.0
 lr_schedule = "onecycle"
 n_epochs = 20
@@ -124,7 +84,7 @@ name = "ElasticWeightConsolidation"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 16
+batch_size = 64
 lambda = 100.0
 lr_schedule = "onecycle"
 n_epochs = 20
@@ -139,7 +99,7 @@ name = "ElasticWeightConsolidation"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 16
+batch_size = 64
 lambda = 1000.0
 lr_schedule = "onecycle"
 n_epochs = 20
@@ -154,7 +114,7 @@ name = "ElasticWeightConsolidation"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 16
+batch_size = 64
 lambda = 10000.0
 lr_schedule = "onecycle"
 n_epochs = 20
@@ -169,7 +129,7 @@ name = "SynapticIntelligence"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 16
+batch_size = 64
 lambda = 1.0
 lr_schedule = "onecycle"
 n_epochs = 20
@@ -185,7 +145,7 @@ name = "SynapticIntelligence"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 16
+batch_size = 64
 lambda = 10.0
 lr_schedule = "onecycle"
 n_epochs = 20
@@ -201,7 +161,7 @@ name = "SynapticIntelligence"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 16
+batch_size = 64
 lambda = 100.0
 lr_schedule = "onecycle"
 n_epochs = 20
@@ -217,7 +177,7 @@ name = "SynapticIntelligence"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 16
+batch_size = 64
 lambda = 1000.0
 lr_schedule = "onecycle"
 n_epochs = 20
@@ -233,7 +193,7 @@ name = "SynapticIntelligence"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 16
+batch_size = 64
 lambda = 10000.0
 lr_schedule = "onecycle"
 n_epochs = 20
@@ -249,7 +209,7 @@ name = "SynapticIntelligence"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 16
+batch_size = 64
 lambda = 1.0
 lr_schedule = "onecycle"
 n_epochs = 20
@@ -265,7 +225,7 @@ name = "SynapticIntelligence"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 16
+batch_size = 64
 lambda = 10.0
 lr_schedule = "onecycle"
 n_epochs = 20
@@ -281,7 +241,7 @@ name = "SynapticIntelligence"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 16
+batch_size = 64
 lambda = 100.0
 lr_schedule = "onecycle"
 n_epochs = 20
@@ -297,7 +257,7 @@ name = "SynapticIntelligence"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 16
+batch_size = 64
 lambda = 1000.0
 lr_schedule = "onecycle"
 n_epochs = 20
@@ -313,7 +273,7 @@ name = "SynapticIntelligence"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 16
+batch_size = 64
 lambda = 10000.0
 lr_schedule = "onecycle"
 n_epochs = 20
@@ -329,7 +289,7 @@ name = "SynapticIntelligence"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 16
+batch_size = 64
 lambda = 1.0
 lr_schedule = "onecycle"
 n_epochs = 20
@@ -345,7 +305,7 @@ name = "SynapticIntelligence"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 16
+batch_size = 64
 lambda = 10.0
 lr_schedule = "onecycle"
 n_epochs = 20
@@ -361,7 +321,7 @@ name = "SynapticIntelligence"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 16
+batch_size = 64
 lambda = 100.0
 lr_schedule = "onecycle"
 n_epochs = 20
@@ -377,7 +337,7 @@ name = "SynapticIntelligence"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 16
+batch_size = 64
 lambda = 1000.0
 lr_schedule = "onecycle"
 n_epochs = 20
@@ -393,7 +353,7 @@ name = "SynapticIntelligence"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 16
+batch_size = 64
 lambda = 10000.0
 lr_schedule = "onecycle"
 n_epochs = 20
@@ -409,7 +369,7 @@ name = "SimpleGVCL"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 16
+batch_size = 64
 lr_schedule = "onecycle"
 mc = false
 n_epochs = 20
@@ -427,7 +387,7 @@ name = "SimpleGMVCL"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 16
+batch_size = 64
 lr_schedule = "onecycle"
 mc = false
 n_comp = 3
@@ -446,16 +406,16 @@ id = "prior_exact_gsfsvi"
 name = "PriorExactGSFSVI"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 16
-coreset_batch_size = 16
+base_lr = 0.001
+batch_size = 64
+coreset_batch_size = 64
 coreset_prob = 1.0
 coreset_size_per_task = 256
-equal_weight = false
+equal_weight = true
 lr_schedule = "onecycle"
 mc = false
-noise_minval = 6.0
-noise_minval = -1.0
+noise_maxval = 1.0
+noise_minval = 0.0
 n_epochs = 20
 precision = 1.0
 sample_size = 10
@@ -470,16 +430,16 @@ id = "prior_exact_gmsfsvi"
 name = "PriorExactGMSFSVI"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 16
-coreset_batch_size = 16
+base_lr = 0.001
+batch_size = 64
+coreset_batch_size = 64
 coreset_prob = 1.0
 coreset_size_per_task = 256
-equal_weight = false
+equal_weight = true
 lr_schedule = "onecycle"
 mc = false
-noise_minval = 6.0
-noise_minval = -1.0
+noise_maxval = 1.0
+noise_minval = 0.0
 n_comp = 3
 n_epochs = 20
 precision = 1.0
@@ -497,8 +457,8 @@ name = "LikelihoodExactGVCL"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 8
-coreset_batch_size = 8
+batch_size = 32
+coreset_batch_size = 32
 coreset_size_per_task = 256
 lr_schedule = "onecycle"
 mc = false
@@ -517,8 +477,8 @@ name = "LikelihoodExactGMVCL"
 
 [trainers.hparams.train]
 base_lr = 0.01
-batch_size = 8
-coreset_batch_size = 8
+batch_size = 32
+coreset_batch_size = 32
 coreset_size_per_task = 256
 lr_schedule = "onecycle"
 mc = false
@@ -538,16 +498,16 @@ id = "likelihood_exact_gsfsvi"
 name = "LikelihoodExactGSFSVI"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 8
-coreset_batch_size = 8
+base_lr = 0.001
+batch_size = 32
+coreset_batch_size = 32
 coreset_size_per_task = 256
-equal_weight = false
+equal_weight = true
 lr_schedule = "onecycle"
 mc = false
-noise_batch_size = 16
-noise_minval = 6.0
-noise_minval = -1.0
+noise_batch_size = 64
+noise_maxval = 1.0
+noise_minval = 0.0
 n_epochs = 20
 precision = 1.0
 sample_size = 10
@@ -562,16 +522,16 @@ id = "likelihood_exact_gmsfsvi"
 name = "LikelihoodExactGMSFSVI"
 
 [trainers.hparams.train]
-base_lr = 0.01
-batch_size = 8
-coreset_batch_size = 8
+base_lr = 0.001
+batch_size = 32
+coreset_batch_size = 32
 coreset_size_per_task = 256
-equal_weight = false
+equal_weight = true
 lr_schedule = "onecycle"
 mc = false
-noise_batch_size = 16
-noise_minval = 6.0
-noise_minval = -1.0
+noise_batch_size = 64
+noise_maxval = 1.0
+noise_minval = 0.0
 n_comp = 3
 n_epochs = 20
 precision = 1.0

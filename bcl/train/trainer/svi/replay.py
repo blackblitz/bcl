@@ -276,7 +276,7 @@ class LikelihoodExactSFSVI(SVI):
                 ind_xs = random.uniform(
                     subkeys[2],
                     shape=(
-                        self.hparams['coreset_batch_size'],
+                        self.hparams['noise_batch_size'],
                         *self.mspec.in_shape
                     ),
                     minval=jnp.array(self.hparams['noise_minval']),

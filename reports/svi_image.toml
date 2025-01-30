@@ -1,16 +1,11 @@
 exps = [
-    "svi_cisplitmnist",
-    #"svi_cisplitcifar10",
-    "svi_displitmnist",
-    #"svi_displitcifar8",
+    "svi_cisplitmnist_fcnn",
+    "svi_cisplitmnist_cnn",
+    "svi_displitmnist_fcnn",
+    "svi_displitmnist_cnn"
 ]
     
 [[metrics]]
 name = "Final average accuracy"
 metametric = "final_average"
 basemetric = "accuracy"
-
-[[metrics]]
-name = "Continual uncertainty loss"
-metametric = "msdsut1"
-basemetric = "mne"

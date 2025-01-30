@@ -1,6 +1,6 @@
 # Bayesian Continual Learning
 
-This repository contains implementations of algorithms for Bayesian continual learning, including the official implementation of "On Sequential Maximum a Posteriori Inference for Continual Learning" [1].
+This repository contains implementations of algorithms for Bayesian continual learning, including the official implementation of "On Sequential Maximum a Posteriori Inference for Continual Learning" [1] and "Sequential Function-Space Variational Inference via Gaussian Mixture Approximation" [2].
 
 ## Setting up
 
@@ -24,9 +24,11 @@ Before running experiments, data must be prepared by running the `dataprep` scri
 python -m dataprep [task_sequence]
 ```
 
-For the experiments in [1], the following tasks or task sequences are required: `cisplit2diris`, `cisplitiris`, `cisplitwine`, `cisplitmnist`, `cisplitcifar10`, `cisplitham8`, `displitmnist`, `displitcifar8`, `displitham6`, `emnistletters`, `cifar100` and `bcn12`. `dataprep` prepares the data as `npy` files and stores them under `data`. `HAM10000` images and metadata must be manually downloaded before preparing `cisplitham8` and `displitham6`. `BCN20000` images and metadata must be manually downloaded and stored under `data/BCN20000` before preparing `bcn12`. Both of these data collections can be downloaded via the CLI tool [`isic`](https://github.com/ImageMarkup/isic-cli).
+For the experiments in [1], the following tasks or task sequences are required: `cisplit2diris`, `cisplitiris`, `cisplitwine`, `cisplitmnist`, `cisplitcifar10`, `cisplitham8`, `displitmnist`, `displitcifar8`, `displitham6`, `emnistletters`, `cifar100` and `bcn12`. For the experiments in [2], the following tasks or task sequences are required: `cisplit2diris`, `cisplitmnist`, `cisplitcifar10`, `cisplitham8`, `displitmnist`, `displitcifar8`, `displitham6`, `emnistletters`, `cifar100` and `bcn12`.
 
-Experiments are specified in toml files under `experiments` with name `[project]_[dataset_sequence]_[variant]`. Use the `train` script to train with all the specified methods and use the `evaluate` script to evaluate them:
+`dataprep` prepares the data as `npy` files and stores them under `data`. `HAM10000` images and metadata must be manually downloaded before preparing `cisplitham8` and `displitham6`. `BCN20000` images and metadata must be manually downloaded and stored under `data/BCN20000` before preparing `bcn12`. Both of these data collections can be downloaded via the CLI tool [`isic`](https://github.com/ImageMarkup/isic-cli).
+
+Experiments are specified in toml files under `experiments` with name `[project]_[dataset_sequence]_[variant]`. Experiments in [1] are under project `smi`, while those in [2] are under project `svi`. Use the `train` script to train with all the specified methods and use the `evaluate` script to evaluate them:
 
 ```
 python -m train [experiment_name]

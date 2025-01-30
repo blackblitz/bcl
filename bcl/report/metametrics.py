@@ -12,15 +12,15 @@ def final_average(metric_vals):
     return tree_util.tree_map(lambda x: x[-1].mean().item(), metric_vals)
 
 
-def msdsut1(metric_vals):
+def madsut1(metric_vals):
     """
-    Compute the mean square difference with strictly upper triangular ones.
+    Compute the mean absolute difference with strictly upper triangular ones.
 
     Intended for use with mean normalized entropy for computing continual
     uncertainty.
     """
     return tree_util.tree_map(
-        lambda x: ((x - np.triu(np.ones_like(x), k=1)) ** 2).mean().item(),
+        lambda x: np.abs(x - np.triu(np.ones_like(x), k=1)).mean().item(),
         metric_vals
     )
 

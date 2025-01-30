@@ -9,11 +9,11 @@ from pathlib import Path
 import orbax.checkpoint as ocp  # noqa: E402
 from tqdm import tqdm  # noqa: E402
 
-from dataops.io import read_task, read_toml  # noqa: E402
-from evaluate import metrics  # noqa: E402
-from models import ModelSpec, NLL  # noqa: E402
-from models import module_map as models_module_map  # noqa: E402
-from train.trainer.sampling import HMCNUTS  # noqa: E402
+from ..dataops.io import read_task, read_toml  # noqa: E402
+from ..evaluate import metrics  # noqa: E402
+from ..models import ModelSpec, NLL  # noqa: E402
+from ..models import module_map as models_module_map  # noqa: E402
+from ..train.trainer.sampling import HMCNUTS  # noqa: E402
 
 
 def main():

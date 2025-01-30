@@ -1,5 +1,5 @@
 [task_sequence]
-name = "cisplitham8"
+name = "displitham6"
 
 [evaluation]
 metrics = ["accuracy", "mne"]
@@ -35,18 +35,16 @@ seed = 1337
 [feature_extractor.hparams.predict]
 
 [model]
-name = "FCNN3"
+name = "FCNN1"
 
 [model.args]
-dense0 = 256
-dense1 = 256
-dense2 = 8
+dense = 1
 
 [model.spec]
-nll = "SOFTMAX_CROSS_ENTROPY"
+nll = "SIGMOID_CROSS_ENTROPY"
 in_shape = [ 512 ]
-out_shape = [ 8 ]
-cratio = [ 1, 1, 1, 1, 1, 1, 1, 1 ]
+out_shape = [ 1 ]
+cratio = [ 1, 1 ]
 cscale = 1
 
 [[trainers]]
@@ -435,15 +433,15 @@ id = "prior_exact_gsfsvi"
 name = "PriorExactGSFSVI"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.001
 batch_size = 64
-coreset_batch_size = 16
+coreset_batch_size = 64
 coreset_prob = 1.0
 coreset_size_per_task = 256
-equal_weight = false
+equal_weight = true
 lr_schedule = "onecycle"
 mc = false
-noise_minval = 6.0
+noise_maxval = 6.0
 noise_minval = -1.0
 n_epochs = 20
 precision = 1.0
@@ -459,15 +457,15 @@ id = "prior_exact_gmsfsvi"
 name = "PriorExactGMSFSVI"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.001
 batch_size = 64
-coreset_batch_size = 16
+coreset_batch_size = 64
 coreset_prob = 1.0
 coreset_size_per_task = 256
-equal_weight = false
+equal_weight = true
 lr_schedule = "onecycle"
 mc = false
-noise_minval = 6.0
+noise_maxval = 6.0
 noise_minval = -1.0
 n_comp = 3
 n_epochs = 20
@@ -527,15 +525,15 @@ id = "likelihood_exact_gsfsvi"
 name = "LikelihoodExactGSFSVI"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.001
 batch_size = 32
 coreset_batch_size = 32
 coreset_size_per_task = 256
-equal_weight = false
+equal_weight = true
 lr_schedule = "onecycle"
 mc = false
-noise_batch_size = 16
-noise_minval = 6.0
+noise_batch_size = 64
+noise_maxval = 6.0
 noise_minval = -1.0
 n_epochs = 20
 precision = 1.0
@@ -551,15 +549,15 @@ id = "likelihood_exact_gmsfsvi"
 name = "LikelihoodExactGMSFSVI"
 
 [trainers.hparams.train]
-base_lr = 0.01
+base_lr = 0.001
 batch_size = 32
 coreset_batch_size = 32
 coreset_size_per_task = 256
-equal_weight = false
+equal_weight = true
 lr_schedule = "onecycle"
 mc = false
-noise_batch_size = 16
-noise_minval = 6.0
+noise_batch_size = 64
+noise_maxval = 6.0
 noise_minval = -1.0
 n_comp = 3
 n_epochs = 20

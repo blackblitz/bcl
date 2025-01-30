@@ -92,7 +92,7 @@ name = "SimpleGSFSVI"
 [trainers.hparams.train]
 base_lr = 0.01
 batch_size = 16
-equal_weight = false
+equal_weight = true
 lr_schedule = "onecycle"
 mc = false
 noise_batch_size = 16

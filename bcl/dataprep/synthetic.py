@@ -7,8 +7,45 @@ from . import seed
 from .datasets import ArrayDataset
 
 
-def sinusoid():
-    """Make sinusoid from https://github.com/timrudner/S-FSVI."""
+def citriangle():
+    """Make CI Traingle."""
+    mean1 = np.array([0., np.sqrt(3)])
+    mean2 = np.array([-1., 0.])
+    mean3 = np.array([1., 0.])
+    stddev = np.full((2,), 0.1)
+    size = 100
+    keys = random.split(random.key(seed), num=3)
+    ys = np.repeat(np.arange(3), 100)
+
+    def makedss(key):
+        xs = np.array(random.normal(key, shape=(300, 2)))
+        for i, mean in enumerate([mean1, mean2, mean3]):
+            xs[i * size : (i + 1) * size] = (  # noqa: E203
+                mean + stddev * xs[i * size : (i + 1) * size]  # noqa: E203
+            )
+        return [ArrayDataset(xs, ys)]
+
+    tsdata = {
+        'training': makedss(keys[0]),
+        'validation': makedss(keys[1]),
+        'testing': makedss(keys[2])
+    }
+    tsmetadata = {
+        'classes': [0, 1, 2],
+        'counts': {
+            split: [
+                np.bincount([y for _, y in ds], minlength=3).tolist()
+                for ds in dss
+            ] for split, dss in tsdata.items()
+        },
+        'input_shape': [2],
+        'length': 1
+    }
+    return tsdata, tsmetadata
+
+
+def disinusoid():
+    """Make DI Sinusoid from https://github.com/timrudner/S-FSVI."""
     mean = np.array([
         [
             [0, 0.2],
@@ -70,42 +107,5 @@ def sinusoid():
         },
         'input_shape': [2],
         'length': 5
-    }
-    return tsdata, tsmetadata
-
-
-def triangle():
-    """Make traingle."""
-    mean1 = np.array([0., np.sqrt(3)])
-    mean2 = np.array([-1., 0.])
-    mean3 = np.array([1., 0.])
-    stddev = np.full((2,), 0.1)
-    size = 100
-    keys = random.split(random.key(seed), num=3)
-    ys = np.repeat(np.arange(3), 100)
-
-    def makedss(key):
-        xs = np.array(random.normal(key, shape=(300, 2)))
-        for i, mean in enumerate([mean1, mean2, mean3]):
-            xs[i * size : (i + 1) * size] = (  # noqa: E203
-                mean + stddev * xs[i * size : (i + 1) * size]  # noqa: E203
-            )
-        return [ArrayDataset(xs, ys)]
-
-    tsdata = {
-        'training': makedss(keys[0]),
-        'validation': makedss(keys[1]),
-        'testing': makedss(keys[2])
-    }
-    tsmetadata = {
-        'classes': [0, 1, 2],
-        'counts': {
-            split: [
-                np.bincount([y for _, y in ds], minlength=3).tolist()
-                for ds in dss
-            ] for split, dss in tsdata.items()
-        },
-        'input_shape': [2],
-        'length': 1
     }
     return tsdata, tsmetadata

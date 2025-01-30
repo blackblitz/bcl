@@ -10,7 +10,7 @@ pytorch = [
     'emnistletters'
 ]
 sklearn = ['cisplitiris', 'cisplit2diris', 'cisplitwine']
-synthetic = ['sinusoid', 'triangle']
+synthetic = ['citriangle', 'disinusoid']
 
 module_map = (
     dict.fromkeys(isic, 'bcl.dataprep.isic')
