@@ -35,13 +35,19 @@ python -m train [experiment_name]
 python -m evaluate [experiment_name]
 ```
 
+Joint HMC-NUTS can be run in parallel on multiple CPU cores:
+
+```
+JAX_PLATFORM_NAME=cpu XLA_FLAGS="--xla_force_host_platform_device_count=[n_cpu_cores]" python -m bcl.train.hmcnuts [experiment_id] [n_cpu_cores]
+```
+
 For visualization experiments, the prediction plots can be produced by using the `plot` script:
 
 ```
 python -m plot [experiment_name]
 ```
 
-The `train` script saves the model parameters under `results/ckpt`. The `evaluate` script saves the evaluation scores in `results/evaluation.jsonl`. The `plot` script saves the plots under `results/plots`.
+The `train` script and the `train.hmcnuts` script save the model parameters under `results/ckpt`. The `evaluate` script saves the evaluation scores in `results/evaluation.jsonl`. The `plot` script saves the plots under `results/plots`. Since joint HMC-NUTS is run separately, its predictions are plotted if its saved model parameters are found.
 
 Hyperparameter tuning is done by specifying multiple trainers of the same type with different hyperparameters and the `evaluate` script chooses the one with the best validation final average accuracy.
 
