@@ -21,6 +21,8 @@ def main():
     report_path = Path('reports').resolve()
     report_spec = read_toml(report_path / f'{args.report_id}.toml')
 
+    pd.options.display.float_format = '{:.4f}'.format
+
     for metric in report_spec['metrics']:
         print(metric['name'])
         print((pd.DataFrame({

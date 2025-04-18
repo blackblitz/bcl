@@ -24,6 +24,9 @@ def main():
     parser.add_argument(
         'n_chains', type=int, help='number of chains to run in parallel'
     )
+    parser.add_argument(
+        '-p', '--precision', type=float, default=1.0, help='initial prior precision'
+    )
     args = parser.parse_args()
 
     # read experiment specifications
@@ -69,10 +72,10 @@ def main():
     with ocp.StandardCheckpointer() as ckpter:
         hparams = {
             'final_only': True, 'n_chains': args.n_chains, 'n_steps': 100,
-            'precision': 1.0, 'seed': 1337
+            'precision': args.precision, 'seed': 1337
         }
         trainer = HMCNUTS(model, mspec, hparams)
-        trainer_id = 'hmcnuts'
+        trainer_id = f'hmcnuts_{args.precision}'
         task_ids = tqdm(
             range(1, metadata['length'] + 1),
             leave=False, unit='task'

@@ -28,8 +28,8 @@ class FECNN4(nn.Module):
         return xs
 
 
-class FECNN7(nn.Module):
-    """Feature-extracting convolutional neural network with 7 layers."""
+class FECNN6(nn.Module):
+    """Feature-extracting convolutional neural network with 6 layers."""
 
     conv0: int
     conv1: int
@@ -37,16 +37,15 @@ class FECNN7(nn.Module):
     conv3: int
     dense0: int
     dense1: int
-    dense2: int
 
     def setup(self):
         """Set up module."""
-        self.tail = FE6(
+        self.tail = FE5(
             conv0=self.conv0, conv1=self.conv1,
             conv2=self.conv2, conv3=self.conv3,
-            dense0=self.dense0, dense1=self.dense1,
+            dense0=self.dense0
         )
-        self.head = nn.Dense(self.dense2)
+        self.head = nn.Dense(self.dense1)
 
     def __call__(self, xs):
         """Apply module."""
@@ -105,15 +104,14 @@ class FE3(nn.Module):
         return xs
 
 
-class FE6(nn.Module):
-    """A feature extractor with 4 convolution layers and 2 dense layers."""
+class FE5(nn.Module):
+    """A feature extractor with 4 convolution layers and 1 dense layer."""
 
     conv0: int
     conv1: int
     conv2: int
     conv3: int
     dense0: int
-    dense1: int
 
     @nn.compact
     def __call__(self, xs):
@@ -134,8 +132,6 @@ class FE6(nn.Module):
         xs = nn.avg_pool(xs, window_shape=(2, 2), strides=(2, 2))
         xs = jnp.reshape(xs, shape=(xs.shape[0], -1))
         xs = nn.Dense(self.dense0)(xs)
-        xs = nn.swish(xs)
-        xs = nn.Dense(self.dense1)(xs)
         xs = nn.swish(xs)
         return xs
 

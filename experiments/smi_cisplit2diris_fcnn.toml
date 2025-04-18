@@ -31,7 +31,7 @@ cscale = 1
 [[trainers]]
 id = "joint"
 name = "Joint"
-label = "Joint training"
+label = "Joint MAP training"
 
 [trainers.hparams.train]
 base_lr = 0.1

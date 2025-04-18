@@ -25,7 +25,7 @@ cratio = [ 696, 2353, 108, 2561, 405, 3613, 740, 201, 811, 182, 357, 97 ]
 cscale = 97
 
 [feature_extractor.hparams.train]
-base_lr = 0.001
+base_lr = 0.0001
 batch_size = 64
 lr_schedule = "onecycle"
 n_epochs = 20

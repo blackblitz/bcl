@@ -2,7 +2,11 @@ exps = [
     "svi_cisplitmnist_fcnn",
     "svi_cisplitmnist_cnn",
     "svi_displitmnist_fcnn",
-    "svi_displitmnist_cnn"
+    "svi_displitmnist_cnn",
+    "svi_cisplitcifar10_cnn",
+    "svi_displitcifar8_cnn",
+    "svi_cisplitham8_cnn",
+    "svi_displitham6_cnn"
 ]
     
 [[metrics]]
