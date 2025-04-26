@@ -10,6 +10,7 @@ from matplotlib.colors import ListedColormap
 from matplotlib.ticker import MaxNLocator
 import numpy as np
 
+from .. import Experiment
 from ..dataops.io import read_task, read_toml
 from ..models import ModelSpec, NLL
 from ..models import module_map as models_module_map
@@ -73,61 +74,37 @@ def main():
     """Run the main script."""
     # parse arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('experiment_id', help='experiment ID')
+    parser.add_argument('exp_id', help='experiment ID')
     args = parser.parse_args()
 
-    # read experiment specifications
-    exp_path = Path('experiments').resolve()
-    exp_spec = read_toml(exp_path / f'{args.experiment_id}.toml')
+    exp = Experiment(args.exp_id)
+    exp.setup(is_eval=True)
 
-    # read metadata
-    ts_path = (
-        Path('data/prepped').resolve() / exp_spec['task_sequence']['name']
-    )
-    metadata = read_toml(ts_path / 'metadata.toml')
-
-    # set results path
-    results_path = Path('results').resolve() / args.experiment_id
-
-    # create plotter and model
     plotter = Plotter(
-        exp_spec['plot']['n_classes'],
-        exp_spec['plot']['x1_min'],
-        exp_spec['plot']['x1_max'],
-        exp_spec['plot']['x2_min'],
-        exp_spec['plot']['x2_max'],
-    )
-    model = getattr(
-        import_module(models_module_map[exp_spec['model']['name']]),
-        exp_spec['model']['name']
-    )(**exp_spec['model']['args'])
-    mspec = ModelSpec(
-        nll=NLL[exp_spec['model']['spec']['nll']],
-        in_shape=exp_spec['model']['spec']['in_shape'],
-        out_shape=exp_spec['model']['spec']['out_shape'],
-        cratio=exp_spec['model']['spec']['cratio'],
-        cscale=exp_spec['model']['spec']['cscale']
+        exp.spec['plot']['n_classes'],
+        exp.spec['plot']['x1_min'],
+        exp.spec['plot']['x1_max'],
+        exp.spec['plot']['x2_min'],
+        exp.spec['plot']['x2_max'],
     )
 
     # restore checkpoint, predict and plot
-    if (results_path / 'ckpt/hmcnuts_1').exists():
-        exp_spec['trainers'].append({
+    if (exp.paths['result'] / 'ckpt/hmcnuts_1').exists():
+        exp.spec['trainers'].append({
             'id': 'hmcnuts',
             'label': 'Joint\nHMC-NUTS',
             'name': 'HMCNUTS',
             'hparams': {'predict': {'sample_size': cpu_count()}}
         })
-    trainer_spec_map = select_trainers(
-        exp_spec, model, mspec, results_path, ts_path, metadata
-    )
+    trainer_spec_map = select_trainers(exp)
     fig, axes = plt.subplots(
-        metadata['length'], len(trainer_spec_map),
-        figsize=(exp_spec['plot']['width'], exp_spec['plot']['height']),
+        exp.metadata['length'], len(trainer_spec_map),
+        figsize=(exp.spec['plot']['width'], exp.spec['plot']['height']),
         sharex=True, sharey=True,
         constrained_layout=True
     )
     axes = np.array([axes])
-    axes = axes.reshape((metadata['length'], len(trainer_spec_map)))
+    axes = axes.reshape((exp.metadata['length'], len(trainer_spec_map)))
     for i, trainer_spec in enumerate(trainer_spec_map.values()):
         trainer_id = trainer_spec['id']
         trainer_label = trainer_spec['label']
@@ -137,23 +114,23 @@ def main():
         )
         hparams = trainer_spec['hparams']['predict']
 
-        for j in range(metadata['length']):
+        for j in range(exp.metadata['length']):
             task_id = j + 1
-            xs, ys = read_task(ts_path, 'training', task_id)
-            path = results_path / f'ckpt/{trainer_id}_{task_id}'
+            xs, ys = read_task(exp.paths['data'], 'training', task_id)
+            path = exp.paths['result'] / f'ckpt/{trainer_id}_{task_id}'
             predictor = trainer_class.predictor_class.from_checkpoint(
-                model, mspec, hparams, path
+                exp.model, exp.mspec, hparams, path
             )
             plotter.plot_pred(axes[j, i], predictor)
             plotter.plot_dataset(axes[j, i], xs, ys)
-            if i == 0 and metadata['length'] > 1:
+            if i == 0 and exp.metadata['length'] > 1:
                 axes[j, 0].set_ylabel(f'Task {task_id}')
             axes[j, i].xaxis.set_major_locator(MaxNLocator(integer=True))
             axes[j, i].yaxis.set_major_locator(MaxNLocator(integer=True))
         axes[-1, i].set_xlabel(trainer_label)
 
-    (results_path / 'plots').mkdir(parents=True, exist_ok=True)
-    fig.savefig(results_path / 'plots/pred.png')
+    (exp.paths['result'] / 'plots').mkdir(parents=True, exist_ok=True)
+    fig.savefig(exp.paths['result'] / 'plots/pred.png')
 
 
 if __name__ == '__main__':

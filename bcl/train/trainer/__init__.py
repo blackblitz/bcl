@@ -13,8 +13,8 @@ from ..training.loss import get_nll
 
 from ...dataops.array import get_n_batches, get_pass_size
 
-coreset_memmap_path = Path('coreset.memmap').resolve()
-coreset_zarr_path = Path('coreset.zarr').resolve()
+coreset_memmap_path = Path('coreset.memmap')
+coreset_zarr_path = Path('coreset.zarr')
 sampling = ['HMCNUTS']
 smi_simple = [
     'AutodiffQuadraticConsolidation', 'Finetuning',
