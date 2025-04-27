@@ -75,7 +75,7 @@ def main():
             'precision': args.precision, 'seed': 1337
         }
         trainer = HMCNUTS(model, mspec, hparams)
-        trainer_id = f'hmcnuts_{args.precision}'
+        trainer_id = 'hmcnuts'
         task_ids = tqdm(
             range(1, metadata['length'] + 1),
             leave=False, unit='task'
