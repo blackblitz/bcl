@@ -21,7 +21,7 @@ smi_simple = [
     'ElasticWeightConsolidation', 'Joint',
     'NeuralConsolidation', 'SynapticIntelligence'
 ]
-smi_replay = ['GDumb', 'TICReplay']
+smi_replay = ['ExperienceReplay']
 svi_simple = [
     'SimpleGMVCL', 'SimpleGVCL', 'SimpleGMSFSVI',
     'SimpleGSFSVI', 'SimpleTSFSVI', 'SimpleTVCL'

@@ -2,13 +2,13 @@
 
 from jax import jit, random
 
-from dataops.array import batch, get_n_batches, shuffle
-
-from . import coreset_memmap_path, coreset_zarr_path, MAPMixin
-from .. import OptimizingTrainer
-from ..coreset import GDumbCoreset
+from . import MAPMixin
+from .. import coreset_memmap_path, coreset_zarr_path, OptimizingTrainer
+from ..coreset import TaskIncrementalCoreset
 from ...training import make_step
 from ...training.loss import concat, l2_reg
+
+from ....dataops.array import batch, get_n_batches, shuffle
 
 
 class ExactReplay(MAPMixin, OptimizingTrainer):
@@ -34,15 +34,15 @@ class ExactReplay(MAPMixin, OptimizingTrainer):
         )
 
 
-class GDumb(ExactReplay):
-    """GDumb."""
+class ExperienceReplay(ExactReplay):
+    """Experience Replay."""
 
     def __init__(self, model, mspec, hparams):
         """Initialize self."""
         super().__init__(model, mspec, hparams)
-        self.hparams['coreset'] = GDumbCoreset(
+        self.hparams['coreset'] = TaskIncrementalCoreset(
             coreset_zarr_path, coreset_memmap_path,
-            self.mspec, self.hparams['coreset_size']
+            self.mspec, self.hparams['coreset_size_per_task']
         )
 
     def update_state(self, xs, ys):

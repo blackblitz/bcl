@@ -3,9 +3,7 @@
 from jax import jit, random
 import jax.numpy as jnp
 
-
 from . import GaussMixin, GaussmixMixin, SVI, TMixin
-
 from .. import coreset_memmap_path, coreset_zarr_path
 from ..coreset import TaskIncrementalCoreset
 from ...training.loss import (

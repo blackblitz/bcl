@@ -365,6 +365,23 @@ xi = 10.0
 [trainers.hparams.predict]
 
 [[trainers]]
+id = "er"
+name = "ExperienceReplay"
+label = "ER"
+
+[trainers.hparams.train]
+base_lr = 0.01
+batch_size = 32
+coreset_batch_size = 32
+coreset_size_per_task = 256
+lr_schedule = "onecycle"
+n_epochs = 20
+precision = 1.0
+seed = 1337
+
+[trainers.hparams.predict]
+
+[[trainers]]
 id = "simple_gvcl"
 name = "SimpleGVCL"
 
