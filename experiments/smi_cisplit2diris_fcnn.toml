@@ -459,7 +459,7 @@ xi = 10.0
 [[trainers]]
 id = "aqc1"
 name = "AutodiffQuadraticConsolidation"
-label = "AQC"
+label = "AQC (ours)"
 
 [trainers.hparams.train]
 base_lr = 0.1
@@ -475,7 +475,7 @@ seed = 1337
 [[trainers]]
 id = "aqc2"
 name = "AutodiffQuadraticConsolidation"
-label = "AQC"
+label = "AQC (ours)"
 
 [trainers.hparams.train]
 base_lr = 0.1
@@ -491,7 +491,7 @@ seed = 1337
 [[trainers]]
 id = "aqc3"
 name = "AutodiffQuadraticConsolidation"
-label = "AQC"
+label = "AQC (ours)"
 
 [trainers.hparams.train]
 base_lr = 0.1
@@ -507,7 +507,7 @@ seed = 1337
 [[trainers]]
 id = "aqc4"
 name = "AutodiffQuadraticConsolidation"
-label = "AQC"
+label = "AQC (ours)"
 
 [trainers.hparams.train]
 base_lr = 0.1
@@ -523,7 +523,7 @@ seed = 1337
 [[trainers]]
 id = "aqc5"
 name = "AutodiffQuadraticConsolidation"
-label = "AQC"
+label = "AQC (ours)"
 
 [trainers.hparams.train]
 base_lr = 0.1
@@ -539,7 +539,7 @@ seed = 1337
 [[trainers]]
 id = "nc1"
 name = "NeuralConsolidation"
-label = "NC"
+label = "NC (ours)"
 
 [trainers.hparams.train]
 base_lr = 0.1
@@ -562,7 +562,7 @@ seed = 1337
 [[trainers]]
 id = "nc2"
 name = "NeuralConsolidation"
-label = "NC"
+label = "NC (ours)"
 
 [trainers.hparams.train]
 base_lr = 0.1
@@ -585,7 +585,7 @@ seed = 1337
 [[trainers]]
 id = "nc3"
 name = "NeuralConsolidation"
-label = "NC"
+label = "NC (ours)"
 
 [trainers.hparams.train]
 base_lr = 0.1
@@ -608,7 +608,7 @@ seed = 1337
 [[trainers]]
 id = "nc4"
 name = "NeuralConsolidation"
-label = "NC"
+label = "NC (ours)"
 
 [trainers.hparams.train]
 base_lr = 0.1
@@ -631,7 +631,7 @@ seed = 1337
 [[trainers]]
 id = "nc5"
 name = "NeuralConsolidation"
-label = "NC"
+label = "NC (ours)"
 
 [trainers.hparams.train]
 base_lr = 0.1
@@ -654,7 +654,7 @@ seed = 1337
 [[trainers]]
 id = "nc6"
 name = "NeuralConsolidation"
-label = "NC"
+label = "NC (ours)"
 
 [trainers.hparams.train]
 base_lr = 0.1
@@ -677,7 +677,7 @@ seed = 1337
 [[trainers]]
 id = "nc7"
 name = "NeuralConsolidation"
-label = "NC"
+label = "NC (ours)"
 
 [trainers.hparams.train]
 base_lr = 0.1
@@ -700,7 +700,7 @@ seed = 1337
 [[trainers]]
 id = "nc8"
 name = "NeuralConsolidation"
-label = "NC"
+label = "NC (ours)"
 
 [trainers.hparams.train]
 base_lr = 0.1
@@ -723,7 +723,7 @@ seed = 1337
 [[trainers]]
 id = "nc9"
 name = "NeuralConsolidation"
-label = "NC"
+label = "NC (ours)"
 
 [trainers.hparams.train]
 base_lr = 0.1
@@ -746,7 +746,7 @@ seed = 1337
 [[trainers]]
 id = "nc10"
 name = "NeuralConsolidation"
-label = "NC"
+label = "NC (ours)"
 
 [trainers.hparams.train]
 base_lr = 0.1
@@ -769,7 +769,7 @@ seed = 1337
 [[trainers]]
 id = "nc11"
 name = "NeuralConsolidation"
-label = "NC"
+label = "NC (ours)"
 
 [trainers.hparams.train]
 base_lr = 0.1
@@ -792,7 +792,7 @@ seed = 1337
 [[trainers]]
 id = "nc12"
 name = "NeuralConsolidation"
-label = "NC"
+label = "NC (ours)"
 
 [trainers.hparams.train]
 base_lr = 0.1
@@ -815,7 +815,7 @@ seed = 1337
 [[trainers]]
 id = "nc13"
 name = "NeuralConsolidation"
-label = "NC"
+label = "NC (ours)"
 
 [trainers.hparams.train]
 base_lr = 0.1
@@ -838,7 +838,7 @@ seed = 1337
 [[trainers]]
 id = "nc14"
 name = "NeuralConsolidation"
-label = "NC"
+label = "NC (ours)"
 
 [trainers.hparams.train]
 base_lr = 0.1
@@ -861,7 +861,7 @@ seed = 1337
 [[trainers]]
 id = "nc15"
 name = "NeuralConsolidation"
-label = "NC"
+label = "NC (ours)"
 
 [trainers.hparams.train]
 base_lr = 0.1
